@@ -3,7 +3,6 @@ use strict;
 # -----------------------------------
 # Configuration
 # -----------------------------------
-my $DBI_DSN = "dbi:Oracle:host=themis.pcbi.upenn.edu;sid=cbilbld;port=1521";
 
 my %ids = (est => "id_est",
 	   library => 'id_lib',
@@ -25,12 +24,18 @@ $USER =~ /^(\w+)\@\w+$/;
 my $DBI_USER = $1;
 my $PASSWORD = shift || die "Second argument must be password\n";
 
+
+
 my $dataFileDir = shift || die "Third argument must specify directory containing the data files.\nFile names must begin with the appropriate table file names followed by a '.' \n\t ex: est.yada.2001011999.bcp.stuff -(applies to)-> est table \n";
 
-print "Read in params: USER=$USER PW=$PASSWORD DBI_USER=$DBI_USER DATA_DIR=$dataFileDir\n";
+my $DBI_DSN = shift || die "Fourth argument must specify the DBI_DSN string, e.g dbi:Oracle:cbilbld";
+
+print "Read in params: USER=$USER PW=$PASSWORD DBI_USER=$DBI_USER DATA_DIR=$dataFileDir DBI_DSN=dbi_dsn string\n";
 
 # DBI handle
 my $dbh = DBI->connect($DBI_DSN,$DBI_USER,$PASSWORD) or die DBI::errstr();
+
+$dbh->do("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS'"); 
 
 $dbh->{AutoCommit} = 0;
 # -----------------------------------
@@ -124,6 +129,7 @@ sub insert {
 		}
 		$_=~ s/\t$/$NULL_end/;
 		$_ = &fixdate($t,$_);
+
 		my @place_holders = split( /\t/,$_);
 		my @vals;
 		for (my $i = 0; $i < (scalar @place_holders); $i++){
@@ -191,6 +197,7 @@ sub fixdatefmt {
     return "$A[2]-$m-$A[1] 00:00:00";
     #return "$A[1]-$m-$A[2]";
 }
+
 sub getNumMonth { 
 	my $m = shift;
 	$m = uc $m;
