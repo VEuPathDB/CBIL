@@ -50,6 +50,10 @@ print  "updateAll.pl: started at $date\n";
 opendir(DDIR, $dataFileDir);
 my @dataFiles = readdir(DDIR);
 
+my $sth = $dbh->prepare("select count(*) from dbest.processedfile where name = ?");
+
+
+
 closedir(DDIR);
 print "Will load files:"; 
 print (join "\n", @dataFiles);
@@ -60,6 +64,12 @@ my ($h,@est, @seq, @comm, @pub, @maprec);
 
 # get the files and order them by table, date , operation and order 
 foreach my $f(@dataFiles) {
+        $sth->execute($f);
+        my $num = $sth->fetchrow_array();
+        if ($num >= 1) {
+	  next;
+	}
+
 	if ($f =~ /insert|delete/) {
 		$f =~ /(\w+)\.(\w+)\.(\d+)(.*)/;
 		my $t = $1; my $op = $2; my $date = $3; my $rest = $4;
@@ -104,9 +114,10 @@ sub delete {
 		$dbh->commit();
 	    }
 	}
+        my $insert = "insert into dbest.processedfile name Values ('$dataFileDir/$f')";
+	$dbh->do("$insert");
 	$dbh->commit();
 	close(F);
-	
 }
 
 sub insert {
@@ -159,6 +170,8 @@ sub insert {
 		}
 		
 	}
+        my $insert = "insert into dbest.processedfile name Values ('$dataFileDir/$f')";
+	$dbh->do("$insert");
 	$dbh->commit();
 	close(F);
 	my $end = time;
