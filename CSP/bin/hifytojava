@@ -1,4 +1,4 @@
-#!@perlLocation@
+#!@perl@
 
 # Demonstration of how to invoke HifyToJava: the first
 # argument is the name of the Java package into which
