@@ -27,14 +27,14 @@ use CBIL::Util::V;
 # ----------------------------------------------------------------------
 
 sub new {
-	 my $Class = shift;
-	 my $Args  = shift;
+   my $Class = shift;
+   my $Args  = shift;
 
-	 my $self = bless {}, $Class;
+   my $self = bless {}, $Class;
 
-	 $self->init($Args);
+   $self->init($Args);
 
-	 return $self;
+   return $self;
 }
 
 # ======================================================================
@@ -48,23 +48,23 @@ sub new {
 # ----------------------------------------------------------------------
 
 sub init {
-	 my $Self = shift;
-	 my $Args = shift;
+   my $Self = shift;
+   my $Args = shift;
 
-	 $Self->setName                 ( $Args->{Name                } );
-	 $Self->setParts                ( $Args->{Parts               } );
+   $Self->setName                 ( $Args->{Name                } );
+   $Self->setParts                ( $Args->{Parts               } );
    $Self->setNodeCount            ( $Args->{NodeCount           } );
-	 $Self->setExtra                ( $Args->{Extra               } );
-	 $Self->setRaw                  ( $Args->{Raw                 } );
-	 $Self->setWeighted             ( $Args->{Weighted            } );
-	 $Self->setGlobalProb           ( $Args->{GlobalProb          } );
-	 $Self->setGlobalBits           ( $Args->{GlobalBits          } );
-	 $Self->setLocalBits            ( $Args->{LocalBits           } );
-	 $Self->setLocalProb            ( $Args->{LocalProb           } );
-	 $Self->setGlobalEntropy        ( $Args->{GlobalEntropy       } );
-	 $Self->setLocalEntropy         ( $Args->{LocalEntropy        } );
+   $Self->setExtra                ( $Args->{Extra               } );
+   $Self->setRaw                  ( $Args->{Raw                 } );
+   $Self->setWeighted             ( $Args->{Weighted            } );
+   $Self->setGlobalProb           ( $Args->{GlobalProb          } );
+   $Self->setGlobalBits           ( $Args->{GlobalBits          } );
+   $Self->setLocalBits            ( $Args->{LocalBits           } );
+   $Self->setLocalProb            ( $Args->{LocalProb           } );
+   $Self->setGlobalEntropy        ( $Args->{GlobalEntropy       } );
+   $Self->setLocalEntropy         ( $Args->{LocalEntropy        } );
 
-	 return $Self;
+   return $Self;
 }
 
 # ----------------------------------------------------------------------
@@ -128,14 +128,36 @@ sub setGlobalEntropy        { $_[0]->{'GlobalEntropy'               } = $_[1]; $
 sub getLocalEntropy         { $_[0]->{'LocalEntropy'                } }
 sub setLocalEntropy         { $_[0]->{'LocalEntropy'                } = $_[1]; $_[0] }
 
+# ----------------------------------------------------------------------
+
+=pod
+
+=head2 C<getGlobalInformation>
+
+This is a derived attribute that measures the information content of
+the tree at this node.  The maximum entropy of lg leaves of subtree -
+entropy of observed tissue distribution.
+
+=cut
+
+sub getGlobalInformation {
+   my $Self = shift;
+   return log($Self->getNodeCount())/log(2.0) - $Self->getGlobalEntropy();
+}
+
+=pod
+
+=head2 C<isLeaf>
+
+A derived attribute that indicates whether there are any subparts for
+this node.
+
+=cut
+
 sub isLeaf {
   my $Self = shift;
-  
-  if (not defined $Self->{IsLeaf}) {
-    $Self->{IsLeaf} = scalar @{$Self->getParts()} > 0 ? 0 : 1;
-  }
-  
-  return $Self->{IsLeaf};
+
+  return scalar @{$Self->getParts()} > 0 ? 0 : 1;
 }
 
 # ----------------------------------------------------------------------
