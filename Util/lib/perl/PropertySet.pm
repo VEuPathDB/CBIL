@@ -34,6 +34,7 @@ sub new {
 
       open(F, $propsFile) || die "Can't open property file $propsFile";
 
+      my %duplicateCheck;
       while (<F>) {
         chomp;
         s/\s+$//;
@@ -44,6 +45,12 @@ sub new {
 	}
         my $key = $1;
         my $value = $2;
+
+        if ($duplicateCheck{$key}) {
+          print STDERR "Property name '$key' is duplicated in property file '$propsFile'\n";
+          $fatalError = 1;
+	}
+        $duplicateCheck{$key} = 1;
 
         if (!$relax && !$self->{props}->{$key}) {
           print STDERR "Invalid property name '$key' in property file '$propsFile'\n";
