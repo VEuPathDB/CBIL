@@ -12,8 +12,6 @@
 
   <target name="CBIL-Installation" depends="CBIL/Bio-Installation,
                                             CBIL/CSP-Installation,
-                                            CBIL/GenBank-Installation,
-                                            CBIL/SeqMatch-Installation,
                                             CBIL/Util-Installation" >
 
     <ant target="defaultProjectInstall"/>
@@ -30,18 +28,6 @@
   <target name="CBIL/CSP-Installation" depends="ProjectTree">
     <ant target="defaultComponentInstall">
       <property name="component" value="CBIL/CSP"/>
-    </ant>
-  </target>  
-
-  <target name="CBIL/GenBank-Installation" depends="ProjectTree">
-    <ant target="defaultComponentInstall">
-      <property name="component" value="CBIL/GenBank"/>
-    </ant>
-  </target>  
-
-  <target name="CBIL/SeqMatch-Installation" depends="ProjectTree">
-    <ant target="defaultComponentInstall">
-      <property name="component" value="CBIL/SeqMatch"/>
     </ant>
   </target>  
 
