@@ -58,8 +58,8 @@ sub strip {
   my ($boFile) = @_;
 
   my $n = 0;
-  open IN, $boFile;
-  open OUT, ">$boFile.tmp";
+  open IN, $boFile || die "Can't open $boFile\n";
+  open OUT, ">${boFile}.tmp" || die "Can't open ${boFile}.tmp\n";;
 
   while (<IN>) {
     print OUT;
