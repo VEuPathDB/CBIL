@@ -23,12 +23,23 @@ require Getopt::Long;
 
 use CBIL::Util::A;
 
+# ======================================================================
+# --------------------------- TYPE NAMES -------------------------------
+# ======================================================================
+
+$CBIL::Util::EasyCsp::String  = 'string';
+$CBIL::Util::EasyCsp::Float   = 'float';
+$CBIL::Util::EasyCsp::Int     = 'int';
+$CBIL::Util::EasyCsp::Boolean = 'boolean';
+
 # ----------------------------------------------------------------------
 
 
 sub DoItAll {
 	my $Desc   = shift;
 	my $Usage  = shift;
+
+  $Desc = { map {($_->{o} => $_)} @$Desc } if ref $Desc eq 'ARRAY';
 
 	my $cla = GetOptions( $Desc );
 
@@ -43,7 +54,7 @@ sub GetOptions {
 	my $D = shift;  # a descriptor
 
 	# arguments from command line.
-	my $cla = A::e;
+	my $cla = CBIL::Util::A::e;
 
 	# assemble an options descriptor
 	my %cld;
@@ -60,7 +71,7 @@ sub GetOptions {
 		$cld{ _optionTag( $D->{ $_ } ) } = \$cla->{ $_ };
 	}
 
-	#CBIL::Util::CBIL::Util::Disp:: Display( \%cld );
+	#CBIL::Util::Disp::Display( \%cld );
 
 	# process the arguments
 	my $ok = Getopt::Long::GetOptions( %cld );
@@ -78,6 +89,7 @@ sub StandardOptions {
 
 	return {
 		verbose => { o => 'verbose', t => 'boolean', h => 'generate lots of output' },
+		veryVerbose => { o => 'veryVerbose', t => 'boolean', h => 'generate reams of output' },
 		debug   => { o => 'debug',   t => 'boolean', h => 'turn on debugging output' },
     usage   => { o => 'help',    t => 'boolean', h => 'get usage' }
 	};
@@ -336,6 +348,6 @@ my $ecd = { map {($_->{o},$_)}
 my $cla = DoItAll( $ecd, 'Test of CBIL::Util::EasyCsp.pm' );
 
 require CBIL::Util::Disp;
-CBIL::Util::CBIL::Util::Disp:: Display( $cla );
+CBIL::Util::Disp::Display( $cla );
 
 

@@ -112,7 +112,7 @@ sub parseBlast{
       return if (/ctxfactor/ || /^Lambda/);
       
       ##      print STDERR "New Subject $sbjctId\n";
-      $sbjct = Subject->new($sbjctId) if $sbjctId;
+      $sbjct = CBIL::Bio::Blast::Subject->new($sbjctId) if $sbjctId;
       ##      $sbjct->setID($sbjctId);
       
     }
@@ -125,7 +125,7 @@ sub parseBlast{
       }
       ##end remaining calculations
     }
-    if (/^\s*Score\s=\s(\d+).*=\s(\S+)$/ || ($rpsblast && /^\s*Score\s*=\s*\d+\sbits\s\((\d+).*=\s(\S+)$/)) {
+    if (/^\s*Score\s=\s+(\d+).*=\s(\S+)$/ || ($rpsblast && /^\s*Score\s*=\s*\d+\sbits\s\((\d+).*=\s(\S+)$/)) {
       my $tmpScore = $1;
       my $tmpValue = $2;
 
@@ -375,7 +375,7 @@ sub buildChimera{
   my($self,$lindex,$rindex,$slop) = @_;
   my @l = $self->sortSubjectsByMaxQueryEnd();
   my @r = reverse($self->sortSubjectsByMinQueryStart()); ##want right one reversed
-  my $chim = Chimera->new();
+  my $chim = CBIL::Bio::Blast::Chimera->new();
   ##now add the current and any others to the chimera
   ## the first time in loop will add the current one to $chim
   ##first do left
@@ -489,7 +489,7 @@ sub detectRepeats {
     if ($sort[$i+1]->getRepeatStart() < $sort[$i]->getRepeatEnd()) {
       ##are overlapping...merge
       if ($merge == 0) {
-        $nr = Repeat->new();
+        $nr = CBIL::Bio::Blast::Repeat->new();
         $merge = 1;
       }
       foreach my $s ($sort[$i]->getSubjects()) {
@@ -539,7 +539,7 @@ sub findRepeats{
     for (my  $i = 0;$i < scalar(@s) - 1;$i++) { 
       if ($s[$i+1]->getMinQueryStart() - $lEdge <= $slop) {
         if ($firstElement == 1) {
-          $rep = Repeat->new(); ##create new Repeat object..
+          $rep = CBIL::Bio::Blast::Repeat->new(); ##create new Repeat object..
           $firstElement = 0;
           $inRepeat = 1;
         }
