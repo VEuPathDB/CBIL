@@ -13,6 +13,7 @@
   <target name="CBIL-Installation" depends="CBIL/Bio-Installation,
                                             CBIL/CSP-Installation,
                                             CBIL/Util-Installation,
+                                            CBIL/HQ-Installation,
                                             CBIL/ObjectMapper-Installation" >
 
     <ant target="defaultProjectInstall"/>
@@ -64,6 +65,14 @@
       <property name="component" value="ObjectMapper"/>
     </ant>
   </target>  
+
+  <target name="CBIL/HQ-Installation" depends="ProjectTree">
+    <ant target="defaultComponentInstall">
+      <property name="project" value="CBIL"/>
+      <property name="component" value="HQ"/>
+    </ant>
+  </target>  
+
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooo  Release  ooooooooooooooooooooooooooooo -->
