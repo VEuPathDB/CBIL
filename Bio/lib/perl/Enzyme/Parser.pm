@@ -13,6 +13,8 @@ use CBIL::Bio::Enzyme::EcNumber;
 use CBIL::Bio::Enzyme::Reaction;
 use CBIL::Bio::Enzyme::DbRef;
 
+use CBIL::Util::Disp;
+
 # ----------------------------------------------------------------------
 
 sub new {
@@ -233,7 +235,7 @@ sub assemble {
 	foreach my $class (values %$class_entries) {
 		$M->linkClass($class);
 	}
-	Disp::Display($class_entries->{'6.5.1'}, 'class 6.5.1' );
+	CBIL::Util::Disp::Display($class_entries->{'6.5.1'}, 'class 6.5.1' );
 
 	# link in enzymes
 	my $enzyme_entries = $M->getFileCache('enzymes')->getEntries;
@@ -241,7 +243,7 @@ sub assemble {
 		$M->linkClass($enzyme);
 	}
 
-	Disp::Display($enzyme_entries->{'6.5.1.3'}, 'enzyme 6.5.1.3');
+	CBIL::Util::Disp::Display($enzyme_entries->{'6.5.1.3'}, 'enzyme 6.5.1.3');
 
 	$M->setAssembled(1);
 }
@@ -269,8 +271,8 @@ sub linkClass {
 			$C->setParent($parent_class);
 		}
 		else {
-			print join("\t", ref $M, 'ERROR',
-								 'no parent found', $C->getId,
+			print join("\t", ref $M, 'WARN',
+								 'no parent found; making a fake parent', $C->getId,
 								), "\n";
 			my $fake_parent = CBIL::Bio::Enzyme::Class
 			->new({ Id          => $parent_path,
