@@ -23,7 +23,37 @@ sub getChromosomes {
     return @{ $self->{chrs} };
 }
 
-sub makeGusExtDbRelXML {
+sub getChromosomeFiles {
+    my ($self, $outFile) = @_;
+
+    my $gDir = $self->getGenomeDir;
+    my @chrs = $self->getChromosomes;
+
+    return map { $gDir . '/chr' . $_ . '.fa' } @chrs;
+}
+
+sub makeChromosomeList {
+    my ($self, $outFile) = @_;
+
+    my $gDir = $self->getGenomeDir;
+    my @chrs = $self->getChromosomes;
+
+    if ($outFile) {
+	open(F, ">$outFile") or die "could not open $outFile for write";
+    }
+
+    foreach my $c (@chrs) {
+	if ($outFile) {
+	    print F "$gDir/chr${c}.fa\n";
+	} else {
+	    print "$gDir/chr${c}.fa\n";
+	}
+    }
+
+    close F if $outFile;
+}
+
+sub makeGusVirtualSequenceXml {
     my ($self, $taxon_id, $ext_db_rel, $outFile) = @_;
 
     my $gDir = $self->getGenomeDir;
