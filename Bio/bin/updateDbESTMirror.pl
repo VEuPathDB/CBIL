@@ -5,16 +5,16 @@ use strict;
 # Configuration
 # -----------------------------------
 
-my %ids = (est => 'id_est',
-	   library => 'id_lib',
-	   author => 'id_pub',
-	   publication => 'id_pub',
-	   maprec => 'id_map',
-	   mapmethod => 'id_method',
-	   sequence => 'id_est',
-	   cmnt => 'id_est',
-	   comment => 'id_est',
-	   contact => 'id_contact');
+my %ids = (dbest.est => 'id_est',
+	   dbest.library => 'id_lib',
+	   dbest.author => 'id_pub',
+	   dbest.publication => 'id_pub',
+	   dbest.maprec => 'id_map',
+	   dbest.mapmethod => 'id_method',
+	   dbest.sequence => 'id_est',
+	   dbest.cmnt => 'id_est',
+	   dbest.comment => 'id_est',
+	   dbest.contact => 'id_contact');
 
 # -----------------------------------
 # Input
