@@ -34,6 +34,13 @@ sub init {
 sub getVersion { $_[0]->{Version} }
 sub setVersion { $_[0]->{Version} = $_[1]; $_[0] }
 
+sub getDescription { $_[0]->{Description} }
+sub setDescription { $_[0]->{Description} = $_[1]; $_[0] }
+
+sub getReleaseDate { $_[0]->{Date} }
+sub setReleaseDate { $_[0]->{Date} = $_[1]; $_[0] }
+
+
 sub getRecords { $_[0]->{Records} }
 sub setRecords { $_[0]->{Records} = $_[1]; $_[0] }
 sub addRecord  { push(@{$_[0]->{Records}},$_[1]); $_[0] }
