@@ -78,7 +78,7 @@ sub StandardOptions {
 
 	return {
 		verbose => { o => 'verbose', t => 'boolean', h => 'generate lots of output' },
-		veryVerbose => { o => 'verbose', t => 'boolean', h => 'generate reams of output' },
+		veryVerbose => { o => 'veryVerbose', t => 'boolean', h => 'generate reams of output' },
 		debug   => { o => 'debug',   t => 'boolean', h => 'turn on debugging output' },
     usage   => { o => 'help',    t => 'boolean', h => 'get usage' }
 	};
