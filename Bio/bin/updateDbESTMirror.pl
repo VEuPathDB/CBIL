@@ -79,7 +79,7 @@ foreach my $f(@dataFiles) {
 		$f =~ /(\w+)\.(\w+)\.(\d+)(.*)/;
 		my $t = $1; my $op = $2; my $date = $3; my $rest = $4;
 		if ($t =~ /comment/) { $t =~ s/comment/cmnt/; }
-		$t = $t ."@$dblink";
+		$t = $t ."$dblink";
 		if ($op =~ /insert/) { 
 	    push @{$h->{$t}->{$date}->{insert}}, $f;
 		}else {
