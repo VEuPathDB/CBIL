@@ -32,6 +32,7 @@ use Fcntl;
 use NDBM_File;
 
 use CBIL::Util::TO;
+use CBIL::Util::A;
 
 # ----------------------------------------------------------------------
 =pod
@@ -63,6 +64,7 @@ sub new {
   my $class = shift;
   my $args  = shift;
 
+  confess if (!$args);
   return undef unless $args->ensure('seq_file');
 
   my $self = CBIL::Util::TO::e;
