@@ -114,7 +114,7 @@ sub open {
   # do the work
   my %index;
   
-  if (tie(%index, GDBM_File, $self->{index_file}, O_READONLY, 0)) {
+  if (tie(%index, GDBM_File, $self->{index_file}, O_READONLY, 0) == 0) {
     $self->{index} = \ %index;
     $self->{index_open} = 1;
 
@@ -336,7 +336,7 @@ sub createIndex {
   system "touch $self->{seq_file}.dir";
   system "touch $self->{seq_file}.db";
 
-  if (tie(%index, GDBM_File, $self->{index_file}, O_RDWR | O_CREAT, 0644)) {
+  if (tie(%index, GDBM_File, $self->{index_file}, O_RDWR | O_CREAT, 0644) == 0) {
     $self->{index} = \ %index;
     $self->{index_open} = 1;
 
