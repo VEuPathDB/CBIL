@@ -23,12 +23,23 @@ require Getopt::Long;
 
 use CBIL::Util::A;
 
+# ======================================================================
+# --------------------------- TYPE NAMES -------------------------------
+# ======================================================================
+
+$CBIL::Util::EasyCsp::String  = 'string';
+$CBIL::Util::EasyCsp::Float   = 'float';
+$CBIL::Util::EasyCsp::Int     = 'int';
+$CBIL::Util::EasyCsp::Boolean = 'boolean';
+
 # ----------------------------------------------------------------------
 
 
 sub DoItAll {
 	my $Desc   = shift;
 	my $Usage  = shift;
+
+  $Desc = { map {($_->{o} => $_)} @$Desc } if ref $Desc eq 'ARRAY';
 
 	my $cla = GetOptions( $Desc );
 
