@@ -53,7 +53,7 @@ print  "updateAll.pl: started at $date\n";
 opendir(DDIR, $dataFileDir);
 my @dataFiles = readdir(DDIR);
 
-my $sth = $dbh->prepare("select count(*) from dbest.processedfile where name = ?");
+my $sth = $dbh->prepare("select count(*) from dbest.processedfile$dblink where name = ?");
 
 
 
@@ -120,7 +120,7 @@ sub delete {
 		$dbh->commit();
 	    }
 	}
-        my $insert = "insert into dbest.processedfile name Values ('$f')";
+        my $insert = "insert into dbest.processedfile$dblink name Values ('$f')";
 	$dbh->do("$insert");
 	$dbh->commit();
 	close(F);
@@ -176,7 +176,7 @@ sub insert {
 		}
 		
 	}
-        my $insert = "insert into dbest.processedfile name Values ('$f')";
+        my $insert = "insert into dbest.processedfile$dblink name Values ('$f')";
 	$dbh->do("$insert");
 	$dbh->commit();
 	close(F);
