@@ -74,23 +74,24 @@ sub makeObject {
   };
   $slf->log('makeObject, eval 1', $@) if $@;
   foreach my $slot ($out->getSlots()){
-    $slf->setSlot($rule,$slot,$obj,$inputs);
+    $slf->setSlot($rule,$objname,$slot,$obj,$inputs);
   }
   return $obj;
 }
 
 sub setSlot {
-  my  ($slf,$rule,$slot,$obj,$inputs) = @_;
+  my  ($slf,$rule,$objname,$slot,$obj,$inputs) = @_;
   my $nvt = $slot->getVal();
+  print "SLOT=(", $slot->getName(),", " , $slot->getMethod(), " ) rule=(", $rule->getName(), ".$objname) nvt=(", $nvt->getName(),":",$nvt->getType(),":", $nvt->getValue(), ")\n\n" if $slf->dbg;
   my $val =  $slf->evalNVT($nvt,$inputs); 
   # what we will set the slot to.
-  print "SLOT=(", $slot->getName(),") VAL=($val) rule=(", $rule->getName(), ") nvt=(", $nvt->getName(),":",$nvt->getType(),":", $nvt->getValue(), ")\n\n" if $slf->dbg;
+  print "SLOTVAL=($val) \n" if $slf->dbg;
   if ($val) {
     eval {
       my $method = $slot->getMethod();
-      $obj->$method($val);
+      $obj->$method($val) if $method;
     };
-    $slf->log('setSlot, eval 1', $@) if $@;
+    $slf->log('setSlot(' . $slot->getName() . '), eval 1' . "val=$val", $@) if $@;
   }
   return $obj;
 }
@@ -195,7 +196,7 @@ sub evalFunction {
   eval {
     $result = $slf->getFunc()->$fname(\@ARGS);
   };
-  $slf->log("evalFunction[ $fname, $args, $inputs ], eval 1", $@) if $@;
+  $slf->log("evalFunction[ $fname, ARGS=($args), IN=($inputs) ], eval 1", $@) if $@;
   $result ? return $result : return undef;
 }
 
