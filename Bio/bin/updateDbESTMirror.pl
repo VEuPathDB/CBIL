@@ -31,7 +31,7 @@ my $dataFileDir = shift || die "Third argument must specify directory containing
 
 my $DBI_DSN = shift || die "Fourth argument must specify the DBI_DSN string, e.g dbi:Oracle:cbilbld";
 
-print "Read in params: USER=$USER PW=$PASSWORD DBI_USER=$DBI_USER DATA_DIR=$dataFileDir DBI_DSN=dbi_dsn string\n";
+print "Read in params: USER=$USER PW=$PASSWORD DBI_USER=$DBI_USER DATA_DIR=$dataFileDir DBI_DSN=$DBI_DSN\n";
 
 # DBI handle
 my $dbh = DBI->connect($DBI_DSN,$DBI_USER,$PASSWORD) or die DBI::errstr();
