@@ -40,7 +40,7 @@ sub AUTOLOAD {
   }
  
   else {
-	my $toCall = "A::$name";
+	my $toCall = "CBIL::Util::A::$name";
 	return $toCall( @_ );
   }
 }
@@ -1095,7 +1095,7 @@ sub __test {
   
   #if ( defined $fh_out ) {
 	
-  print  $hify->e_BR( A::e );
+  print  $hify->e_BR( CBIL::Util::A::e );
 	
   print  $hify->E_textarea( new CBIL::Util::A {
 	viz  => "That's what I'm talkin' 'bout!",

@@ -13,12 +13,12 @@ sub new {
     $self->{count} = 1;  # must be base 1 (0 is a bummer key)
 
     my $fiArgs = { seq_file => $fastaFileName };
-    $self->{fastaIndex} = new FastaIndex(TO->new($fiArgs));
+    $self->{fastaIndex} = CBIL::Bio::FastaIndex->new(CBIL::Util::TO->new($fiArgs));
 
     my $whatever = sub { $self->{count}++ };
 
     my $ciArgs = {echo => 0, get_key => $whatever};
-    $self->{fastaIndex}->createIndex(TO->new($ciArgs));
+    $self->{fastaIndex}->createIndex(CBIL::Util::TO->new($ciArgs));
 
     $self->{count}--;
 
@@ -42,7 +42,7 @@ sub writeSeqsToFile {
     $stop = $self->{count} if $stop > $self->{count};
     for (my $i=$start+1; $i<$stop+1; $i++) {
 	my $gsArgs = {accno => $i };
-	my $seq = $self->{fastaIndex}->getSequence(TO->new($gsArgs));
+	my $seq = $self->{fastaIndex}->getSequence(CBIL::Util::TO->new($gsArgs));
 	print F "$seq->{hdr}\n";
 	print F "$seq->{seq}\n";
     }

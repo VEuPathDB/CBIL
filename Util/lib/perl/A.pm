@@ -262,8 +262,8 @@ Arguments:
 sub dump {
   my $self = shift;
   my $args = shift;
-    
-  $args = A::e() unless $args;
+
+  $args = CBIL::Util::A::e() unless $args;
   
   my $fh = $args->{FH} ? $args->{FH} : STDOUT;
  
