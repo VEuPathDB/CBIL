@@ -38,7 +38,7 @@ sub stripExtraHeaders {
 	foreach ($self->getPSLFiles) { push @fs, $_; }
     }
 
-    foreach (@fs) { &_strip($_);  }
+    foreach (@fs) { &strip($_);  }
 }
 
 # file scoped subs
@@ -54,7 +54,7 @@ sub _readPSLDir {
     \@psl_files;
 }
 
-sub _strip {
+sub strip {
   my ($boFile) = @_;
 
   my $n = 0;
