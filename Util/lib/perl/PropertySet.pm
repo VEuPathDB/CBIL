@@ -35,7 +35,7 @@ sub new {
 	chomp;
 	s/\s+$//;
 	next if (!$_ || /^#/);
-	die "Can't parse '$_' in props file $propsFile" unless /(\S+)\s*=\s*(.+)/; 
+	die "Can't parse '$_' in props file $propsFile" unless /(\S+?)\s*=\s*(.+)/; 
 	my $key = $1;
 	my $value = $2;
 
