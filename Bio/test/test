@@ -1,0 +1,51 @@
+#! /usr/bin/perl
+
+$| = 1;
+
+use strict 'vars';
+
+my $usage = <<USAGE
+
+Tests GenBank parsing objects.
+
+USAGE
+;
+
+my $ecd = {
+					 file => { o => 'file',
+										 t => 'string',
+										 h => 'GenBank formatted file to read',
+									 },
+
+					 D => { o => 'display',
+									t => 'boolean',
+									h => 'display parsed records',
+								},
+
+					 C => { o => 'count',
+									t => 'boolean',
+									h => 'count parsed records',
+								},
+					};
+
+use Disp;
+use EasyCsp;
+use FileHandle;
+
+my $cla = EasyCsp::DoItAll( $ecd, $usage ) || exit 1;
+
+use GenBank::Entry;
+use GenBank::IoStream;
+
+my $fh  = $cla->{file} =~ /\.gz$|\.Z$/ ?
+FileHandle->new( "zcat $cla->{file}|" )
+: FileHandle->new( '<'. $cla->{file} );
+my $ios = GenBank::IoStream->new( { fh => $fh } );
+my $n   = 0;
+while ( ! $ios->eof() ) {
+	my $e   = GenBank::Entry->new( { ios => $ios } );
+	Disp::Display( $e ) if $cla->{D};
+	print $n++, "\n"    if $cla->{C};
+}
+
+
