@@ -88,8 +88,9 @@ sub loadFile {
   my $fh = FileHandle->new("<$fullFileName");
 
   unless ($fh) {
-    $self->setErrMsg(join("\t",'Unable to open loadFile',$fullFileName,$!));
-    print  STDERR $self->getErrMsg,"\n";
+ 
+      print STDERR "Note: did not find file $fileName in directory $self->getPath.\n To load this branch of the ontology specified by $fileName,\n please put that file in the directory.\n"; 
+ 
     return undef;
   }
 
