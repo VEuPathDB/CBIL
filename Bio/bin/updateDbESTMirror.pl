@@ -1,10 +1,11 @@
+#! /usr/bin/perl
 use DBI;
 use strict;
 # -----------------------------------
 # Configuration
 # -----------------------------------
 
-my %ids = (est => "id_est",
+my %ids = (est => 'id_est',
 	   library => 'id_lib',
 	   author => 'id_pub',
 	   publication => 'id_pub',
@@ -66,7 +67,9 @@ my ($h,@est, @seq, @comm, @pub, @maprec);
 foreach my $f(@dataFiles) {
         $sth->execute($f);
         my $num = $sth->fetchrow_array();
+        $sth->finish();
         if ($num >= 1) {
+	  print "$f loaded into dbEST during a previous run - skipping.\n";
 	  next;
 	}
 
@@ -114,7 +117,7 @@ sub delete {
 		$dbh->commit();
 	    }
 	}
-        my $insert = "insert into dbest.processedfile name Values ('$dataFileDir/$f')";
+        my $insert = "insert into dbest.processedfile name Values ('$f')";
 	$dbh->do("$insert");
 	$dbh->commit();
 	close(F);
@@ -170,7 +173,7 @@ sub insert {
 		}
 		
 	}
-        my $insert = "insert into dbest.processedfile name Values ('$dataFileDir/$f')";
+        my $insert = "insert into dbest.processedfile name Values ('$f')";
 	$dbh->do("$insert");
 	$dbh->commit();
 	close(F);
@@ -230,6 +233,8 @@ sub getNumMonth {
 
 	return  $month{$m};
 }
+
+
 
 $dbh->disconnect();
 1;
