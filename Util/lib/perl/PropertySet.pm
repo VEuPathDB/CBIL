@@ -21,6 +21,8 @@ sub new {
     $self->{decl} = $propsDeclaration;
     $self->{file} = $propsFile;
 
+    my $fatalError;
+
     foreach my $decl (@$propsDeclaration) {
         my $name = $decl->[0];
         my $value = $decl->[1];
@@ -36,11 +38,17 @@ sub new {
         chomp;
         s/\s+$//;
         next if (!$_ || /^#/);
-        die "Can't parse '$_' in property file '$propsFile'" unless /(\S+?)\s*=\s*(.+)/;
+	if (! /(\S+?)\s*=\s*(.+)/) {
+	  print STDERR "Can't parse '$_' in property file '$propsFile'\n";
+	  $fatalError = 1;
+	}
         my $key = $1;
         my $value = $2;
 
-        die "Invalid property name '$key' in property file '$propsFile'" unless $relax || $self->{props}->{$key};
+        if (!$relax && !$self->{props}->{$key}) {
+          print STDERR "Invalid property name '$key' in property file '$propsFile'\n";
+          $fatalError = 1;
+	}
 
         # allow value to include $ENV{} expressions to include environment vars
         $value =~ s/\$ENV\{"?'?(\w+)"?'?\}/$ENV{$1}/g;
@@ -51,10 +59,13 @@ sub new {
     }
 
     foreach my $name (keys %{$self->{props}}) {
-        die "Required property '$name' must be specified in property file '$propsFile'"
-            if ($self->{props}->{$name} eq "REQD_PROP");
+      if ($self->{props}->{$name} eq "REQD_PROP") {
+        print STDERR "Required property '$name' must be specified in property file '$propsFile'\n";
+	$fatalError = 1;
+      }
     }
 
+    die "Fatal PropertySet error(s)" if $fatalError;
     return $self;
 }
 
