@@ -17,9 +17,9 @@ sub parse {
   my $line;
 	# my $header; ## place to put header info
 
-  # skip to next left justified line
+  # skip to next left justified line-exclude things of the form .seq-e.g. GBROD2.SEQ
   while ( $line = $IOS->getLine() ) {
-    last unless $line =~ /^\s/ || $line =~ /\./;
+    last unless $line =~ /^\s/ || $line =~ /^\w+\./;
 		# $header .= $line;
   }
   $IOS->putLine($line);
@@ -65,7 +65,7 @@ sub parse {
     }
 
     # sequence
-    elsif ( $line =~ /^\s+\d+\s/ ) {
+    elsif ( $line =~ /^\s*\d+\s/ ) {
       $IOS->putLine($line);
       $M->{Sequence} = CBIL::Bio::GenBank::Sequence->new( { ios => $IOS } );
     }
