@@ -13,7 +13,7 @@ sub new {
     $self->{count} = 1;  # must be base 1 (0 is a bummer key)
 
     my $fiArgs = { seq_file => $fastaFileName };
-    $self->{fastaIndex} = new CBIL::Bio::FastaIndex(CBIL::Util::TO->new($fiArgs));
+    $self->{fastaIndex} = CBIL::Bio::FastaIndex->new(CBIL::Util::TO->new($fiArgs));
 
     my $whatever = sub { $self->{count}++ };
 

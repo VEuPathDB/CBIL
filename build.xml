@@ -59,16 +59,15 @@
 
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooo  Distributable  ooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooo  Release  ooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="CBIL-Distributable" depends="ProjectTree">
-
-    <copy todir="${targetDir}">
-      <fileset dir="${projectsDir}" >
-        <exclude name="**/CVS/*" />
-      </fileset>
-    </copy>  
+  <target name="CBIL-Release">
+    
+    <ant target="defaultProjectRelease">
+      <property name="tag" value="v1-1-0"/>
+      <property name="cvsroot" value="/ptolemy/cbil/cvs/cvsroot"/>
+    </ant>
   </target>  
 
 
