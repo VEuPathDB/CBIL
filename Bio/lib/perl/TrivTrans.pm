@@ -1,5 +1,6 @@
 package CBIL::Bio::TrivTrans;
 
+
 # use strict;
 sub Trivial {
    my ($seq) = @_;
