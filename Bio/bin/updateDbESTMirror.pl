@@ -1,11 +1,9 @@
-#!@perl@
-
 use DBI;
 use strict;
 # -----------------------------------
 # Configuration
 # -----------------------------------
-my $DBI_DSN = "dbi:Oracle:host=nemesis.pcbi.upenn.edu;sid=gus;port=1521";
+my $DBI_DSN = "dbi:Oracle:host=themis.pcbi.upenn.edu;sid=cbilbld;port=1521";
 
 my %ids = (est => "id_est",
 	   library => 'id_lib',
@@ -146,7 +144,8 @@ sub insert {
 		}
 		my $sql = "insert into $t values (" . (join ",",@place_holders) . ")";
 
-		$dbh->do($sql,undef,@vals) or die $dbh->errstr . $sql . "(" . (join(' :: ' , @vals)) . "<end>)\nline= $_\n";
+		$dbh->do($sql,undef,@vals) or die $dbh->errstr . 
+		  "$sql\nVALS=(" . (join(', ',(map {'\'' . $_ . '\''}  @vals))) . ")\nline= $_\n";
 		
 		$count++;
 		if ($count % 100 == 0) { 
@@ -170,6 +169,7 @@ sub fixdate{
 	    $a[32] = &fixdatefmt($a[32]);
 	    unless ($a[37] =~ /^$|NULL/) {$a[37] = &fixdatefmt($a[37]);}
 	    unless ($a[38] =~ /^$|NULL/) {$a[38] = &fixdatefmt($a[38]);}
+	      
 	    $l = join "\t", @a;
 	} elsif ($t =~ /^maprec/) { 
 		my @a = split /\t/, $_;
@@ -184,9 +184,12 @@ sub fixdatefmt {
     # May 26 1992  8:32AM -> yyyy-mm-dd
     my @A = split /\s+/, $d;
     my $m = &getNumMonth($A[0]);
+    #my $m = uc $A[0]; 
     $A[2] =~ s/^1900$/2000/;
+    #$A[2] =~ s/^\d\d//;
     if (length $A[1] == 1 ) {$A[1] = "0" . $A[1];}
     return "$A[2]-$m-$A[1] 00:00:00";
+    #return "$A[1]-$m-$A[2]";
 }
 sub getNumMonth { 
 	my $m = shift;
