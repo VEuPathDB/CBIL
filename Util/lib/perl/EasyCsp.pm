@@ -43,7 +43,7 @@ sub GetOptions {
 	my $D = shift;  # a descriptor
 
 	# arguments from command line.
-	my $cla = A::e;
+	my $cla = CBIL::Util::A::e;
 
 	# assemble an options descriptor
 	my %cld;
