@@ -1,16 +1,67 @@
 package CBIL::Util::GenomeDir;
 
 use strict;
+use Bio::SeqIO;
+use Carp;
 
 # read a directory containing genomic sequence,
 #  on fasta file per chr, named as in chr9[_random].fa
 
 sub new {
-    my ($class, $genomeDir) = @_;
+    my ($class, $genomeDir, $srcIdRegEx) = @_;
 
-    my $self = { genomeDir=>$genomeDir };
-    $self->{chrs} = &_readChromosomes($genomeDir);
+    my $self = { genomeDir=>$genomeDir, srcIdRegEx=>$srcIdRegEx };
+
     bless($self, $class);
+}
+
+sub splitUp {
+  my ($self) = @_;
+
+  my $genomeDir = $self->getGenomeDir();
+  my $srcIdRegEx = $self->getSrcIdRegEx();
+
+  opendir(GD, $genomeDir) or die "could not opendir $genomeDir";
+  my @all = readdir(GD);
+  closedir(GD);
+
+  my @fastaFiles = grep(/\.(fa|fasta)$/, @all);
+  foreach my $fastaFile (@fastaFiles) {
+    $fastaFile = $genomeDir . '/' . $fastaFile;
+    my $tempfile = $fastaFile . '.tmp';
+    rename($fastaFile, $tempfile);
+
+    # read and parse with BioPerl
+    my $fa = Bio::SeqIO->new(-file => $tempfile, '-format' => 'Fasta');
+
+    while (my $entry = $fa->next_seq()) {
+
+      my $id = $entry->id;
+      my $desc = $entry->desc;
+      my $seq = $entry->seq;
+
+      # parse source id from defline with regex
+      my $srcId = $1 if $id =~ /$srcIdRegEx/;
+
+      # if it isn't in the id, look in the desc
+      if (! $srcId) {
+	my $srcId = $1 if $desc =~ /$srcIdRegEx/;
+      }
+
+      confess "Cannot parse source id from defline \"$id $desc\" with regEx $srcIdRegEx"
+	if ! $srcId;
+
+      # write out as <src_id>.fasta
+      my $outfile = $genomeDir . '/' . $srcId . '.fasta';
+      confess "file already exists: $outfile" if -e $outfile;
+
+      open OUT, "> $outfile" or confess "can't open $outfile to write";
+      print OUT ">$srcId $id $desc\n$seq\n";
+      close OUT;
+    }
+    system("rm $tempfile");
+  }
+
 }
 
 sub getGenomeDir {
@@ -18,9 +69,28 @@ sub getGenomeDir {
     return $self->{genomeDir};
 }
 
+sub getSrcIdRegEx {
+    my $self = shift;
+    return $self->{srcIdRegEx};
+}
+
 sub getChromosomes {
+  my ($self) = @_;
+
+  confess "It appears that this genome does not have complete chromosomes.  Use getSequencePieces instead."
+    if ($self->{srcIdRegEx});
+
+  return $self->getSequencePieces();
+}
+
+sub getSequencePieces {
     my ($self) = @_;
-    return @{ $self->{chrs} };
+
+    if ( ! $self->{seqs} ) {
+      $self->{seqs} = &_readSeqPieces($self->getGenomeDir());
+    }
+
+    return @{ $self->{seqs} };
 }
 
 sub getChromosomeFiles {
@@ -121,19 +191,19 @@ sub _getGusXMLStr {
     $res;
 }
 
-sub _readChromosomes {
+sub _readSeqPieces {
     my ($genomeDir) = @_;
 
     opendir(GD, $genomeDir) or die "could not opendir $genomeDir";
     my @all = readdir(GD);
     closedir(GD);
 
-    my @chrs;
-    my @chr_files = grep(/chr\S+\.(fa|fasta)/, @all);
-    foreach (@chr_files) {
-	push @chrs, $1 if /chr(\S+)\./;
+    my @seqs;
+    my @seq_files = grep(/\S+\.(fa|fasta)/, @all);
+    foreach (@seq_files) {
+	push @seqs, $1 if /(\S+)\./;
     }
-    \@chrs;
+    \@seqs;
 }
 
 1;
