@@ -1,7 +1,7 @@
 SUMMARY
 --------------
 
-RAD/ObjectMapper
+CBIL/ObjectMapper
 
 This is a generic package for translating between object spaces. It follows 
 a simple declarative rule structure, in which a set of inputs are mapped 
