@@ -61,7 +61,7 @@ sub getProp {
     my ($self, $name) = @_;
 
     my $value = $self->{props}->{$name};
-    die "invalid property name '$name' in file $self->{file}" unless $value;
+    die "trying to get invalid property name '$name' " unless $value;
     return $value;
 }
 
