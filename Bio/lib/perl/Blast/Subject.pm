@@ -72,7 +72,7 @@ sub getQueryLength{
 sub addHSP{
   my $self = shift;
   $self->{"numHSPs"}++;		##count the number of hsps
-	my $hsp =  HSP->new($self->getLength(),$self->{"numHSPs"},@_);
+	my $hsp =  CBIL::Bio::Blast::HSP->new($self->getLength(),$self->{"numHSPs"},@_);
   $self->{"hspHash"}->{$self->{"numHSPs"}} = $hsp;
   push(@{$self->{"hsp"}},$hsp);
 

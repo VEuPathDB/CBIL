@@ -8,7 +8,7 @@ FASTA file of sequences.
 
 =head1 Description
 
-Uses a NDBM_File index into a FASTA format file of sequences.  Assumes
+Uses a GDBM_File index into a FASTA format file of sequences.  Assumes
 that the first word following the '>' is the accession number for the
 sequence.
 
@@ -20,7 +20,7 @@ sequence.
 
 package CBIL::Bio::FastaIndex;
 
-@ISA = qw ( TO );
+@ISA = qw ( CBIL::Util::TO );
 @EXPORT = qw ( new );
 
 use strict "vars";
@@ -29,9 +29,10 @@ use English;
 use Carp;
 use FileHandle;
 use Fcntl;
-use NDBM_File;
+use GDBM_File;
 
 use CBIL::Util::TO;
+use CBIL::Util::A;
 
 # ----------------------------------------------------------------------
 =pod
@@ -63,9 +64,10 @@ sub new {
   my $class = shift;
   my $args  = shift;
 
+  confess if (!$args);
   return undef unless $args->ensure('seq_file');
 
-  my $self = TO::e;
+  my $self = CBIL::Util::TO::e;
 
   bless $self, $class;
   
@@ -112,7 +114,7 @@ sub open {
   # do the work
   my %index;
   
-  if (tie(%index, NDBM_File, $self->{index_file}, O_READONLY, 0)) {
+  if (tie(%index, GDBM_File, $self->{index_file}, O_READONLY, 0)) {
     $self->{index} = \ %index;
     $self->{index_open} = 1;
 
@@ -188,7 +190,7 @@ C<uc>    (opt) if set then sequence is returned in uppercase.
 
 B<Returns>
 
-a C<TO> object with the attributes, C<hdr> and C<seq> containing the
+a C<CBIL::Util::TO> object with the attributes, C<hdr> and C<seq> containing the
 obvious things if all goes well.
 
 =cut
@@ -334,7 +336,7 @@ sub createIndex {
   system "touch $self->{seq_file}.dir";
   system "touch $self->{seq_file}.db";
 
-  if (tie(%index, NDBM_File, $self->{index_file}, O_RDWR | O_CREAT, 0644)) {
+  if (tie(%index, GDBM_File, $self->{index_file}, O_RDWR | O_CREAT, 0644)) {
     $self->{index} = \ %index;
     $self->{index_open} = 1;
 
