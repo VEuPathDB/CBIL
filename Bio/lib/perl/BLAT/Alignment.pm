@@ -244,8 +244,10 @@ sub checkQuality {
       my @qGapSizes = $self->getUnexplainedLargeInternalGapSizes($dbh, $gapTable, $maxQueryGap, $minGapPct);
       print "DEBUG: unexplained large query gap sizes are: ", join(', ', @qGapSizes), "\n" if $DEBUG;
       my ($hasP3GenomicGap, $hasP5GenomicGap);
-      $hasP3GenomicGap = $self->hasEndGenomicGap($dbh, $gapTable, $endGapFactor, $minGapPct, $p3mis, 0) if $p3mis > $maxEndMismatch;
-      $hasP5GenomicGap = $self->hasEndGenomicGap($dbh, $gapTable, $endGapFactor, $minGapPct, $p5mis, 1) if $p5mis > $maxEndMismatch;
+      $hasP3GenomicGap = $self->hasEndGenomicGap($dbh, $gapTable, $endGapFactor, $minGapPct, $p3mis, 0)
+	  if $p3mis > $maxEndMismatch;
+      $hasP5GenomicGap = $self->hasEndGenomicGap($dbh, $gapTable, $endGapFactor, $minGapPct, $p5mis, 1)
+	  if $p5mis > $maxEndMismatch;
 
       if (($p3mis <= $maxEndMismatch || $hasP3GenomicGap) && scalar(@qGapSizes) == 0 &&
           ($p5mis <= $maxEndMismatch || $hasP5GenomicGap)) {
@@ -482,6 +484,7 @@ sub getUnexplainedLargeInternalGapSizes {
   my ($self, $dbh, $gapTable, $maxQueryGap, $minGapPct) = @_;
 
   my @qGapSizes;
+  return () unless $gapTable;
 
   my $spans = $self->getSpans();
   my $numSpans = scalar(@$spans);
@@ -504,6 +507,8 @@ sub getUnexplainedLargeInternalGapSizes {
 #
 sub hasEndGenomicGap {
   my ($self, $dbh, $gapTable, $endGapFactor, $minGapPct, $qGapSize, $is5p) = @_;
+
+  return undef unless $gapTable;
 
   my $is_reversed = ($self->get('strand') eq '-') ? 1 : 0;
   my $target_end = $self->get('t_end');
