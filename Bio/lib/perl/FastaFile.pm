@@ -44,7 +44,7 @@ sub writeSeqsToFile {
 	my $gsArgs = {accno => $i };
 	my $seq = $self->{fastaIndex}->getSequence(CBIL::Util::TO->new($gsArgs));
 	print F "$seq->{hdr}\n";
-	print F "$seq->{seq}\n";
+	print F "$seq->{seq}";
     }
     close(F);
     $self->{fastaIndex}->close();
