@@ -12,7 +12,7 @@
 
   <target name="CBIL-Installation" depends="CBIL/Bio-Installation,
                                             CBIL/CSP-Installation,
-                                            CBIL/Util-Installation" >
+                                            CBIL/Util-Installation,
                                             CBIL/ObjectMapper-Installation" >
 
     <ant target="defaultProjectInstall"/>
