@@ -8,7 +8,7 @@ FASTA file of sequences.
 
 =head1 Description
 
-Uses a NDBM_File index into a FASTA format file of sequences.  Assumes
+Uses a GDBM_File index into a FASTA format file of sequences.  Assumes
 that the first word following the '>' is the accession number for the
 sequence.
 
@@ -29,7 +29,7 @@ use English;
 use Carp;
 use FileHandle;
 use Fcntl;
-use NDBM_File;
+use GDBM_File;
 
 use CBIL::Util::TO;
 use CBIL::Util::A;
@@ -114,7 +114,7 @@ sub open {
   # do the work
   my %index;
   
-  if (tie(%index, NDBM_File, $self->{index_file}, O_READONLY, 0)) {
+  if (tie(%index, 'GDBM_File', "$self->{index_file}.db", O_READONLY, 0)) {
     $self->{index} = \ %index;
     $self->{index_open} = 1;
 
@@ -334,9 +334,8 @@ sub createIndex {
 
   system "touch $self->{seq_file}.pag";
   system "touch $self->{seq_file}.dir";
-  system "touch $self->{seq_file}.db";
 
-  if (tie(%index, NDBM_File, $self->{index_file}, O_RDWR | O_CREAT, 0644)) {
+  if (tie(%index, 'GDBM_File', "$self->{index_file}.db", O_RDWR | O_CREAT, 0644)) {
     $self->{index} = \ %index;
     $self->{index_open} = 1;
 
