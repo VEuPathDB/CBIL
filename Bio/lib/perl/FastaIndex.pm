@@ -20,7 +20,7 @@ sequence.
 
 package CBIL::Bio::FastaIndex;
 
-@ISA = qw ( TO );
+@ISA = qw ( CBIL::Util::TO );
 @EXPORT = qw ( new );
 
 use strict "vars";
@@ -65,7 +65,7 @@ sub new {
 
   return undef unless $args->ensure('seq_file');
 
-  my $self = TO::e;
+  my $self = CBIL::Util::TO::e;
 
   bless $self, $class;
   
@@ -188,7 +188,7 @@ C<uc>    (opt) if set then sequence is returned in uppercase.
 
 B<Returns>
 
-a C<TO> object with the attributes, C<hdr> and C<seq> containing the
+a C<CBIL::Util::TO> object with the attributes, C<hdr> and C<seq> containing the
 obvious things if all goes well.
 
 =cut
