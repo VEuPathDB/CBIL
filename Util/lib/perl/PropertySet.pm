@@ -18,6 +18,7 @@ sub new {
 
     $self->{props} = {};
     $self->{decl} = $propsDeclaration;
+    $self->{file} = $propsFile;
 
     foreach my $decl (@$propsDeclaration) {
 	my $name = $decl->[0];
@@ -60,7 +61,7 @@ sub getProp {
     my ($self, $name) = @_;
 
     my $value = $self->{props}->{$name};
-    die "invalid property name '$name'" unless $value;
+    die "invalid property name '$name' in file $self->{file}" unless $value;
     return $value;
 }
 
