@@ -69,7 +69,7 @@ sub entropy {
 sub average {
 	my $n  = scalar @_;
 	return undef unless $n > 0;
-	V::sum( @_ ) / scalar @_
+	sum( @_ ) / scalar @_
 }
 
 sub median {
@@ -89,7 +89,7 @@ sub dot_product {
 	my $av = shift;
 	my $bv = shift;
 
-	my $n =V::min( scalar @{ $av }, scalar @{ $bv } );
+	my $n = min( scalar @{ $av }, scalar @{ $bv } );
 
 	my $rv = 0;
 	for ( my $i = 0; $i < $n; $i++ ) {
