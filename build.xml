@@ -37,19 +37,23 @@
 
   <target name="CBIL/Bio-Installation" depends="ProjectTree">
     <ant target="defaultComponentInstall">
-      <property name="component" value="CBIL/Bio"/>
+      <property name="project" value="CBIL"/>
+      <property name="component" value="Bio"/>
     </ant>
   </target>  
 
   <target name="CBIL/CSP-Installation" depends="ProjectTree">
     <ant target="defaultComponentInstall">
-      <property name="component" value="CBIL/CSP"/>
+      <property name="project" value="CBIL"/>
+      <property name="component" value="CSP"/>
+      <property name="skipJava" value="true"/>
     </ant>
   </target>  
 
   <target name="CBIL/Util-Installation" depends="ProjectTree">
     <ant target="defaultComponentInstall">
-      <property name="component" value="CBIL/Util"/>
+      <property name="project" value="CBIL"/>
+      <property name="component" value="Util"/>
     </ant>
   </target>  
 
