@@ -81,8 +81,8 @@
   <target name="CBIL-Release">
     
     <ant target="defaultProjectRelease">
-      <property name="tag" value="v1-1-0"/>
-      <property name="cvsroot" value="/ptolemy/cbil/cvs/cvsroot"/>
+      <property name="tag" value="v1-4-0"/>
+      <property name="cvsroot" value="/files/cbil/cvs/cvsroot"/>
     </ant>
   </target>  
 
