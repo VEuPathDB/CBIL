@@ -415,7 +415,7 @@ sub _Error {
     delete $P->YYData->{ERRMSG};
     return;
   };
-  CBIL::Util::CBIL::Util::Disp:: Display($P);
+  CBIL::Util::Disp::Display($P);
 }
 
 sub _Lexer {
@@ -507,7 +507,7 @@ sub Run {
                         yyerror => \&_Error
                       );
 
-#  CBIL::Util::CBIL::Util::Disp:: Display( $rv );
+#  CBIL::Util::Disp::Display( $rv );
 
   $rv
 }
