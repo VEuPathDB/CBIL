@@ -1,12 +1,12 @@
 <?xml version="1.0"  encoding="ISO-8859-1" ?>
 <!-- 
-        RuelSet.dtd
+        ruleset.dtd
 
     This is a spec for defining rules to produce objects from other
    	object  sources. The method is general enough to
    	extend to any class-based system, but for right now it is specifically
    	tailored to defining our gene expression object-relational system to 
-    MAGE-OM. It si much-simplified version of the ObjectMap framework.
+    MAGE-OM. It is much-simplified version of the ObjectMap framework.
 
    	For a more general description of the mapping see below. 
 
@@ -21,7 +21,6 @@
      rule = A rule for taking a set of inputs and producing a set of outputs
      input = An input object to a rule
      output = An object produced by a rule. 
-
 -->
 
 <!ELEMENT ruleset (function?,rule*)>
