@@ -27,8 +27,6 @@ sub init {
  
    $self->setPath ($filePath);
 
-   print STDERR "Parser: initializing with filepath = $filePath\n";
-   
    $self->setLoaded(0);
    $self->setParsed(0);
 
@@ -45,7 +43,6 @@ sub loadAllFiles {
     
     foreach my $file (qw( component process function )) {
 	my $fullFile = "$file.ontology";
-	print STDERR "parser: loading file $fullFile\n";
 	
 	$self->loadFile($fullFile);
     }
@@ -59,11 +56,11 @@ sub loadAllFiles {
 # ----------------------------------------------------------------------
 sub parseAllFiles {
     my ($self) = @_;
-    print STDERR "Parser:  Parsing all files\n";
+
     my $files = $self->getFileCaches();
     
     foreach my $file (keys %$files){
-	print STDERR "Parser:  Parsing file $file\n";
+
 	my $store = $self->parseFile($file);
     }
     $self->setParsed(1);

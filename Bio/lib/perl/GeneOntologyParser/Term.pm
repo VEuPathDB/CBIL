@@ -104,7 +104,7 @@ sub parse {
 	$self->addClass($self->getParentId());
     }
     elsif ($term_relation eq "\$") {
-	print STDERR "setting root to true for $term_gono\n";
+
 	$self->setRoot(1);
     }
     
