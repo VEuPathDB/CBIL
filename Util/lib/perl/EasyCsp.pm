@@ -60,7 +60,7 @@ sub GetOptions {
 		$cld{ _optionTag( $D->{ $_ } ) } = \$cla->{ $_ };
 	}
 
-	#CBIL::Util::CBIL::Util::Disp:: Display( \%cld );
+	#CBIL::Util::Disp::Display( \%cld );
 
 	# process the arguments
 	my $ok = Getopt::Long::GetOptions( %cld );
@@ -336,6 +336,6 @@ my $ecd = { map {($_->{o},$_)}
 my $cla = DoItAll( $ecd, 'Test of CBIL::Util::EasyCsp.pm' );
 
 require CBIL::Util::Disp;
-CBIL::Util::CBIL::Util::Disp:: Display( $cla );
+CBIL::Util::Disp::Display( $cla );
 
 
