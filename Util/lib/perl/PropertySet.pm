@@ -27,7 +27,7 @@ sub new {
     }
 
     if ($propsFile) {
-      print STDERR "Reading properties from $propsFile\n";
+#      print STDERR "Reading properties from $propsFile\n";
 
       open(F, $propsFile) || die "Can't open property file $propsFile";
 
@@ -41,7 +41,7 @@ sub new {
 
 	die "Invalid property name '$key' in properties file $propsFile" unless $self->{props}->{$key};
 
-	# allow value to include $ENV{} expressions to inlcude environment vars
+	# allow value to include $ENV{} expressions to include environment vars
 	$value =~ s/\$ENV\{"?'?(\w+)"?'?\}/$ENV{$1}/g;
 
 	$self->{props}->{$key} = $value;
