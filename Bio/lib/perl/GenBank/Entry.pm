@@ -65,7 +65,7 @@ sub parse {
     }
 
     # sequence
-    elsif ( $line =~ /^\s+\d+\s/ ) {
+    elsif ( $line =~ /^\s*\d+\s/ ) {
       $IOS->putLine($line);
       $M->{Sequence} = CBIL::Bio::GenBank::Sequence->new( { ios => $IOS } );
     }
