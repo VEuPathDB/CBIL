@@ -31,6 +31,8 @@ my $dataFileDir = shift || die "Third argument must specify directory containing
 
 my $DBI_DSN = shift || die "Fourth argument must specify the DBI_DSN string, e.g dbi:Oracle:cbilbld";
 
+my $dblink = shift || die "Fifth argument must be the db link to dbest, e.g. pinneylink";
+
 print "Read in params: USER=$USER PW=$PASSWORD DBI_USER=$DBI_USER DATA_DIR=$dataFileDir DBI_DSN=$DBI_DSN\n";
 
 # DBI handle
@@ -77,6 +79,7 @@ foreach my $f(@dataFiles) {
 		$f =~ /(\w+)\.(\w+)\.(\d+)(.*)/;
 		my $t = $1; my $op = $2; my $date = $3; my $rest = $4;
 		if ($t =~ /comment/) { $t =~ s/comment/cmnt/; }
+		$t = $t ."@$dblink";
 		if ($op =~ /insert/) { 
 	    push @{$h->{$t}->{$date}->{insert}}, $f;
 		}else {
