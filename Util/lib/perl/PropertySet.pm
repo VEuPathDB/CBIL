@@ -18,6 +18,7 @@ sub new {
 
     $self->{props} = {};
     $self->{decl} = $propsDeclaration;
+    $self->{file} = $propsFile;
 
     foreach my $decl (@$propsDeclaration) {
 	my $name = $decl->[0];
@@ -26,7 +27,7 @@ sub new {
     }
 
     if ($propsFile) {
-      print STDERR "Reading properties from $propsFile\n";
+#      print STDERR "Reading properties from $propsFile\n";
 
       open(F, $propsFile) || die "Can't open property file $propsFile";
 
@@ -34,13 +35,13 @@ sub new {
 	chomp;
 	s/\s+$//;
 	next if (!$_ || /^#/);
-	die "Can't parse '$_' in props file $propsFile" unless /(\S+)\s*=\s*(.+)/; 
+	die "Can't parse '$_' in props file $propsFile" unless /(\S+?)\s*=\s*(.+)/; 
 	my $key = $1;
 	my $value = $2;
 
 	die "Invalid property name '$key' in properties file $propsFile" unless $self->{props}->{$key};
 
-	# allow value to include $ENV{} expressions to inlcude environment vars
+	# allow value to include $ENV{} expressions to include environment vars
 	$value =~ s/\$ENV\{"?'?(\w+)"?'?\}/$ENV{$1}/g;
 
 	$self->{props}->{$key} = $value;
@@ -60,7 +61,7 @@ sub getProp {
     my ($self, $name) = @_;
 
     my $value = $self->{props}->{$name};
-    die "invalid property name '$name'" unless $value;
+    die "trying to call getProp('$name') on invalid property name '$name' " unless $value;
     return $value;
 }
 
