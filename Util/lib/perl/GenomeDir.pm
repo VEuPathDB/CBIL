@@ -21,11 +21,12 @@ sub splitUp {
   my $genomeDir = $self->getGenomeDir();
   my $srcIdRegEx = $self->getSrcIdRegEx();
 
-  opendir(GD, $genomeDir) or die "could not opendir $genomeDir";
-  my @all = readdir(GD);
-  closedir(GD);
+#  opendir(GD, $genomeDir) or die "could not opendir $genomeDir";
+#  my @all = readdir(GD);
+#  closedir(GD);
 
-  my @fastaFiles = grep(/\.(fa|fasta)$/, @all);
+#  my @fastaFiles = grep(/\.(fa|fasta)$/, @all);
+  my @fastaFiles = $self->getSequenceFiles();
   foreach my $fastaFile (@fastaFiles) {
     $fastaFile = $genomeDir . '/' . $fastaFile;
     my $tempfile = $fastaFile . '.tmp';
@@ -87,10 +88,27 @@ sub getSequencePieces {
     my ($self) = @_;
 
     if ( ! $self->{seqs} ) {
-      $self->{seqs} = &_readSeqPieces($self->getGenomeDir());
+      $self->{seqs} = $self->_readSeqPieces($self->getGenomeDir());
     }
 
     return @{ $self->{seqs} };
+}
+
+sub getSequenceFiles {
+  my ($self) = @_;
+
+  if (! $self->{sequenceFiles} ) {
+    my $genomeDir = $self->getGenomeDir();
+    opendir(GD, $genomeDir) or die "could not opendir $genomeDir";
+    my @all = readdir(GD);
+    closedir(GD);
+
+    my @fastaFiles = map { $genomeDir . '/' . $_ } grep(/\.(fa|fasta)$/, @all);
+
+    $self->{sequenceFiles} = \@fastaFiles;
+  }
+
+  return @{$self->{sequenceFiles}};
 }
 
 sub getChromosomeFiles {
@@ -124,9 +142,21 @@ sub makeChromosomeList {
 }
 
 sub makeGusVirtualSequenceXml {
-    my ($self, $taxon_id, $ext_db_rel, $outFile) = @_;
+    my ($self, $taxon_id, $ext_db_rel, $outFile, $regEx) = @_;
 
     my $gDir = $self->getGenomeDir;
+    my @seqs = $self->getSequencePieces;
+
+    if ($regEx) {
+      my $xml = &_getGusXMLStr(\@seqs, $taxon_id, $ext_db_rel);
+      if ($outFile) {
+	open F, ">$outFile" or die "could not open $outFile for write";
+	print F $xml;
+	close F;
+      }
+      return $xml;
+    }
+
     my @chrs = $self->getChromosomes;
     my %chrs; foreach (@chrs) { $chrs{$_} = 1; }
 
@@ -159,7 +189,7 @@ sub makeGusVirtualSequenceXml {
     # anything remaining
     foreach my $chr (keys %chrs) { push @ordered_chrs, $chr; }
 
-    my $xml = &_getGusXMLStr(\@ordered_chrs, $taxon_id, $ext_db_rel);
+    my $xml = &_getGusXMLStr(\@ordered_chrs, $taxon_id, $ext_db_rel, 'chr');
 
     if ($outFile) {
 	open F, ">$outFile" or die "could not open $outFile for write";
@@ -172,7 +202,7 @@ sub makeGusVirtualSequenceXml {
 # file scoped subs
 
 sub _getGusXMLStr {
-    my ($ordered_chrs, $taxon_id, $ext_db_rel_id) = @_;
+    my ($ordered_chrs, $taxon_id, $ext_db_rel_id, $filePrefix) = @_;
 
     my $chr_ord_num = 0;
     my $res;
@@ -181,7 +211,7 @@ sub _getGusXMLStr {
         $res .= "<DOTS::VirtualSequence>\n";
 	$res .= "  <sequence_version>1</sequence_version>\n";
         $res .=  "  <sequence_type_id>3</sequence_type_id>\n";
-        $res .=  "  <source_id>chr$chr</source_id>\n";
+        $res .=  "  <source_id>$filePrefix$chr</source_id>\n";
         $res .=  "  <external_database_release_id>$ext_db_rel_id</external_database_release_id>\n";
         $res .=  "  <taxon_id>$taxon_id</taxon_id>\n";
         $res .=  "  <chromosome>$chr</chromosome>\n";
@@ -192,16 +222,17 @@ sub _getGusXMLStr {
 }
 
 sub _readSeqPieces {
-    my ($genomeDir) = @_;
+    my ($self, $genomeDir) = @_;
 
-    opendir(GD, $genomeDir) or die "could not opendir $genomeDir";
-    my @all = readdir(GD);
-    closedir(GD);
+#    opendir(GD, $genomeDir) or die "could not opendir $genomeDir";
+#    my @all = readdir(GD);
+#    closedir(GD);
 
     my @seqs;
-    my @seq_files = grep(/\S+\.(fa|fasta)/, @all);
+#    my @seq_files = grep([^/]+\.(fa|fasta)/, @all);
+    my @seq_files = $self->getSequenceFiles();
     foreach (@seq_files) {
-	push @seqs, $1 if /(\S+)\./;
+	push @seqs, $1 if /([^\/]+)\.(fa|fasta)$/;
     }
     \@seqs;
 }
