@@ -19,6 +19,22 @@
   </target>  
    
 
+  <!-- oooooooooooooooooo  Installation Postprocess  ooooooooooooooooooooo -->
+
+  <target name="CBIL-Installation-postprocess">
+    <echo message="Postprocessing the CBIL installation"/>
+
+    <replace dir="${targetDir}/bin" 
+             propertyFile="${targetDir}/config/replacements.prop" > 
+      <include name="**/*" />
+      <replacefilter token="@perl@" property="perl"/>
+    </replace> 
+
+  </target>
+
+
+  <!-- ooooooooooooooooooooooo  Install Components  ooooooooooooooooooooooo -->
+
   <target name="CBIL/Bio-Installation" depends="ProjectTree">
     <ant target="defaultComponentInstall">
       <property name="component" value="CBIL/Bio"/>
