@@ -1,44 +1,51 @@
 #! /usr/bin/perl
-use DBI;
-use strict;
+use lib "$ENV{GUS_HOME}/lib/perl";
+use Getopt::Long;
+use GUS::ObjRelP::DbiDatabase;
+use GUS::Common::GusConfig;
+
+my ($verbose,$gusConfigFile,$dataFileDir);
+&GetOptions("verbose!"=> \$verbose,
+            "gusConfigFile=s" => \$gusConfigFile,
+	    "dataFileDir=s" => \$dataFileDir );
+
+$| = 1;
+
+print STDERR "Establishing dbi login\n" if $verbose;
+
+my $gusconfig = GUS::Common::GusConfig->new($gusConfigFile);
+
+my $db = GUS::ObjRelP::DbiDatabase->new($gusconfig->getDbiDsn(),
+					$gusconfig->getReadOnlyDatabaseLogin(),
+					$gusconfig->getReadOnlyDatabasePassword(),
+					$verbose,0,1,
+					$gusconfig->getCoreSchemaName());
+
+my $dbh = $db->getQueryHandle();
+
+
 # -----------------------------------
 # Configuration
 # -----------------------------------
 
-my %ids = (dbest.est => 'id_est',
-	   dbest.library => 'id_lib',
-	   dbest.author => 'id_pub',
-	   dbest.publication => 'id_pub',
-	   dbest.maprec => 'id_map',
-	   dbest.mapmethod => 'id_method',
-	   dbest.sequence => 'id_est',
-	   dbest.cmnt => 'id_est',
-	   dbest.comment => 'id_est',
-	   dbest.contact => 'id_contact');
+my %ids = ("dbest.est" => 'id_est',
+	   "dbest.library" => 'id_lib',
+	   "dbest.author" => 'id_pub',
+	   "dbest.publication" => 'id_pub',
+	   "dbest.maprec" => 'id_map',
+	   "dbest.mapmethod" => 'id_method',
+	   "dbest.sequence" => 'id_est',
+	   "dbest.cmnt" => 'id_est',
+	   "dbest.comment" => 'id_est',
+	   "dbest.contact" => 'id_contact');
 
 # -----------------------------------
 # Input
 # -----------------------------------
 
-my $USER = shift || die "First argument must be user name\n";
-$USER =~ /^(\w+)\@\w+$/;
-my $DBI_USER = $1;
-my $PASSWORD = shift || die "Second argument must be password\n";
-
-
-
-my $dataFileDir = shift || die "Third argument must specify directory containing the data files.\nFile names must begin with the appropriate table file names followed by a '.' \n\t ex: est.yada.2001011999.bcp.stuff -(applies to)-> est table \n";
-
-my $DBI_DSN = shift || die "Fourth argument must specify the DBI_DSN string, e.g dbi:Oracle:cbilbld";
-
-print "Read in params: USER=$USER PW=$PASSWORD DBI_USER=$DBI_USER DATA_DIR=$dataFileDir DBI_DSN=$DBI_DSN\n";
-
-# DBI handle
-my $dbh = DBI->connect($DBI_DSN,$DBI_USER,$PASSWORD) or die DBI::errstr();
-
 $dbh->do("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS'"); 
 
-$dbh->{AutoCommit} = 0;
+
 # -----------------------------------
 # Main program
 # -----------------------------------
@@ -154,7 +161,7 @@ sub insert {
 		}
 		@place_holders = map {if ($_ =~ /^NULL$/) { $_} else {"\?"}} @place_holders;
 		
-		if (!($t =~ /cmnt|sequence/)) {
+		if (!($t =~ /dbest.cmnt|dbest.sequence/)) {
 			my $del = "delete from $t where $ids{$t} = $vals[0]";
 			$dbh->do($del) or die $dbh->errstr . $del;
 		}else {
@@ -194,7 +201,7 @@ sub fixdate{
 	    unless ($a[38] =~ /^$|NULL/) {$a[38] = &fixdatefmt($a[38]);}
 	      
 	    $l = join "\t", @a;
-	} elsif ($t =~ /^maprec/) { 
+	} elsif ($t =~ /^dbest.maprec/) { 
 		my @a = split /\t/, $_;
 		$a[5] = &fixdatefmt($a[5]);
 		$l =  join "\t", @a;
