@@ -115,7 +115,7 @@ sub loadFile{
 	print STDERR "Error in Parser::LoadFile() could not open $fullFileName";
 	return undef;
     } 
-    
+#    
     
     my $store = CBIL::Bio::GeneAssocParser::Store->new();
     
