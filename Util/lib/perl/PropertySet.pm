@@ -35,11 +35,11 @@ sub new {
 	chomp;
 	s/\s+$//;
 	next if (!$_ || /^#/);
-	die "Can't parse '$_' in props file $propsFile" unless /(\S+?)\s*=\s*(.+)/; 
+	die "Can't parse '$_' in property file '$propsFile'" unless /(\S+?)\s*=\s*(.+)/; 
 	my $key = $1;
 	my $value = $2;
 
-	die "Invalid property name '$key' in properties file $propsFile" unless $self->{props}->{$key};
+	die "Invalid property name '$key' in property file '$propsFile'" unless $self->{props}->{$key};
 
 	# allow value to include $ENV{} expressions to include environment vars
 	$value =~ s/\$ENV\{"?'?(\w+)"?'?\}/$ENV{$1}/g;
@@ -50,7 +50,7 @@ sub new {
     }
 
     foreach my $name (keys %{$self->{props}}) {
-	die "Required property '$name' must be specified in $propsFile" 
+	die "Required property '$name' must be specified in property file '$propsFile'" 
 	    if ($self->{props}->{$name} eq "REQD_PROP");
     } 
 
@@ -61,7 +61,7 @@ sub getProp {
     my ($self, $name) = @_;
 
     my $value = $self->{props}->{$name};
-    die "trying to call getProp('$name') on invalid property name '$name' " unless $value;
+    die "trying to call getProp('$name') on invalid property name '$name' " unless ($value ne "");
     return $value;
 }
 
