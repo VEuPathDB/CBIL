@@ -66,17 +66,28 @@ sub makeGusVirtualSequenceXml {
 
     # regular chromosome numbers:
     for ($chr=1; $chr<=$max; $chr++) {
-	push @ordered_chrs, $chr if $chrs{$chr};
+	if ($chrs{$chr}) {
+	    push @ordered_chrs, $chr;
+	    delete $chrs{$chr};
+	}
     }
     # X, Y, 'M', 'Un'
     foreach $chr ('X', 'Y', 'M', 'Un', 'X_random', 'Y_random', 'M_random', 'Un_random') {
-	push @ordered_chrs, $chr if $chrs{$chr};
+	if ($chrs{$chr}) {
+	    push @ordered_chrs, $chr;
+	    delete $chrs{$chr};
+	}
     }
     # random nerds
     for (my $i=1; $i<=$max; $i++) {
 	$chr = $i . '_random';
-	push @ordered_chrs, $chr if $chrs{$chr};
+	if ($chrs{$chr}) {
+	    push @ordered_chrs, $chr;
+	    delete $chrs{$chr};
+	}
     }
+    # anything remaining
+    foreach my $chr (keys %chrs) { push @ordered_chrs, $chr; }
 
     my $xml = &_getGusXMLStr(\@ordered_chrs, $taxon_id, $ext_db_rel);
 
