@@ -4,8 +4,6 @@ my $purpose = 'compute hierarchical entropy values';
 
 # ----------------------------------------------------------------------
 
-BEGIN { push(@INC, '.') }
-
 use strict;
 
 use Disp;
@@ -53,7 +51,6 @@ sub getCla {
 
        { h => 'select spots matching this node name',
          t => $EasyCsp::String,
-         l => 1,
          o => 'Node',
        },
 
@@ -148,15 +145,17 @@ sub run {
 			$Cla->{debug} && Disp::Display($_analysis->getHierarchy());
 
 			my $root_node     = $_hierarchy->getRoot();
-			my $placenta_node = $_hierarchy->lookup('Placenta');
+			my $special_node = $_hierarchy->lookup($Cla->{Node});
 
-			my $placentaQ_r   =
-			$root_node->getGlobalEntropy() + $placenta_node->getLocalBits();
+			my $specialQ_r   =
+			$root_node->getGlobalEntropy() + $special_node->getGlobalBits();
 
 			print join("\t", $spot,
-								 $placentaQ_r,
-								 $root_node->getGlobalEntropy(),
-								 $placenta_node->getLocalBits()
+								 ( map { sprintf('%0.3f', $_) }
+												 $specialQ_r,
+												 $root_node->getGlobalEntropy(),
+												 $special_node->getLocalBits()
+												)
 								), "\n";
    }
 }
