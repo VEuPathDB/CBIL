@@ -12,12 +12,12 @@ use CBIL::Bio::GeneAssocParser::Assoc;
 #new
 
 sub new{
-    my ($class, $filePath) = @_;
+    my ($class, $filePath, $parseStartLine, $parseEndLine) = @_;
 
     my $self = {};
     bless ($self, $class);
     
-    $self->init($filePath);
+    $self->init($filePath, $parseStartLine, $parseEndLine);
     
     
     return $self;
@@ -27,10 +27,12 @@ sub new{
 #init
 
 sub init {
-    my ($self, $filePath) = @_;
+    my ($self, $filePath, $parseStartLine, $parseEndLine) = @_;
     
     $self->setPath ($filePath);
-    
+    $self->setParseStartLine($parseStartLine);
+    $self->setParseEndLine($parseEndLine);
+
 }
 
 
@@ -74,9 +76,30 @@ sub setPath{
     $self->{Path} = $path;
 }
 
+
 sub getPath{
     my ($self) = @_;
     return $self->{Path};
+}
+
+sub setParseStartLine {
+    my ($self, $parseStartLine) = @_;
+    $self->{ParseStartLine} = $parseStartLine;
+}
+
+sub getParseStartLine{
+    my ($self) = @_;
+    return $self->{ParseStartLine};
+}
+
+sub setParseEndLine {
+    my ($self, $parseEndLine) = @_;
+    $self->{ParseEndLine} = $parseEndLine;
+}
+
+sub getParseEndLine{
+    my ($self) = @_;
+    return $self->{ParseEndLine};
 }
 
 sub setFileStore{
@@ -118,9 +141,15 @@ sub loadFile{
 #    
     
     my $store = CBIL::Bio::GeneAssocParser::Store->new();
-    
+    my $start = $self->getParseStartLine();
+    my $end = $self->getParseEndLine();
+    my $counter = 0;
+   
     while (<$fh>){
 	chomp;
+	$counter++;
+	if ($start && $counter < $start) {next;}
+	if ($end && $counter > $end) {next;}
 	
 	#for now do not worry about comments in file
 	unless (/^!/){ 
@@ -147,13 +176,16 @@ sub parseFile{
     }
 
     my $records = $fileStore->getRecords;
+
+    my $tempCounter = 1;
  
     foreach my $record(@$records){
 	my $entry = $self->loadGeneAssocEntry($record);
 	$fileStore->addParsedEntry($entry);
-	$entry->showMyInfo;
-	
+	#$entry->showMyInfo;
+	$tempCounter++;
     }
+    print STDERR "we have $tempCounter records\n";
     $self->setFileStore($fileName, $fileStore);
     
     return $fileStore;

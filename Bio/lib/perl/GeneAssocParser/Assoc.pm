@@ -62,14 +62,14 @@ sub showMyInfo{
     my $tempWith = $self->getWith();
     my $tempDB = $self->getDB();
     my $tempGOId = $self->getGOId();
-    my $tempDate = $self->getDate();
+    my $tempDate = $self->getEntryDate();
 
         
-    open(RESULT, ">>./testResult") || die "file couldn't be opened ";
-    #print STDERR "$tempDB\t$tempObjId\t$tempObjSym\t$tempNot\t$tempRef\t$tempEvidence\t$tempWith\t$tempAspect\t$tempName\t$tempSyn\t$tempType\t$tempTaxon\t $tempGOId\t$tempDate\n";
+    open(RESULT, ">>./entryInfo") || die "file couldn't be opened ";
+#    print STDERR "$tempDB\t$tempObjId\t$tempObjSym\t$tempNot\t$tempRef\t$tempEvidence\t$tempWith\t$tempAspect\t$tempName\t$tempSyn\t$tempType\t$tempTaxon\t $tempGOId\t$tempDate\n";
     
     
-    print RESULT "$tempDB\t$tempObjId\t$tempObjSym\t$tempNot\t$tempGOId\t$tempRef\t$tempEvidence\t$tempWith\t$tempAspect\t$tempName\t$tempSyn\t$tempType\t$tempTaxon\t$tempDate\n";
+   print RESULT "DB: $tempDB\t ObjId: $tempObjId\t ObjSym: $tempObjSym\t isnot: $tempNot\t goID: $tempGOId\t ref: $tempRef\t evidence: $tempEvidence\t with: $tempWith\t$tempAspect\t$tempName\t$tempSyn\t$tempType\t$tempTaxon\t$tempDate\n";
     
 
 
@@ -211,7 +211,7 @@ sub getTaxon{
     return $self->{Taxon};
 }
 
-sub getDate{
+sub getEntryDate{
     my ($self) = @_;
     return $self->{Date};
 }
