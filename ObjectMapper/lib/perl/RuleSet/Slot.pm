@@ -3,6 +3,9 @@ package CBIL::ObjectMapper::RuleSet::Slot;
 # ------------------------------------------------------------------------
 # RuleSet::Slot.pm
 #
+# Represents an attribute or assocation for the parent C<CBIL::ObjectMapper::RuleSet::IOClass>. 
+#
+#
 # Created:  Mon Jun 16 12:13:44 EDT 2003
 # Angel Pizarro
 #
@@ -11,8 +14,6 @@ package CBIL::ObjectMapper::RuleSet::Slot;
 
 use strict;
 use CBIL::ObjectMapper::RuleSet::NVT;
-
-#use vars qw( );
 
 sub new {
 	my ($slf,$node) = @_;
@@ -55,20 +56,19 @@ sub setMethod {
 
 sub getVal {
 	my ($slf) = @_;
-	return $slf->{nvt};
+	return $slf->{val};
 }
 
 sub setVal {
 	my ($slf,$nvt) =@_;
 	if (UNIVERSAL::isa($nvt, "CBIL::ObjectMapper::RuleSet::NVT")){
-		$slf->{nvt} = $nvt;
+		$slf->{val} = $nvt;
 	}
 }
 
 sub toHash {
   my $slf = shift;
   my $ref = {};
-#  tie %$ref, 'Tie::IxHash';
   $ref->{name} = $slf->getName() if  $slf->getName() ;
   $ref->{method} = $slf->getMethod() if  $slf->getMethod() ;
   if ($slf->getVal()) {
@@ -78,3 +78,41 @@ sub toHash {
 }
 
 1;
+ 
+__END__
+
+=pod 
+
+=head1 CBIL::ObjectMapper::RuleSet::Slot
+
+=head2 Summary
+
+Represents an attribute or assocation for the parent C<CBIL::ObjectMapper::RuleSet::IOClass>. 
+
+=head2 Usage
+
+  my $hashref = {name => "slot name",
+                 method => "access_subroutine_name", # note that this must be a valid subroutine name for the
+                                                     # containing class represented by the IOClass.
+                 val => CBIL::ObjectMapper::RuleSet::NVT
+                 };
+                 
+
+  my $slot = CBIL::ObjectMapper::RuleSet::Slot->new($hashref);
+
+
+or
+
+  my $slot = CBIL::ObjectMapper::RuleSet::Slot->new();
+  $s->setName( "slot name" );
+  $s->setMethod( "valid_subroutine_access_method_name" );
+  $s->setVal( CBIL::ObjectMapper::RuleSet::NVT );
+
+ 
+=head2 Notes
+
+Please note that this class is really only meant to be used by classes within this package. I don't 
+see any other useful applications for it.
+
+
+=cut

@@ -25,6 +25,26 @@ use vars qw( @ISA @EXPORT @EXPORT_OK @xmloptions);
                'xmldecl' => "<?xml version='1.0'  encoding='ISO-8859-1' standalone='no' ?>\n<!DOCTYPE ruleset SYSTEM 'ruleset.dtd' >",
                suppressempty => 1
                );
+=pod 
+
+=head1 CBIL::ObjectMapper::RuleSet
+
+=head2 SUMMARY
+
+C<CBIL::ObjectMapper::RuleSet> represent a specification of declarative 
+rules for transforming a set of inputs to a set of outputs. The specification is
+serialized as XML (see DTD below for full specification) and the constructor takes 
+either a string or filehandle or filelocation of the XML specification for a 
+C<RuleSet>.
+
+=head1 Methods
+
+=head2 new([$cfg])
+
+The constructor. Optionally takes in a configuration file handle, file location or XML string 
+See the DTD specification below for the XML configuration file syntax. 
+
+=cut
 
 sub new {
 	my ($M,$cfg,$dbg) = @_;
@@ -142,3 +162,76 @@ sub _setParser {
 
 1;
 
+
+__END__
+
+=pod 
+
+=head2 USAGE
+
+  my $ruleset = CBIL::ObjectMapper::RuleSet->new($config);
+
+where $config is a file location/handle or XML string validated with the following DTD. 
+
+=head2 DTD specification
+
+      <?xml version="1.0"  encoding="ISO-8859-1" ?>
+      <!ELEMENT ruleset (function?,rule*)>
+      <!ATTLIST ruleset
+             name CDATA #IMPLIED
+            cfg CDATA #IMPLIED  
+      >
+      
+      <!ELEMENT function (nvt*)>
+      <!ATTLIST function 
+            cfg CDATA #IMPLIED 
+      >
+      
+      <!ELEMENT rule ((in*|out+),(out+|in*))>
+      <!ATTLIST rule 
+         name  CDATA #IMPLIED
+      >
+      
+      <!ELEMENT in (slot*)>
+      <!ATTLIST in
+                name CDATA #IMPLIED 
+                className CDATA #IMPLIED >
+      
+      <!ELEMENT out (slot*)>
+      <!ATTLIST out
+         name  CDATA #IMPLIED
+         className CDATA #IMPLIED
+      >
+      
+      <!ELEMENT slot (nvt)>
+      <!ATTLIST slot
+         name  CDATA #IMPLIED
+         method CDATA #IMPLIED
+      >
+      
+      <!ELEMENT nvt (nvt*)>
+      <!ATTLIST nvt  
+         name CDATA #IMPLIED 
+         value CDATA #IMPLIED
+         type  (scalar|func|data|rule|rulelist|string) 'scalar'
+      >
+
+=head2 Notes
+
+This package was meant to be a simple  object translation specification and grew out of efforts to 
+translate between gene expression object domains, specifically C<GUS::Model::RAD> and  C<Bio::MAGE>. 
+
+While recursive calls to rules may be done, I found it simpler and easier to understand the mappings
+if the more complex transformations happened within colling programs, rather than the C<RuleSet> 
+specification itself. 
+
+
+=head2 Release Notes
+
+Created:  Mon Jun 16 12:13:44 EDT 2003
+Author: Angel Pizarro
+
+$Revision$ $Date$ $Author$
+
+
+=cut

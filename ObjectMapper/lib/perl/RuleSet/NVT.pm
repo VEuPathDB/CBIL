@@ -12,17 +12,11 @@ package CBIL::ObjectMapper::RuleSet::NVT;
 
 use strict;
 
-# Tie::IxHash implementation -- not sure if needed
-use Tie::IxHash;
-
-#use vars qw( );
-
 sub new {
 	my ($slf,$node) = @_;
 	$slf = {};
 	bless $slf;
   $slf->setType('scalar');
-  # Tie::IxHash implementation -- not sure if needed
   $slf->{nvt} = [];
 	if ($node) {
     $slf->instantiate($node);
@@ -97,17 +91,10 @@ sub addVal {
   }
 }
 
-# sub addVal {
-#   my ($slf,$v) =@_;
-#   if (UNIVERSAL::isa($v, "NVT")){
-#     push @{$slf->{nvt}} ,$v;
-#   }
-# }
 
 sub toHash {
   my $slf = shift;
   my $ref = {};
-#  tie %$ref, 'Tie::IxHash';
   $ref->{name} = $slf->getName() if $slf->getName() ;
   $ref->{value} = $slf->getValue() if $slf->getValue() ;
   $ref->{type} = $slf->getType() if $slf->getType() ;
@@ -120,20 +107,21 @@ sub toHash {
 }
 
 1;
+
 __END__
 
-# "Tie::IsHash" implementation -- not sure if needed
-# sub addVal {
-#	  my ($slf,$v) =@_;
-#	  if (UNIVERSAL::isa($v, "NVT")){
-#     my $name = $v->getName();
-#     if ($slf->{nvt}->Indices($name)) {
-#       $slf->{nvt}->Replace($slf->{nvt}->Indices($name),$v);
-#     } else {
-#       $slf->{nvt}->Push($name => $v );
-#     }
-#   }
-# }
+=pod 
 
+=head1 CBIL::ObjectMapper::RuleSet::NVT
 
+=head2 Summary
 
+A fairly flexible container for (name, type, value) tuples used throughout the 
+C<CBIL::ObjectMapper::RuleSet> package.
+
+=head2 Notes
+
+Please note that this class is really only meant to be used by classes within this package. I don't 
+see any other useful applications for it.
+
+=cut

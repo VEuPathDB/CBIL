@@ -12,8 +12,6 @@ package CBIL::ObjectMapper::RuleSetEngine;
 use strict;
 use CBIL::ObjectMapper::RuleSet;
 
-#use vars (@ISA);
-
 sub new { 
   my ($M,$rs,$dbg)   = @_;
   my $slf = {};
@@ -24,11 +22,11 @@ sub new {
 
 sub initialize {
   my ($slf,$rs,$dbg)   = @_;
-  print "RS=$rs\n";
+  print "RS=$rs\n" if $dbg;
   if (UNIVERSAL::isa($rs, 'CBIL::ObjectMapper::RuleSet')){
     $slf->setRuleSet($rs);
   }else {
-    $slf->setRuleSet(RuleSet->new($rs,$dbg));
+    $slf->setRuleSet(CBIL::ObjectMapper::RuleSet->new($rs,$dbg));
   }
   if ($slf->getRuleSet()->getFunction()) {
     $slf->setFunc($slf->getRuleSet()->getFunction());
@@ -44,7 +42,7 @@ sub getRuleSet {
 
 sub setRuleSet {
 	my ($slf,$rs) = @_;
-  $slf->{ruleset} = $rs if $rs->isa('RuleSet') ;
+  $slf->{ruleset} = $rs if $rs->isa('CBIL::ObjectMapper::RuleSet') ;
 }
 
 sub getRules {
@@ -216,13 +214,12 @@ sub setFunc {
   $funcModule  =~ s/\./::/g;
   my $c = $funcModule;
   $c  =~ s/\:\:/\//g;
-  $c  = "lib/$c.pm";
-  
+  $c  = "$ENV{GUS_HOME}/lib/perl/$c.pm";
   eval {
     require($c);
     $slf->{__FUNC} = $funcModule->new();
   };
-  $slf->log("setFunc($funcModule)", $@) if $@;
+  $slf->log("setFunc(module=$funcModule, path=$c)", $@) if $@;
 }
 
 sub getFunc {

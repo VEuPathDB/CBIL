@@ -14,8 +14,6 @@ use Tie::IxHash;
 
 use CBIL::ObjectMapper::RuleSet::IOClass;
 
-#use vars qw( );
-
 sub new {
 	my ($slf,$node) = @_;
 	$slf = {};
@@ -107,14 +105,40 @@ sub addOutput {
 sub toHash {
   my $slf = shift;
   my $ref = {} ;
-#  tie %$ref, 'Tie::IxHash';
   $ref->{name} = $slf->getName() if  $slf->getName() ;
-  foreach my $i ($slf->getInputs()) {
-    push @{$ref->{in}}, $i->toHash();
-  }
   foreach my $o ($slf->getOutputs()) {
     push @{$ref->{out}}, $o->toHash();
+  }
+  foreach my $i ($slf->getInputs()) {
+    push @{$ref->{in}}, $i->toHash();
   }
   return $ref;
 }
 1;
+
+__END__
+
+=pod 
+
+=head1 CBIL::ObjectMapper::RuleSet::Rule
+
+=head2 Summary
+
+Represents single rule for transformation of a set of inputs to a set of (possibly related) outputs. 
+Inputs and outputs are represented via C<CBIL::ObjectMapper::RuleSet::IOClass>. 
+
+=head2 Usage
+
+  my $slot = CBIL::ObjectMapper::RuleSet::Rule->new($hashref);
+
+where $hashref contains the specifications for the input and output C<CBIL::ObjectMapper::RuleSet::IOClass>. 
+The contructor for  C<CBIL::ObjectMapper::RuleSet::IOClass> is called within for both the inputs and outputs.
+
+ 
+=head2 Notes
+
+Please note that this class is really only meant to be used by classes within this package. I don't 
+see any other useful applications for it.
+
+
+=cut

@@ -87,7 +87,6 @@ sub addSlot {
 sub toHash {
   my $slf = shift;
   my $ref = {};
-#  tie %$ref, 'Tie::IxHash';
   $ref->{name} = $slf->getName() if $slf->getName() ;
   if ($slf->getClassName() ) {
     $ref->{className} = $slf->getClassName();
@@ -101,3 +100,36 @@ sub toHash {
 }
 
 1;
+
+__END__
+
+=pod 
+
+=head1 CBIL::ObjectMapper::RuleSet::IOClass
+
+=head2 Summary
+
+A representation of a Perl object serving as an input or output to a 
+C<CBIL::ObjectMapper::RuleSet::Rule>. The attributes and assocations of the object are
+represented by contained C<CBIL::ObjectMapper::RuleSet::Slot> and the constructor passes 
+the specifications for C<RuleSet::Slot> to its constructor.
+
+=head2 Usage
+
+  my $ioclass = CBIL::ObjectMapper::RuleSet::IOClass->new($hashref);
+
+where $hashref contains the specifcation for the IOClass and the specifications for all
+contained C<RuleSet::Slot>.
+
+  $hashref = {name => "name to refer to class by",
+              className => "fully qualified Perl object name",
+              slot => [CBIL::ObjectMapper::RuleSet::Slot]
+              };
+
+                
+=head2 Notes
+
+Please note that this class is really only meant to be used by classes within this package. I don't 
+see any other useful applications for it.
+
+=cut

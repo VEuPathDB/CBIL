@@ -11,7 +11,6 @@ package CBIL::ObjectMapper::RuleSet::Function;
 
 use strict;
 use Exporter;
-use Tie::IxHash;
 
 use CBIL::ObjectMapper::RuleSet::NVT;
 
@@ -82,3 +81,21 @@ sub toHash {
 
 1;
 
+__END__
+
+=pod 
+
+=head1 CBIL::ObjectMapper::RuleSet::Function
+
+=head2 Summary
+
+Serves as an interface definition of the functions called by a particular 
+C<CBIL::ObjectMapper::RuleSet>. Also states where one can find the concrete
+implementation of said functions. 
+
+=head2 Notes
+
+Please note that this class is really only meant to be used by classes within this package. I don't 
+see any other useful applications for it.
+
+=cut
