@@ -1,0 +1,79 @@
+<project name="CBIL" default="Installation" basedir=".">
+
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooo  Dependencies  oooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+
+
+
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+
+  <target name="CBIL-Installation" depends="CBIL/Bio-Installation,
+                                            CBIL/CSP-Installation,
+                                            CBIL/GenBank-Installation,
+                                            CBIL/SeqMatch-Installation,
+                                            CBIL/Util-Installation" >
+
+    <ant target="defaultProjectInstall"/>
+
+  </target>  
+   
+
+  <target name="CBIL/Bio-Installation" depends="ProjectTree">
+    <ant target="defaultComponentInstall">
+      <property name="component" value="CBIL/Bio"/>
+    </ant>
+  </target>  
+
+  <target name="CBIL/CSP-Installation" depends="ProjectTree">
+    <ant target="defaultComponentInstall">
+      <property name="component" value="CBIL/CSP"/>
+    </ant>
+  </target>  
+
+  <target name="CBIL/GenBank-Installation" depends="ProjectTree">
+    <ant target="defaultComponentInstall">
+      <property name="component" value="CBIL/GenBank"/>
+    </ant>
+  </target>  
+
+  <target name="CBIL/SeqMatch-Installation" depends="ProjectTree">
+    <ant target="defaultComponentInstall">
+      <property name="component" value="CBIL/SeqMatch"/>
+    </ant>
+  </target>  
+
+  <target name="CBIL/Util-Installation" depends="ProjectTree">
+    <ant target="defaultComponentInstall">
+      <property name="component" value="CBIL/Util"/>
+    </ant>
+  </target>  
+
+
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooo  Distributable  ooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+
+  <target name="CBIL-Distributable" depends="ProjectTree">
+
+    <copy todir="${targetDir}">
+      <fileset dir="${projectsDir}" >
+        <exclude name="**/CVS/*" />
+      </fileset>
+    </copy>  
+  </target>  
+
+
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooo  ProjectTree  ooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+
+  <target name="ProjectTree" if="${checkout}">
+    <ant target="projectCheckOut"/>
+  </target>  
+
+</project>
+
+
