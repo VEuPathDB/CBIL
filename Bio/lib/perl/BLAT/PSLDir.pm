@@ -1,5 +1,6 @@
 package CBIL::Bio::BLAT::PSLDir;
 
+
 use strict;
 
 # read a directory containing BLAT alignment output files,
@@ -81,16 +82,16 @@ sub strip {
 
 sub isFileEmpty {
   my ($file) = @_;
-
   my $last_line;
   my $num_lines = 0;
-  open IN, $file;
-  while (<>) {
+  open (IN, $file);
+  while (<IN>) {
     $last_line = $_;
     $num_lines++;
   }
   close IN;
   return $num_lines <= 5 && $last_line =~ /\-+/;
+
 }
 
 1;
