@@ -20,7 +20,7 @@ sub parse {
   while ( my $line = $IOS->getLine() ) {
 
     # sequence prefaced by index
-    if ( $line =~ /^\s+\d+\s+(.+)/ ) {
+    if ( $line =~ /^\s*\d+\s+(.+)/ ) {
       $seq .= $1;
     }
 

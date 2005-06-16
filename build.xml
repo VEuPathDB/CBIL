@@ -1,0 +1,100 @@
+<project name="CBIL" default="Installation" basedir=".">
+
+  <!-- ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooo  Dependencies  oooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+
+
+
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+
+  <target name="CBIL-Installation" depends="CBIL/Bio-Installation,
+                                            CBIL/CSP-Installation,
+                                            CBIL/Util-Installation,
+                                            CBIL/HQ-Installation,
+                                            CBIL/ObjectMapper-Installation" >
+
+    <ant target="defaultProjectInstall"/>
+
+  </target>  
+   
+
+  <!-- oooooooooooooooooo  Installation Postprocess  ooooooooooooooooooooo -->
+
+  <target name="CBIL-Installation-postprocess">
+    <echo message="Postprocessing the CBIL installation"/>
+
+    <replace dir="${targetDir}/bin" 
+             propertyFile="${targetDir}/config/replacements.prop" > 
+      <include name="**/*" />
+      <replacefilter token="@perl@" property="perl"/>
+    </replace> 
+
+  </target>
+
+
+  <!-- ooooooooooooooooooooooo  Install Components  ooooooooooooooooooooooo -->
+
+  <target name="CBIL/Bio-Installation" depends="ProjectTree">
+    <ant target="defaultComponentInstall">
+      <property name="project" value="CBIL"/>
+      <property name="component" value="Bio"/>
+    </ant>
+  </target>  
+
+  <target name="CBIL/CSP-Installation" depends="ProjectTree">
+    <ant target="defaultComponentInstall">
+      <property name="project" value="CBIL"/>
+      <property name="component" value="CSP"/>
+      <property name="skipJava" value="true"/>
+    </ant>
+  </target>  
+
+  <target name="CBIL/Util-Installation" depends="ProjectTree">
+    <ant target="defaultComponentInstall">
+      <property name="project" value="CBIL"/>
+      <property name="component" value="Util"/>
+    </ant>
+  </target>  
+
+  <target name="CBIL/ObjectMapper-Installation" depends="ProjectTree">
+    <ant target="defaultComponentInstall">
+      <property name="project" value="CBIL"/>
+      <property name="component" value="ObjectMapper"/>
+    </ant>
+  </target>  
+
+  <target name="CBIL/HQ-Installation" depends="ProjectTree">
+    <ant target="defaultComponentInstall">
+      <property name="project" value="CBIL"/>
+      <property name="component" value="HQ"/>
+    </ant>
+  </target>  
+
+
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooo  Release  ooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+
+  <target name="CBIL-Release">
+    
+    <ant target="defaultProjectRelease">
+      <property name="tag" value="v1-4-0"/>
+      <property name="cvsroot" value="/files/cbil/cvs/cvsroot"/>
+    </ant>
+  </target>  
+
+
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooo  ProjectTree  ooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+
+  <target name="ProjectTree" if="${checkout}">
+    <ant target="projectCheckOut"/>
+  </target>  
+
+</project>
+
+

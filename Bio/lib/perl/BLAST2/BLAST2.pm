@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl -w
 
-package BLAST2;
+package CBIL::Bio::BLAST2::BLAST2;
 
 # Module that parses (and creates an object that 
 # stores the results of parsing) a BLAST2 output file.

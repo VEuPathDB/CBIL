@@ -9,7 +9,7 @@ FastaIndex.pm.
 
 =head1 Description
 
-Uses an NDBM_File to index an EMBL database.  Assumes that the
+Uses an GDBM_File to index an EMBL database.  Assumes that the
 EMBL database entries are delimited by a single-line delimiter
 and also that the EMBL entries have a unique primary key.
 
@@ -29,7 +29,7 @@ use strict vars;
 use Carp;
 use Fcntl;      # File access constants.
 use FileHandle;
-use NDBM_File;
+use GDBM_File;
 
 =pod
 =item new
@@ -42,7 +42,7 @@ C<embl_file> (req)
 EMBL database filename.
 
 C<index_file> (opt)
-NDBM index filename.  If not provided defaults to C<embl_file>.
+GDBM index filename.  If not provided defaults to C<embl_file>.
 
 C<is_entry_delim> (req)
 Reference to a subroutine that accepts a line of the EMBL flat
@@ -100,7 +100,7 @@ sub open {
     $self->safeCopy($args, 'index_file') if defined $args;
 
     my %index;
-    if (tie(%index, NDBM_File, $self->{index_file}, O_READONLY, 0)) {
+    if (tie(%index, GDBM_File, $self->{index_file}, O_READONLY, 0)) {
 	$self->{index} = \%index;
 	$self->{embl_fh} = new FileHandle "<$self->{embl_file}";
 
@@ -176,7 +176,7 @@ sub createIndex {
     my $idSub = (defined($args) && $args->{get_prim_key}) || $self->{get_prim_key};
     my $echo = defined($args) && $args->{echo};
     
-    if (tie my %index, NDBM_File, $self->{index_file}, O_RDWR|O_CREAT|O_TRUNC, 0644) {
+    if (tie my %index, GDBM_File, $self->{index_file}, O_RDWR|O_CREAT|O_TRUNC, 0644) {
 	$self->{index} = \%index;
 
 	# Open EMBL file
