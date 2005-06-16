@@ -84,7 +84,7 @@ sub getProp {
     return $value;
 }
 
-sub getAllProperties {
+sub toString {
   my $self = shift;
   my $ret = "property = value, help\n----------------------\n";
   foreach my $p (sort keys %{$self->{props}}){
