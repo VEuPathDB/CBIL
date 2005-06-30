@@ -63,6 +63,7 @@ sub init {
    $Self->setLocalProb            ( $Args->{LocalProb           } );
    $Self->setGlobalEntropy        ( $Args->{GlobalEntropy       } );
    $Self->setLocalEntropy         ( $Args->{LocalEntropy        } );
+	 $Self->setMaximumExpression    ( $Args->{MaximumExpression   } );
 
    return $Self;
 }
@@ -95,7 +96,7 @@ sub reset {
 sub getName                 { $_[0]->{'Name'                        } }
 sub setName                 { $_[0]->{'Name'                        } = $_[1]; $_[0] }
 
-sub getParts                { $_[0]->{'Parts'                       } }
+sub getParts                { $_[0]->{'Parts'                       } || []}
 sub setParts                { $_[0]->{'Parts'                       } = $_[1]; $_[0] }
 
 sub getNodeCount            { $_[0]->{NodeCount                     } }
@@ -127,6 +128,9 @@ sub setGlobalEntropy        { $_[0]->{'GlobalEntropy'               } = $_[1]; $
 
 sub getLocalEntropy         { $_[0]->{'LocalEntropy'                } }
 sub setLocalEntropy         { $_[0]->{'LocalEntropy'                } = $_[1]; $_[0] }
+
+sub getMaximumExpression    { $_[0]->{'MaximumExpression'           } }
+sub setMaximumExpression    { $_[0]->{'MaximumExpression'           } = $_[1]; $_[0] }
 
 # ----------------------------------------------------------------------
 
@@ -310,6 +314,27 @@ sub mapRawToWeighted {
   map { $_->mapRawToWeighted($Func) } @{$Self->getParts()};
 
   return $Self;
+}
+
+# ----------------------------------------------------------------------
+
+sub updateMaximumExpression {
+	 my $Self = shift;
+	 my $Raw  = shift; # bool : use raw (1) or weighted expression (0)
+
+	 # base case: use raw or weighted as requested
+	 if ($Self->isLeaf()) {
+			$Self->setMaximumExpression($Raw ? $Self->getRaw() : $Self->getWeighted());
+	 }
+
+	 # get the best of the (updated) kids.
+	 else {
+			$Self->setMaximumExpression(CBIL::Util::V::max(map {
+				 $_->updateMaximumExpression($Raw)->getMaximumExpression()
+			} @{ $Self->getParts() } ) );
+	 }
+
+	 return $Self
 }
 
 # ----------------------------------------------------------------------
