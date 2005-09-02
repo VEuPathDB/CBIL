@@ -27,7 +27,7 @@ use strict;
 
 # ----------------------------------------------------------------------
 
-=head2 C<initFromXmlFile>
+=head2 C<NewFromXmlFile>
 
 Reads the XML from the C<$File>.  Makes sure that C<Node>
 elements are arrays and that we do not use C<name> or other keys.
@@ -38,17 +38,108 @@ Resursively converts from XML to objects.
 
 =cut
 
-sub NewFromXmlFile  {
+sub NewFromXmlFile {
    my $File = shift;
-   my $RV;
-
-	 # read the XML file.
-	 # ..................................................
 
    my $_xml = XML::Simple::XMLin($File,
                                  forcearray => [ 'Node' ],
                                  keyattr    => [],
                                 );
+
+   my $root = $_xml->{Root};
+   my $name = $_xml->{Name};
+
+   my $Rv = CBIL::HQ::Hierarchy->_makeHierarchy($root, $name);
+
+   return $Rv;
+}
+
+# ----------------------------------------------------------------------
+
+
+=head2 C<NewFromLeafNodes>
+
+Will create a Hierarchy based on Node Name and number of Leaves UNDER each 
+Node.  Takes in a sorted array whereby the index of the array is the 
+ordinal number from the hierarchy (0 is the Root!).  Each element of the Array 
+is a hash with the following keys:  Name, Extra, Leaf_Num
+
+Ordinals are assigned.
+
+=cut
+sub NewFromLeafNodes {
+  my $dat = shift;
+
+  my $Root = CBIL::HQ::Node->new( {Extra => {}} );
+  $Root->getExtra()->{Ordinal} = 0;
+
+  if(scalar @$dat - 1 == $$dat[0]->{Leaf_Num}) {
+    $Root->setNodeCount($$dat[0]->{Leaf_Num});
+  }
+  else {
+    die "Error in Leaf Count for Root.\n";
+  }
+
+  my $prevLeaf = 1;
+
+  for(my $i = scalar @$dat - 1; $i > 0; $i--) {
+    my $leaf = $$dat[$i]->{Leaf_Num};
+
+    my $Node = CBIL::HQ::Node->new( $$dat[$i] );
+
+    $Node->getExtra->{Ordinal} = $i + 1;
+    $Node->setNodeCount($leaf);
+
+    # if the current Node is a Parent of something...
+    my $n;
+    while($leaf > $prevLeaf) {
+      my $child = pop @{$Root->{Parts}};
+
+      $n = $n + $child->getNodeCount();
+      $prevLeaf = $n;
+
+      push( @{$Node->{Parts}}, $child );
+    }
+
+    push( @{$Root->{Parts}}, $Node );
+
+  }
+
+  my $RV = CBIL::HQ::Hierarchy->new({ Name => 'Hierarchy',
+				      Root => $Root
+				      });
+  return $RV;
+}
+
+# ----------------------------------------------------------------------
+
+sub new {
+   my $Class = shift;
+   my $Args  = shift;
+
+   my $self = bless {}, $Class;
+
+   $self->init($Args);
+
+   return $self;
+}
+
+# ======================================================================
+
+=pod
+
+=head1 Instance Methods
+
+=cut
+
+# ----------------------------------------------------------------------
+
+sub _makeHierarchy  {
+  my $Self = shift;
+  my $root = shift;
+  my $name = shift;
+
+  my $RV;
 
 	 # recursively convert nodes to Nodes
 	 # ..................................................
@@ -72,41 +163,20 @@ sub NewFromXmlFile  {
       return $_RV;
    };
 
-	 my $root_node = $recurse->($_xml->{Root});
+	 my $root_node = $recurse->($root);
 
 	 # make the new Hierarchy
 	 # ..................................................
 
-	 $RV = CBIL::HQ::Hierarchy->new({ Name => $_xml->{Name},
-																		Root => $root_node
-																	});
+	 $RV = CBIL::HQ::Hierarchy->new({ Name => $name,
+					  Root => $root_node
+					});
 
 	 # return the new hierarchy
 	 # ..................................................
 
 	 return $RV;
 }
-
-# ----------------------------------------------------------------------
-
-sub new {
-   my $Class = shift;
-   my $Args  = shift;
-
-   my $self = bless {}, $Class;
-
-   $self->init($Args);
-
-   return $self;
-}
-
-# ======================================================================
-
-=pod
-
-=head1 Instance Methods
-
-=cut
 
 # ----------------------------------------------------------------------
 
