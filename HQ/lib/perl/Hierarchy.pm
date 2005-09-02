@@ -73,11 +73,14 @@ sub NewFromLeafNodes {
   my $Root = CBIL::HQ::Node->new( {Extra => {}} );
   $Root->getExtra()->{Ordinal} = 0;
 
-  if(scalar @$dat - 1 == $$dat[0]->{Leaf_Num}) {
+  my $expected = scalar @$dat - 1;
+  my $found = $$dat[0]->{Leaf_Num};
+
+  if($expected == $found) {
     $Root->setNodeCount($$dat[0]->{Leaf_Num});
   }
   else {
-    die "Error in Leaf Count for Root.\n";
+    die "Error in Leaf Count. Expected $expected, Found $found \n";
   }
 
   my $prevLeaf = 1;
