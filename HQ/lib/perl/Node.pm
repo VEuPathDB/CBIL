@@ -176,10 +176,11 @@ Applies a function to each node.
 sub foreachNode {
    my $Self = shift;
    my $Func = shift;
+   my $Parent = shift;
 
-   map { $_->foreachNode($Func) } @{$Self->getParts()};
+   map { $_->foreachNode($Func, $Self) } @{$Self->getParts()};
 
-   $Func->($Self);
+   $Func->($Self, $Parent);
 }
 
 # ----------------------------------------------------------------------
@@ -194,12 +195,13 @@ Applies a function to each leaf node.
 sub foreachLeafNode {
   my $Self = shift;
   my $Func = shift;
+  my $Parent = shift;
 
   if ($Self->isLeaf()) {
-    return $Func->($Self);
+    return $Func->($Self, $Parent);
   }
   else {
-    return map { $_->foreachLeafNode($Func) } @{$Self->getParts()};
+    return map { $_->foreachLeafNode($Func, $Self) } @{$Self->getParts()};
   }
 }
 
@@ -216,13 +218,14 @@ We apply to parts first, then to self.
 sub foreachParentNode {
    my $Self = shift;
    my $Func = shift;
+   my $Parent = shift;
 
    if ($Self->isLeaf()) {
       ;
    }
    else {
-      map { $_->foreachParentNode($Func) } @{$Self->getParts()};
-      $Func->($Self);
+      map { $_->foreachParentNode($Func, $Self) } @{$Self->getParts()};
+      $Func->($Self, $Parent);
    }
 }
 
