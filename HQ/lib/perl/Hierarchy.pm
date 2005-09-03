@@ -46,102 +46,6 @@ sub NewFromXmlFile {
                                  keyattr    => [],
                                 );
 
-   my $root = $_xml->{Root};
-   my $name = $_xml->{Name};
-
-   my $Rv = CBIL::HQ::Hierarchy->_makeHierarchy($root, $name);
-
-   return $Rv;
-}
-
-# ----------------------------------------------------------------------
-
-
-=head2 C<NewFromLeafNodes>
-
-Will create a Hierarchy based on Node Name and number of Leaves UNDER each 
-Node.  Takes in a sorted array whereby the index of the array is the 
-ordinal number from the hierarchy (0 is the Root!).  Each element of the Array 
-is a hash with the following keys:  Name, Extra, Leaf_Num
-
-Ordinals are assigned.
-
-=cut
-sub NewFromLeafNodes {
-  my $dat = shift;
-
-  my $Root = CBIL::HQ::Node->new( {Extra => {}} );
-  $Root->getExtra()->{Ordinal} = 0;
-
-  my $expected = scalar @$dat - 1;
-  my $found = $$dat[0]->{Leaf_Num};
-
-  if($expected == $found) {
-    $Root->setNodeCount($$dat[0]->{Leaf_Num});
-  }
-  else {
-    die "Error in Leaf Count. Expected $expected, Found $found \n";
-  }
-
-  my $prevLeaf = 1;
-
-  for(my $i = scalar @$dat - 1; $i > 0; $i--) {
-    my $leaf = $$dat[$i]->{Leaf_Num};
-
-    my $Node = CBIL::HQ::Node->new( $$dat[$i] );
-
-    $Node->getExtra->{Ordinal} = $i + 1;
-    $Node->setNodeCount($leaf);
-
-    # if the current Node is a Parent of something...
-    my $n;
-    while($leaf > $prevLeaf) {
-      my $child = pop @{$Root->{Parts}};
-
-      $n = $n + $child->getNodeCount();
-      $prevLeaf = $n;
-
-      push( @{$Node->{Parts}}, $child );
-    }
-
-    push( @{$Root->{Parts}}, $Node );
-
-  }
-
-  my $RV = CBIL::HQ::Hierarchy->new({ Name => 'Hierarchy',
-				      Root => $Root
-				      });
-  return $RV;
-}
-
-# ----------------------------------------------------------------------
-
-sub new {
-   my $Class = shift;
-   my $Args  = shift;
-
-   my $self = bless {}, $Class;
-
-   $self->init($Args);
-
-   return $self;
-}
-
-# ======================================================================
-
-=pod
-
-=head1 Instance Methods
-
-=cut
-
-# ----------------------------------------------------------------------
-
-sub _makeHierarchy  {
-  my $Self = shift;
-  my $root = shift;
-  my $name = shift;
-
   my $RV;
 
 	 # recursively convert nodes to Nodes
@@ -166,12 +70,12 @@ sub _makeHierarchy  {
       return $_RV;
    };
 
-	 my $root_node = $recurse->($root);
+	 my $root_node = $recurse->($_xml->{Root});
 
 	 # make the new Hierarchy
 	 # ..................................................
 
-	 $RV = CBIL::HQ::Hierarchy->new({ Name => $name,
+	 $RV = CBIL::HQ::Hierarchy->new({ Name => $_xml->{Name},
 					  Root => $root_node
 					});
 
@@ -179,7 +83,78 @@ sub _makeHierarchy  {
 	 # ..................................................
 
 	 return $RV;
+
 }
+
+# ----------------------------------------------------------------------
+
+
+=head2 C<NewFromLeafNodes>
+
+Will create a Hierarchy based on Node Name, Parent_Node, and number 
+of Leaves UNDER each Node.  Takes in a sorted array (asc on Node_Num where
+the children follows the parents starting with root) Each element of the Array 
+is a hash with the following keys: Name, Node_Num, Par_Num, Leaf_Count, Extra
+
+Ordinals are assigned into Extra.
+
+=cut
+sub NewFromLeafNodes {
+  my $dat = shift;
+
+  my @Nodes;
+
+  # Convert To Nodes... the first created is the Root
+  foreach my $d (@$dat) {
+    if(!defined($d->{Leaf_Count}) || !defined($d->{Par_Num})) {
+      die "Missing either Par_Num, or Leaf_Count\n";
+    }
+
+    my $Node = CBIL::HQ::Node->new( $d );
+    $Node->getExtra()->{Ordinal} = $d->{Node_Num};
+    $Node->setNodeCount($d->{Leaf_Count});
+
+    # Set the Parent's Parts...no Parent for Root
+    if(my $Parent = $Nodes[$d->{Par_Num} - 1]) {
+      my $Parts = $Parent->getParts();
+
+      push(@$Parts, $Node);
+         $Parent->setParts($Parts);
+    }
+
+    push(@Nodes, $Node);
+  }
+
+  my $Root = shift @Nodes;
+
+  # Make the Hierarchy
+  my $RV = CBIL::HQ::Hierarchy->new({ Name => 'Hierarchy',
+				      Root => $Root
+				      });
+
+  return $RV;
+}
+
+# ----------------------------------------------------------------------
+
+sub new {
+   my $Class = shift;
+   my $Args  = shift;
+
+   my $self = bless {}, $Class;
+
+   $self->init($Args);
+
+   return $self;
+}
+
+# ======================================================================
+
+=pod
+
+=head1 Instance Methods
+
+=cut
 
 # ----------------------------------------------------------------------
 
