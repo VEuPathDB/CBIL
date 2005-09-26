@@ -99,6 +99,7 @@ is a hash with the following keys: Name, Node_Num, Par_Num, Leaf_Count, Extra
 Ordinals are assigned into Extra.
 
 =cut
+
 sub NewFromLeafNodes {
   my $dat = shift;
 
