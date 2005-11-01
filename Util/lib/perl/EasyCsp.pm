@@ -1,334 +1,413 @@
 #/usr/bin/perl
 
+package CBIL::Util::EasyCsp;
+
 =pod
 
-hash of tag => {
-  o  => option
-	h  => hint
-	d  => default
-	e  => error checking
-  l  => value can be a list
-  ld => list delimiter
-  t  => type
-  r  => required
-}
+=head1 CBIL::Util::EasyCsp
+
+This package helps process command line parameters including defining
+error checks and providing help to the user.
+
+See CBIL::Util::EasyCsp::Decl for a description of a single
+declaration.
 
 =cut
 
-package CBIL::Util::EasyCsp;
+# ========================================================================
+# ----------------------------- Declarations -----------------------------
+# ========================================================================
 
 use strict 'vars';
 
+use FileHandle;
 require Getopt::Long;
 
-use CBIL::Util::A;
+use CBIL::Util::EasyCsp::Decl;
 
 # ======================================================================
 # --------------------------- TYPE NAMES -------------------------------
 # ======================================================================
 
-$CBIL::Util::EasyCsp::String  = 'string';
-$CBIL::Util::EasyCsp::Float   = 'float';
-$CBIL::Util::EasyCsp::Int     = 'int';
-$CBIL::Util::EasyCsp::Boolean = 'boolean';
+#$CBIL::Util::EasyCsp::String  = 'string';
+#$CBIL::Util::EasyCsp::Float   = 'float';
+#$CBIL::Util::EasyCsp::Int     = 'int';
+#$CBIL::Util::EasyCsp::Boolean = 'boolean';
 
-# ----------------------------------------------------------------------
+our $String  = 'string';
+our $Float   = 'float';
+our $Int     = 'int';
+our $Boolean = 'boolean';
 
+sub StringType  { $String  }
+sub FloatType   { $Float   }
+sub IntType     { $Int     }
+sub BooleanType { $Boolean }
 
-sub DoItAll {
-	my $Desc   = shift;
-	my $Usage  = shift;
-
-  $Desc = { map {($_->{o} => $_)} @$Desc } if ref $Desc eq 'ARRAY';
-
-	my $cla = GetOptions( $Desc );
-
-	my $rv = $cla->{ usage } || ! ErrorCheck( $Desc, $cla );
-
-	print STDERR UsageString( $Desc, $Usage ) if $rv;
-
-	return $rv ? undef : $cla;
-}
-
-sub GetOptions {
-	my $D = shift;  # a descriptor
-
-	# arguments from command line.
-	my $cla = CBIL::Util::A::e;
-
-	# assemble an options descriptor
-	my %cld;
-
-	# standards
-	my $so = &StandardOptions;
-	foreach ( keys %{ $so } ) {
-		#$cld{ $so->{ $_ }->{ o } } = \$cla->{ $_ };
-		$cld{ _optionTag( $so->{ $_ } ) } = \$cla->{ $_ };
-	}
-
-	foreach ( keys %{ $D } ) {
-		#$cld{ $D->{ $_ }->{ o } } = \$cla->{ $_ };
-		$cld{ _optionTag( $D->{ $_ } ) } = \$cla->{ $_ };
-	}
-
-	#CBIL::Util::Disp::Display( \%cld );
-
-	# process the arguments
-	my $ok = Getopt::Long::GetOptions( %cld );
-
-	$cla = { usage => 1 } if ! $ok;
-
-	return $cla;
-}
+# ========================================================================
+# ------------------------- Constraint Functions -------------------------
+# ========================================================================
 
 =pod
-=head1 StandardOptions
+
+=head1 Constraint Functions
+
+Constraint or error checking of user values can be performed by pre-
+or user-defined constraint functions.  See this package for
+pre-defined functions.
+
+=cut
+
+sub IsPositive     { scalar @_ ? $_[0] > 0 : 'must be > 0' }
+sub IsNegative     { scalar @_ ? $_[0] < 0 : 'must be < 0' }
+sub IsNonPositive  { scalar @_ ? $_[0] <= 0 : 'must be <= 0' }
+sub IsNonNegative  { scalar @_ ? $_[0] >= 0 : 'must be >= 0' }
+
+sub RelatesTo {
+   my $Relation  = shift;
+   my $Threshold = shift;
+
+   return eval "sub { scalar \@_ ? \@_[0] $Relation $Threshold : 'must be $Relation $Threshold' }";
+}
+
+# ========================================================================
+# ---------------------------- Class Methods -----------------------------
+# ========================================================================
+
+# ------------------------------- DoItAll --------------------------------
+
+=pod
+
+=head1 DoItAll
+
+This is the main entry point for this class.  The function takes a
+list of hashes that match the CBIL::Util::EasyCsp::Decl specification,
+a usage string, and an optional list of files or packages that contain
+pod relevant to the main program.
+
+DoItAll gathers command line parameters from the user, error checks
+them, then returns a hash of the values if there were no errors.  The
+remaining, unused, arguments are in the dictionary at the tag 'ARGV'.
+All other parameter values are at the 'o' or Option tag for their
+declaration.  List parameters are always returned as list ref, even
+when empty.
+
+=cut
+
+sub DoItAll {
+   my $Desc  = shift;           # list or dictionary
+   my $Usage = shift;           # string
+   my $Files = shift || [ $0 ]; # Perl code to be pod2x'ed
+
+   # make sure we're including the exe's pod.
+   unshift(@$Files, $0) unless $Files->[0] eq $0;
+
+   # dictionary of values.
+   my $Rv;
+
+   # convert all declarations to objects and make sure we have a
+   # dictionary.
+   if ( ref $Desc eq 'ARRAY') {
+      $Desc = { map {
+         my $_decl = CBIL::Util::EasyCsp::Decl->new($_);
+         ( $_decl->getOption() => $_decl )
+      } @$Desc };
+   }
+
+   # is already a dictionary.
+   else {
+      foreach (keys %$Desc) {
+         $Desc->{$_} = CBIL::Util::EasyCsp::Decl->new($_);
+      }
+   }
+
+   # gather the command line parameters
+   $Rv = GetOptions( $Desc );
+
+   # we will show help if user asked for it of if there was an error
+   if ($Rv->{usage} || ! ErrorCheck( $Desc, $Rv )) {
+      DoHelp($Desc, $Usage, $Files);
+      $Rv = undef;
+   }
+
+   # add in the ARGV options as well.
+   else {
+      $Rv->{ARGV} = \@ARGV;
+   }
+
+   return $Rv;
+}
+
+# ------------------------------ GetOptions ------------------------------
+
+sub GetOptions {
+   my $D = shift;               # a descriptor dictionary
+
+   # arguments from command line.
+   my %Rv = ();
+
+   # standards
+   my $so = &StandardOptions;
+
+   # assemble an options descriptor
+   my %cld;
+   foreach my $_desc (values %$so, values %$D) {
+      my @goDesc = $_desc->optionTag();
+      foreach (@goDesc) {
+         $cld{$_} = \$Rv{$_desc->getOption()};
+      }
+   }
+
+   # process the arguments
+   if (!Getopt::Long::GetOptions( %cld )) {
+      %Rv = ( usage => 1 );
+   }
+
+   return wantarray ? %Rv : \%Rv;
+}
+
+# --------------------------- StandardOptions ----------------------------
+
+=pod
+
+=head1 Standard Options
+
+Any program that uses CBIL::Util::EasyCsp automatically gets the
+following boolean options: verbose, veryverbose, debug, and usage.
+
 =cut
 
 sub StandardOptions {
 
-	return {
-		verbose => { o => 'verbose', t => 'boolean', h => 'generate lots of output' },
-		veryVerbose => { o => 'veryVerbose', t => 'boolean', h => 'generate reams of output' },
-		debug   => { o => 'debug',   t => 'boolean', h => 'turn on debugging output' },
-    usage   => { o => 'help',    t => 'boolean', h => 'get usage' }
-	};
+   return { map { $_->getOption() => $_ }
+            (
+             CBIL::Util::EasyCsp::Decl->new( o => 'verbose',
+                                             t => CBIL::Util::EasyCsp::BooleanType,
+                                             h => 'generate lots of output',
+                                           ),
 
+             CBIL::Util::EasyCsp::Decl->new( o => 'veryVerbose',
+                                             t => CBIL::Util::EasyCsp::BooleanType,
+                                             h => 'generate reams of output',
+                                           ),
+
+             CBIL::Util::EasyCsp::Decl->new( o => 'debug',
+                                             t => CBIL::Util::EasyCsp::BooleanType,
+                                             h => 'turn on debugging output',
+                                           ),
+
+             CBIL::Util::EasyCsp::Decl->new( o => 'usage',
+                                             s => 'help',
+                                             t => CBIL::Util::EasyCsp::BooleanType,
+                                             h => 'get usage'
+                                           ),
+            )
+          };
 }
 
 =pod
 =head1 UsageString
 
-
-
 =cut
 
 sub _ftag {
-	my $tag = shift;
-	my $leader = defined $tag ? '--' : '  ';
-	sprintf( "  %s%-24.24s", $leader, $tag );
-}
-
-sub _optionTag {
-	my $Opt = shift;
-
-	if ( defined $Opt->{ t } ) {
-		my $tag = $Opt->{ o };
-		$tag =~ s/=.$//;
-		$tag =~ s/!//;
-
-		if ( $Opt->{ l } ) {
-			return "$tag=s";
-		}
-		elsif ( $Opt->{ t } =~ /^s(t(r(i(n(g)?)?)?)?)?$/i ) {
-			return "$tag=s";
-		}
-		elsif ( $Opt->{ t } =~ /^f(l(o(a(t)?)?)?)?$/i ) {
-			return "$tag=f";
-		}
-		elsif ( $Opt->{ t } =~ /^i(n(t)?)?$/i ) {
-			return "$tag=i";
-		}
-		elsif ( $Opt->{ t } =~ /^b(o(o(l(e(a(n)?)?)?)?)?)?$/i ) {
-			return "$tag!";
-		}
-		else {
-			return "$tag=s";
-		}
-	}
-	else {
-		return $Opt->{ o }
-	}
+   my $tag = shift;
+   my $leader = defined $tag ? '--' : '  ';
+   sprintf( "  %s%-24.24s", $leader, $tag );
 }
 
 # ----------------------------------------------------------------------
 # generate usage string for a single option.
 
 sub single_usage {
-	my $O = shift; 
+   my $O   = shift;
+   my $Pod = shift;
 
-	my @RV;
+   my $Rv;
 
-	return '' unless defined $O->{o};
+   if (defined $O->getOption()) {
 
-	push(@RV, join("\t", _ftag(_optionTag($O))));
-	push(@RV,   "\thint:     $O->{h}");
-	push(@RV,   "\ttype:     $O->{t}") if defined $O->{t};
-	if ($O->{l} ) {
-		my $delim =defined $O->{ld} ? "$O->{ld}" : ',';
-		push(@RV, "\tlist:     delimit values with a '$delim'" );
-	}
-	if (defined $O->{e}) {
-		my $s_legal = join(', ', @{$O->{e}});
-		push(@RV, "\tpatterns: $s_legal" );
-	}
-	push(@RV,   "\tdefault:  $O->{d}") if defined $O->{d};
-	push(@RV,   "\tREQUIRED!")        if $O->{r};
+      my @lines;
 
-	join("\n",@RV). "\n"
+      my $lead       = $Pod ? '=head2 ' : '  ';
+      my $littleLead = $Pod ? '  ' : "\t";
+
+      push(@lines, $lead. join(' ', map { "--$_" } grep { defined $_ && length $_ } ( $O->getOption(), $O->getShortOption())));
+      push(@lines, '') if $Pod;
+      push(@lines,   $littleLead. 'hint:     '. $O->getHint());
+      push(@lines,   $littleLead. 'type:     '. $O->getType()) if defined $O->getType();
+      if ($O->getIsList()) {
+         my $delim = $O->getListDelimiter();
+         push(@lines, $littleLead. 'list:     delimit values with a \'$delim\'' );
+      }
+      push(@lines,   $littleLead. 'check:    '. $O->errorCheckDescription());
+      push(@lines,   $littleLead. 'default:  '. $O->getDefault()) if defined $O->getDefault();
+      push(@lines,   $littleLead. 'REQUIRED!')                    if $O->getIsRequired();
+
+      $Rv = join("\n", @lines). "\n";
+   }
+
+   return $Rv;
 }
+
 
 # ----------------------------------------------------------------------
 # generate whole usage message.
 
 sub UsageString {
-	my $D = shift;
-	my $T = shift;
+   my $D = shift;
+   my $T = shift;
 
-	my $s_rv;
+   my $Rv;
 
+   $Rv .= $T. "\n";
+   $Rv .= "Usage:\n";
 
-	$s_rv .= $T. "\n";
-	$s_rv .= "Usage:\n";
+   my @all_options = sort {
+      lc $a->getOption() cmp lc $b->getOption()
+   } ( (values %{&StandardOptions}), (values %$D) );
 
-	my @all_options = sort { lc $a->{o} cmp lc $b->{o} } ((values %{&StandardOptions}),
-																												(values %$D),
-																											 );
-	$s_rv .= join("\n",
-								map {single_usage($_)} @all_options
-							 ). "\n";
+   $Rv .= join("\n",
+               map {single_usage($_)} @all_options
+              ). "\n";
 
-#	my $so =  &StandardOptions;
-#	foreach ( sort keys %{ $so } ) {
-#		$s rv .= single_usage($so->{$_});
-#		$s_rv .= join( "\t",
-#									 #'',
-#									 _ftag( _optionTag( $so->{ $_ }) ), 
-#									 "$so->{ $_ }->{ h }",
-#								 ). "\n";
-#		$s_rv .= join( "\t",
-#									 _ftag( undef ),
-#									 "   type:    $so->{ $_ }->{ t }",
-#								 ). "\n"
-#								 if defined $so->{ $_ }->{ t };
-#		$s_rv .= join( "\t", 
-#									 _ftag( undef ),
-#									 "   default: $so->{ $_ }->{ d }" 
-#								 ). "\n"
-#								 if defined $so->{ $_ }->{ d };
-#		$s_rv .= join( "\t",
-#									 _ftag( undef ),
-#									 "   REQUIRED!",
-#								 ). "\n"
-#								 if defined $so->{ $_ }->{ r };
-#		$s_rv .= "\n";
-#
-#	}
-#
-#  foreach ( sort keys %{ $D } ) {
-#		$s_rv .= join( "\t",
-#									 #'',
-#									 _ftag( _optionTag( $D->{ $_ } ) ),
-#									 "$D->{ $_ }->{ h }",
-#								 ). "\n";
-#		$s_rv .= join( "\t",
-#									 _ftag( undef ),
-#									 "   type:    $D->{ $_ }->{ t }",
-#								 ). "\n"
-#								 if defined $D->{ $_ }->{ t };
-#		$s_rv .= join( "\t", 
-#									 #'',
-#									 _ftag( undef ),
-#									 "   REQUIRED!",
-#								 ). "\n"
-#								 if defined $D->{ $_ }->{ r };
-#		$s_rv .= join( "\t", 
-#									 #'',
-#									 _ftag( undef ),
-#									 "   default: $D->{ $_ }->{ d }"
-#								 ). "\n"
-#								 if defined $D->{ $_ }->{ d };
-#		if ( $D->{ $_ }->{ l } ) {
-#			my $delim = defined $D->{ $_ }->{ ld } ? "'$D->{ $_ }->{ ld }'" : "','";
-#			$s_rv .= join( "\t", 
-#										 #'', 
-#										 _ftag( undef ),
-#										 "  list delimited by a '$delim'\n" )
-#		}
-#		if ( defined $D->{ $_ }->{ e } ) {
-#			my $s_legal = join( ', ', @{ $D->{ $_ }->{ e } } );
-#			$s_rv .= join( "\t", 
-#										 #'', 
-#										 _ftag( undef ),
-#										 "   legal values: $s_legal" ). "\n";
-#		}
-#		$s_rv .= "\n";
-#
-#	}
-#
-	return $s_rv;
+   return $Rv;
 }
+
+# ------------------------------- PodUsage -------------------------------
+
+sub PodUsage {
+   my $D = shift;
+   my $T = shift;
+
+   my $Rv;
+
+   my $_fh = FileHandle->new("|pod2text -c -t")
+   || die "Can not open pod2text to give help: $!";
+
+   my @all_options = sort {
+      lc $a->getOption() cmp lc $b->getOption()
+   } ( (values %{&StandardOptions}), (values %$D) );
+
+   my $options_pod = join("\n",
+                          map {single_usage($_,1)} @all_options
+                         ). "\n";
+
+   print $_fh "=pod\n\n";
+   print $_fh "=head1 Short Description\n\n";
+   print $_fh "$T\n\n";
+   print $_fh "=head1 Command Line Arguments\n\n";
+   print $_fh "$options_pod\n\n";
+
+   $_fh->close();
+}
+
+# ------------------------------ ErrorCheck ------------------------------
+
+=pod
+
+=head1 Error Check
+
+Returns false if an error was detected.
+
+Errors can be a required option that was not specified, or a specified
+value that does not match the error checking pattern list.
+
+=cut
 
 sub ErrorCheck {
-	my $D = shift;
-	my $V = shift;
+   my $D = shift;               # dictionary of declarations
+   my $V = shift;               # values for declarations
 
-	my $b_allOk = 1;
+   my $Rv = 1;
 
-	my $tag; foreach $tag ( sort keys %{ $D } ) {
+   # process all options in the tag.
+   foreach my $tag ( sort keys %$D ) {
 
-		# set default values
-		if ( ! defined $V->{ $tag } && exists $D->{ $tag }->{ d } ) {
-			$V->{ $tag } = $D->{ $tag }->{ d };
-		}
+      my $_decl = $D->{$tag};
 
-		# check for required values
-		if ($D->{$tag}->{r}) {
-			if (not defined $V->{$tag}) {
-				print STDERR "No value supplied for required option $tag.\n";
-				$b_allOk = 0;
-			}
-		}
+      # set default values
+      if ( ! defined $V->{$tag} && defined $_decl->getDefault()) {
+         $V->{$tag} = $_decl->getDefault();
+      }
 
-		# split lists on comma
-		if ( $D->{ $tag }->{ l } ) {
-			my $ld = $D->{ tag }->{ ld } || ',';
-			$V->{$tag} = [ split( $ld, $V->{ $tag } ) ];
-		}
+      # check for required values
+      if ($_decl->getIsRequired()) {
+         if (not defined $V->{$tag}) {
+            print STDERR "No value supplied for required option $tag.\n";
+            $Rv = 0;
+         }
+      }
 
-		# enforce pattern matching requirements if required or defined
-		if (ref $D->{$tag}->{e} eq 'ARRAY' &&
-				(defined $V->{$tag} || $D->{$tag}->{r})
-			 ) {
+      # split lists on delimiter
+      if ( $_decl->getIsList() ) {
+         my $ld = $_decl->getListDelimiter();
+         $V->{$tag} = [ split( /$ld/, $V->{$tag} ) ];
+      }
 
-			# values to consider
-			my @values = ref $V->{$tag} ? @{$V->{$tag}} : ($V->{$tag});
+      # enforce pattern matching requirements if defined
+      if (defined $V->{$tag}) {
+         if (my @bad_values = $_decl->errorCheck($V->{$tag})) {
+            print STDERR join("\t",
+                              'BADVAL(S)',
+                              "--$tag",
+                              join(', ', map {"'$_'"} @bad_values),
+                             ), "\n";
+            $Rv = 0;
+         }
+      }
+   }
 
-			# values that did not match an RX.
-			my @bad_values;
-
-		ALL_CHECK:
-			foreach my $value (@values) {
-				my $b_ok = 0;
-
-			IDV_CHECK:
-				foreach my $pat_rx (@{$D->{$tag}->{e}}) {
-					if ($V->{ $tag } =~ $pat_rx) {
-						$b_ok = 1;
-						last;
-					}
-				}
-
-				unless ($b_ok) {
-					push(@bad_values, $value);
-				}
-			}
-
-			if (@bad_values) {
-				print STDERR join("\t",
-													'BADVAL(S)',
-													"--$D->{$tag}->{o}",
-													join(', ', map {"'$_'"} @bad_values),
-												 ), "\n";
-				$b_allOk = 0;
-			}
-		}
-	}
-
-	return $b_allOk;
+   return $Rv;
 }
 
-# ......................................................................
+# -------------------------------- DoHelp --------------------------------
+
+sub DoHelp {
+   my $Desc  = shift;
+   my $Usage = shift;
+   my $Files = shift;
+
+   $| = 1;
+
+   #print STDERR UsageString( $Desc, $Usage );
+   PodUsage($Desc, $Usage);
+
+   if ($Files) {
+
+      #printf STDERR "\n%s\n\n", '=' x 70;
+
+      # consider each file
+      foreach my $file (@$Files) {
+
+         # get file which may be a package name
+         my $_f = $file;
+         if ($_f =~ /::/) {
+            eval "require $_f";
+            $_f = "$_f.pm"; $_f =~ s/::/\//g; $_f = $INC{$_f};
+         }
+
+         # if we can find the file convert it to pod.
+         if ($_f) {
+            if ($_f ne $0) {
+               print  '-' x 70, "\n";
+               print  "$file\n";
+               print  '-' x 70, "\n\n";
+            }
+            system "pod2text -c -t $_f";
+         }
+
+         # bad file
+         else {
+            print "Couldn't process help file '$file'/\n";
+         }
+      }
+   }
+}
+
+# ========================================================================
+# ---------------------------- End of Package ----------------------------
+# ========================================================================
 
 1;
 
@@ -336,14 +415,14 @@ __END__
 
 
 my $ecd = { map {($_->{o},$_)}
-						( { h => 'sequence logo',
-								t => 'string',
-								r => 1,
-								e => [ 'a+c+g+t+' ],
-								o => 'Logo'
-							},
-						)
-					};
+            ( { h => 'sequence logo',
+                t => 'string',
+                r => 1,
+                e => [ 'a+c+g+t+' ],
+                o => 'Logo'
+              },
+            )
+          };
 
 my $cla = DoItAll( $ecd, 'Test of CBIL::Util::EasyCsp.pm' );
 
