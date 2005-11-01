@@ -117,7 +117,7 @@ sub DoItAll {
    # is already a dictionary.
    else {
       foreach (keys %$Desc) {
-         $Desc->{$_} = CBIL::Util::EasyCsp::Decl->new($_);
+         $Desc->{$_} = CBIL::Util::EasyCsp::Decl->new($Desc->{$_});
       }
    }
 
