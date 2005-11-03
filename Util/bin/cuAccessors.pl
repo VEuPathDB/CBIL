@@ -19,6 +19,7 @@ as a call suitable for an init method.
 
 use strict;
 
+use CBIL::Util::V;
 use CBIL::Util::EasyCsp;
 
 # ========================================================================
@@ -53,58 +54,66 @@ the object is prepended to the field name using the __PACKAGE__ macro.
 =cut
 
 sub run {
-  my $Cla = shift;
+   my $Cla = shift;
 
-  # generate initialization code.
-  # ........................................
+   # get maximum length of attributes
+   my $w      = CBIL::Util::V::max( 20, map { length($_) } @ARGV );
+	 my $w_fmt  = '%-'. $w. '.'. $w. 's';
 
-  foreach my $attribute (@ARGV) {
-    my $fmt = $Cla->{Prefix}
-      ? '$Self->set%-20.20s ( $Args->{%-20.20s} || $Args->{%-20.20s});'
-	: '$Self->set%-20.20s ( $Args->{%-20.20s} );';
-    $fmt .= "\n";
-    printf $fmt, $attribute, $attribute, $Cla->{Prefix}.$attribute;
-  }
+   my $pw     = CBIL::Util::V::max( 20, map { length($_)+length($Cla->{Prefix}) } @ARGV );
+   my $pw_fmt = '%-'. $pw. '.'. $pw. 's';
 
-  print "\n\n";
+   # generate initialization code.
+   # ........................................
 
-  # generate accessors code
-  # ........................................
+   foreach my $attribute (@ARGV) {
+      my $fmt = $Cla->{Prefix}
+      ? "\$Self->set$w_fmt ( \$Args->{$w_fmt} || \$Args->{$pw_fmt});\n"
+      : "\$Self->set$w_fmt ( \$Args->{$w_fmt} );\n";
+      printf $fmt, $attribute, $attribute, $Cla->{Prefix}.$attribute;
+   }
 
-  my $fnPrefix = $Cla->{PackageFieldNames} ? '__PACKAGE__ . ' : '';
+   print "\n\n";
 
-  foreach my $attribute (@ARGV) {
-    my $fmt = join("\n",
-		   'sub get%-20.20s { $_[0]->{%-30.30s} }',
-		   'sub set%-20.20s { $_[0]->{%-30.30s} = $_[1]; $_[0] }',
-		   '',
-		   ''
-		  );
-    printf $fmt,
+   # generate accessors code
+   # ........................................
+
+   my $fnPrefix = $Cla->{PackageFieldNames} ? '__PACKAGE__ . ' : '';
+   my $fw  = CBIL::Util::V::max( 20, map { length($_)+length($fnPrefix)+2 } @ARGV );
+   my $fw_fmt  = '%-'. $fw. '.'. $fw. 's';
+
+   foreach my $attribute (@ARGV) {
+      my $fmt = join("\n",
+                     "sub get$w_fmt { \$_[0]->{$fw_fmt} }",
+                     "sub set$w_fmt { \$_[0]->{$fw_fmt} = \$_[1]; \$_[0] }",
+                     '',
+                     ''
+                    );
+      printf $fmt,
       $attribute, "$fnPrefix'$attribute'",
-	$attribute, "$fnPrefix'$attribute'";
-  }
+      $attribute, "$fnPrefix'$attribute'";
+   }
 }
 
 # --------------------------------- cla ----------------------------------
 
 sub cla {
 
-  my $purpose = 'generate boilerplate Perl accessor code';
+   my $purpose = 'generate boilerplate Perl accessor code';
 
-  my $options = [ { h => 'include __PACKAGE__ prefix in hash fieldnames',
-		    t => CBIL::Util::EasyCsp::BooleanType,
-		    o => 'PackageFieldNames',
-		  },
+   my $options = [ { h => 'include __PACKAGE__ prefix in hash fieldnames',
+                     t => CBIL::Util::EasyCsp::BooleanType,
+                     o => 'PackageFieldNames',
+                   },
 
-		  { h => 'allow init with or without this prefix',
-		    t => CBIL::Util::EasyCsp::StringType,
-		    o => 'Prefix',
-		  }
-		];
+                   { h => 'allow init with or without this prefix',
+                     t => CBIL::Util::EasyCsp::StringType,
+                     o => 'Prefix',
+                   }
+                 ];
 
-  my $cla = CBIL::Util::EasyCsp::DoItAll($options, $purpose) || exit 0;
+   my $cla = CBIL::Util::EasyCsp::DoItAll($options, $purpose) || exit 0;
 
-  return $cla;
+   return $cla;
 }
 
