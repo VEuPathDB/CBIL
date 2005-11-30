@@ -20,6 +20,8 @@ has a value lt, le, eq, gt, ge, ne, <=, <, ==, !=, >, >= a specified value.
 use strict 'vars';
 use vars qw( @ARGV );
 
+use lib '@targetDir@/lib/perl';
+
 use CBIL::Util::EasyCsp;
 
 # ========================================================================
