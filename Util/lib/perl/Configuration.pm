@@ -16,8 +16,6 @@ which can be documented.
 
 =cut
 
-@ISA = qw( CBIL::Util::A );
-
 use strict 'vars';
 use FileHandle;
 use Carp;
@@ -37,13 +35,11 @@ C<CONFIG_FILE> (opt) name of a file to read for configuration.
 sub new {
   my $class = shift;
   my $args  = shift;
-		
+
   my $self = {};
   bless $self, $class;
 
-  if (defined $args->{CONFIG_FILE}) {
-     $self->load($args);
-  }
+  $self->load($args);
 
   return $self;
 }
@@ -67,7 +63,7 @@ sub add {
   foreach (keys %$args) {
      $self->{$_} = $args->{$_};
   }
-  #$self->copy($args, @{$args->attributes()});
+
 }
 
 # ----------------------------------------------------------------------
@@ -79,39 +75,41 @@ loading.
 
 Arguments:
 
-C<CONFIG_FILE> (req) name of a file to read for configuration.
+C<CONFIG_FILE> or C<ConfigFile> (req) name of a file to read for configuration.
+C<Delimiter> (opt) to split lines.
 
 =cut
 
 sub load {
   my $self = shift;
   my $args = shift;
-  
-  return undef unless $args->{'CONFIG_FILE'};
 
-  my $fh_config = new FileHandle "<$args->{CONFIG_FILE}";
-	
-	if ($fh_config) {
-	  while (<$fh_config>) {
+  if (my $config_f = $args->{ConfigFile} || $args->{'CONFIG_FILE'}) {
+     if (my $config_fh = FileHandle->new("<$config_f")) {
+        my $delim_rx = $args->{Delimiter} || '\s+';
 
-		# comments
-		if (/^\#/) {
-		  ;
-		}
-			
-		# key-value pairs
-		elsif (/^(\S+)\s+(.+)$/) {
-		  $self->{$1} = $2;
-		}
-	  }
-	  $fh_config->close();
+        while (<$config_fh>) {
+           chomp;
+
+           # skip comments
+           if (/^\#/) {
+              ;
+           }
+
+           # key-value pairs
+           elsif (/\s*(.+?)$delim_rx(.*)/) {
+              $self->{$1} = $2;
+           }
+        }
+        $config_fh->close();
+     }
+
+     else {
+        carp("Unable to open '$config_f' to read the configuration: $!");
+        return undef;
+     }
 	}
-	else {
-	  carp(sprintf("Unable to open '%s' to read the configuration; '%s'\n",
-	  $args->{CONFIG_FILE}, $English::ERRNO));
-	  return undef;
-  }
-	
+
   return $self;
 }
 
@@ -130,19 +128,20 @@ C<CONFIG_FILE> writes to this file.
 sub save {
   my $self = shift;
   my $args = shift;
-  
-  return undef unless $args->ensure('CONFIG_FILE');
-  
+
   my $rv;
-  
-  if (my $fh_config = new FileHandle ">$args->{CONFIG_FILE}") {
-     foreach (sort keys %$self) {
-        print $fh_config "$_ = $args->{$_}\n";
+
+  if (my $config_f = $args->{ConfigFile} || $args->{'CONFIG_FILE'}) {
+     if (my $config_fh = FileHandle->new(">$config_f")) {
+        my $delim = $args->{Delimiter} || "\t";
+        foreach (sort keys %$self) {
+           print $config_fh "$_$delim$args->{$_}\n";
+        }
+        $config_fh->close();
+        $rv = 1;
      }
-     $fh_config->close();
-     $rv = 1;
   }
-	
+
   return $rv;
 }
 
