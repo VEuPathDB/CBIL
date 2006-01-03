@@ -2,7 +2,7 @@
 use lib "$ENV{GUS_HOME}/lib/perl";
 use Getopt::Long;
 use GUS::ObjRelP::DbiDatabase;
-use GUS::Common::GusConfig;
+use GUS::Supported::GusConfig;
 
 my ($verbose,$gusConfigFile,$dataFileDir);
 &GetOptions("verbose!"=> \$verbose,
@@ -13,7 +13,7 @@ $| = 1;
 
 print STDERR "Establishing dbi login\n" if $verbose;
 
-my $gusconfig = GUS::Common::GusConfig->new($gusConfigFile);
+my $gusconfig = GUS::Supported::GusConfig->new($gusConfigFile);
 
 my $db = GUS::ObjRelP::DbiDatabase->new($gusconfig->getDbiDsn(),
 					$gusconfig->getReadOnlyDatabaseLogin(),
