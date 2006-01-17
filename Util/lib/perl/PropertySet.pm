@@ -1,6 +1,7 @@
 package CBIL::Util::PropertySet;
 
 use strict;
+use Carp;
 
 # smart parsing of properties file.
 # file is of the format:
@@ -80,7 +81,7 @@ sub getProp {
     my ($self, $name) = @_;
 
     my $value = $self->{props}->{$name};
-    die "trying to call getProp('$name') on invalid property name '$name' " unless ($value ne "");
+    confess "trying to call getProp('$name') on invalid property name '$name'\n" unless ($value ne "");
     return $value;
 }
 
