@@ -26,6 +26,25 @@ use FileHandle;
 # ------------------------------- Methods --------------------------------
 # ========================================================================
 
+# ------------------------------- AbsPath --------------------------------
+
+=pod
+
+=head2 AbsPath
+
+This class method takes a file name and prepends the value of PWD if
+it does not begin with a '/'.
+
+=cut
+
+sub AbsPath {
+   my $File = shift;
+
+   my $Rv = $File =~ /^\// ? $File : "$ENV{PWD}/$File";
+
+   return $Rv;
+}
+
 # ----------------------------- openForRead ------------------------------
 
 sub SmartOpenForRead {
@@ -34,22 +53,22 @@ sub SmartOpenForRead {
    my $Rv;
    my $file;
 
-   if ($Rv eq '-') {
+   if ($File eq '-') {
       $file = '<-';
       $Rv = FileHandle->new($file);
    }
 
-   elsif ($Rv =~ /\.Z$/) {
+   elsif ($File =~ /\.Z$/) {
       $file = "zcat $File|";
       $Rv = FileHandle->new($file);
    }
 
-   elsif ($Rv =~ /\.gz$/) {
+   elsif ($File =~ /\.gz$/) {
       $file = "zcat $File|";
       $Rv = FileHandle->new($file);
    }
 
-   elsif ($Rv =~ /:/) {
+   elsif ($File =~ /:/) {
       my ($host, $remoteSpec) = split(':', $File);
       $file = "ssh $host cat $remoteSpec|";
       $Rv = FileHandle->new($file);
@@ -72,19 +91,19 @@ sub SmartOpenForWrite {
 
    my $Rv;
 
-   if ($Rv eq /-/) {
+   if ($File eq /-/) {
       $Rv = FileHandle->new(STDOUT);
    }
 
-   elsif ($Rv =~ /\.Z$/) {
+   elsif ($File =~ /\.Z$/) {
       $Rv = FileHandle->new("|compress -c > $File");
    }
 
-   elsif ($Rv =~ /\.gz$/) {
+   elsif ($File =~ /\.gz$/) {
       $Rv = FileHandle->new("|zcat -c > $File");
    }
 
-   elsif ($Rv = ~ /:/) {
+   elsif ($File = ~ /:/) {
       my ($host, $remoteSpec) = split(':', $File);
       my $cmd = "|ssh $host cat \\> $remoteSpec";
       $Rv = FileHandle->new($cmd);
