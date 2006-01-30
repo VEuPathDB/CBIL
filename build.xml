@@ -13,6 +13,7 @@
   <target name="CBIL-Installation" depends="CBIL/Bio-Installation,
                                             CBIL/CSP-Installation,
                                             CBIL/Util-Installation,
+                                            CBIL/Cider-Installation,
                                             CBIL/HQ-Installation,
                                             CBIL/ObjectMapper-Installation" >
 
@@ -56,6 +57,13 @@
     <ant target="defaultComponentInstall">
       <property name="project" value="CBIL"/>
       <property name="component" value="Util"/>
+    </ant>
+  </target>  
+
+  <target name="CBIL/Cider-Installation" depends="ProjectTree">
+    <ant target="defaultComponentInstall">
+      <property name="project" value="CBIL"/>
+      <property name="component" value="Cider"/>
     </ant>
   </target>  
 
