@@ -25,13 +25,12 @@ sub makeFastaFormattedSequence{
 sub reverseComplementSequence{	##for reverseComplementing sequences
   my($seq) = @_;
   $seq =~ s/\s//g;
-  my $revcompseq = "";
+
   print STDERR "revCompSeq: incoming:\n$seq\n" if $debug == 1;
-  my $revseq = reverse $seq;
-  my @revseq = split('', $revseq);
-  foreach my $nuc (@revseq) {
-    $revcompseq .= &compNuc($nuc);
-  }
+
+  my $revcompseq = reverse $seq;
+  $revcompseq =~ tr/acgtrymkswhbvdnxACGTRYMKSWHBVDNX/tgcayrkmswdvbhnxTGCAYRKMSWDVBHNX/;
+
   print STDERR "revCompSeq: returns:\n$revcompseq\n" if $debug == 1;
   return $revcompseq;
 }
