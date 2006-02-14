@@ -4,6 +4,19 @@
   <!-- oooooooooooooooooooooooooo  Dependencies  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
+  
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooo    Checkout    oooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+
+  <target name="CBIL-ChildCheckout" />
+  
+  
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooo    Update    oooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+
+  <target name="CBIL-ChildUpdate" />
 
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
@@ -38,14 +51,14 @@
 
   <!-- ooooooooooooooooooooooo  Install Components  ooooooooooooooooooooooo -->
 
-  <target name="CBIL/Bio-Installation" depends="ProjectTree">
+  <target name="CBIL/Bio-Installation">
     <ant target="defaultComponentInstall">
       <property name="project" value="CBIL"/>
       <property name="component" value="Bio"/>
     </ant>
   </target>  
 
-  <target name="CBIL/CSP-Installation" depends="ProjectTree">
+  <target name="CBIL/CSP-Installation">
     <ant target="defaultComponentInstall">
       <property name="project" value="CBIL"/>
       <property name="component" value="CSP"/>
@@ -53,28 +66,28 @@
     </ant>
   </target>  
 
-  <target name="CBIL/Util-Installation" depends="ProjectTree">
+  <target name="CBIL/Util-Installation">
     <ant target="defaultComponentInstall">
       <property name="project" value="CBIL"/>
       <property name="component" value="Util"/>
     </ant>
   </target>  
 
-  <target name="CBIL/Cider-Installation" depends="ProjectTree">
+  <target name="CBIL/Cider-Installation">
     <ant target="defaultComponentInstall">
       <property name="project" value="CBIL"/>
       <property name="component" value="Cider"/>
     </ant>
   </target>  
 
-  <target name="CBIL/ObjectMapper-Installation" depends="ProjectTree">
+  <target name="CBIL/ObjectMapper-Installation">
     <ant target="defaultComponentInstall">
       <property name="project" value="CBIL"/>
       <property name="component" value="ObjectMapper"/>
     </ant>
   </target>  
 
-  <target name="CBIL/HQ-Installation" depends="ProjectTree">
+  <target name="CBIL/HQ-Installation">
     <ant target="defaultComponentInstall">
       <property name="project" value="CBIL"/>
       <property name="component" value="HQ"/>
@@ -93,32 +106,6 @@
       <property name="cvsroot" value="/files/cbil/cvs/cvsroot"/>
     </ant>
   </target>  
-
-
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooo  ProjectTree  ooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-
-  <target name="ProjectTree" if="${checkout}">
-    <ant target="projectCheckOut"/>
-  </target>  
-
-
-
-  
-  
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooo    Checkout    oooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-
-  <target name="CBIL-Checkout" />
-  
-  
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooo    Update    oooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-
-  <target name="CBIL-Update" />
 
 
 </project>
