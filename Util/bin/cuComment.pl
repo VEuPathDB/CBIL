@@ -34,26 +34,29 @@ run(cla());
 sub run {
   my $Cla = shift || cla();
 
-  my $text   = join(' ', @ARGV);
+  my @texts  = $Cla->{Multiple} ? @ARGV : join(' ', @ARGV);
 
-  my $td     = scalar localtime;
-  $text      =~ s/%d/$td/g;
+  foreach my $text (@texts) {
 
-  my $text_n = length $text;
+     my $td     = scalar localtime;
+     $text      =~ s/%d/$td/g;
 
-  my $pad_n  = int(($Cla->{Width} - $text_n) / 2) - 1;
+     my $text_n = length $text;
 
-  my $lPad   = $Cla->{MinorFill} x $pad_n;
-  my $rPad   = $Cla->{MinorFill} x $pad_n; $rPad .= $Cla->{MinorFill} if $text_n % 2 == 1;
+     my $pad_n  = int(($Cla->{Width} - $text_n) / 2) - 1;
 
-  my $head   = $CommentChars{$Cla->{Language}}->[0];
-  my $tail   = $CommentChars{$Cla->{Language}}->[1];
+     my $lPad   = $Cla->{MinorFill} x $pad_n;
+     my $rPad   = $Cla->{MinorFill} x $pad_n; $rPad .= $Cla->{MinorFill} if $text_n % 2 == 1;
 
-  my $section = $Cla->{Section} ? $Cla->{MajorFill} x $Cla->{Width} : undef;
+     my $head   = $CommentChars{$Cla->{Language}}->[0];
+     my $tail   = $CommentChars{$Cla->{Language}}->[1];
 
-  output($head, $section, $tail) if $Cla->{Section};
-  output($head, $lPad, $text, $rPad, $tail );
-  output($head, $section, $tail) if $Cla->{Section};
+     my $section = $Cla->{Section} ? $Cla->{MajorFill} x $Cla->{Width} : undef;
+
+     output($head, $section, $tail) if $Cla->{Section};
+     output($head, $lPad, $text, $rPad, $tail );
+     output($head, $section, $tail) if $Cla->{Section};
+  }
 }
 
 # --------------------------------- cla ----------------------------------
@@ -89,6 +92,11 @@ sub cla {
         t => CBIL::Util::EasyCsp::StringType,
         o => 'MajorFill',
         d => '=',
+      },
+
+      { h => 'treat words as separate comments',
+        t => CBIL::Util::EasyCsp::BooleanType(),
+        o => 'Multiple',
       },
 
     ],

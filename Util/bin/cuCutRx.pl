@@ -38,20 +38,33 @@ sub run {
    my $head = <>;
    chomp $head;
    my @head = split /$Cla->{InDelimRx}/, $head;
+
    my @keep;
+
+   my @accept_rx = @{$Cla->{AcceptRx}};
+   my @reject_rx = @{$Cla->{RejectRx}};
 
  Head:
    for (my $i = 0; $i < @head; $i++) {
-      foreach my $rx (@{$Cla->{RejectRx}}) {
-         next Head if $head[$i] =~ /$rx/;
+
+      if (@accept_rx) {
+         my @match_rx = grep { $head[$i] =~ /$_/ } @accept_rx;
+         next Head if !@match_rx;
       }
+
+      if (@reject_rx) {
+         foreach my $rx (@reject_rx) {
+            next Head if $head[$i] =~ /$rx/;
+         }
+      }
+
       push(@keep, $i);
    }
 
    foreach (@keep) {
       push(@showRow, $head[$_]);
    }
-   print join("\t", @showRow), "\n";
+   print join($Cla->{OutDelim}, @showRow), "\n";
 
    while ( <> ) {
       chomp;
@@ -65,20 +78,26 @@ sub run {
 
 sub cla {
    my $Rv = CBIL::Util::EasyCsp::DoItAll
-   ( [ { h => 'select these 1-based columns: column[:format]',
-         t => CBIL::Util::EasyCsp::StringType,
+   ( [ { h => 'remove any columns that match any of these regexps',
+         t => CBIL::Util::EasyCsp::StringType(),
          l => 1,
          o => 'RejectRx',
        },
 
+       { h => 'accept any columns that match any of these regexps; accept is applied before reject',
+         t => CBIL::Util::EasyCsp::StringType(),
+         l => 1,
+         o => 'AcceptRx',
+       },
+
        { h => 'input stream is delimited by this RX',
-         t => CBIL::Util::EasyCsp::StringType,
+         t => CBIL::Util::EasyCsp::StringType(),
          o => 'InDelimRx',
          d => "\t",
        },
 
        { h => 'delimit output with this string',
-         t => CBIL::Util::EasyCsp::StringType,
+         t => CBIL::Util::EasyCsp::StringType(),
          o => 'OutDelim',
          d => "\t",
        },

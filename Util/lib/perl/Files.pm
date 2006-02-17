@@ -64,7 +64,7 @@ sub SmartOpenForRead {
    }
 
    elsif ($File =~ /\.gz$/) {
-      $file = "zcat $File|";
+      $file = "gunzip -c $File|";
       $Rv = FileHandle->new($file);
    }
 
@@ -91,7 +91,7 @@ sub SmartOpenForWrite {
 
    my $Rv;
 
-   if ($File eq /-/) {
+   if ($File eq '-') {
       $Rv = FileHandle->new(STDOUT);
    }
 
@@ -100,10 +100,10 @@ sub SmartOpenForWrite {
    }
 
    elsif ($File =~ /\.gz$/) {
-      $Rv = FileHandle->new("|zcat -c > $File");
+      $Rv = FileHandle->new("| gzip -f -c > $File");
    }
 
-   elsif ($File = ~ /:/) {
+   elsif ($File =~ /:/) {
       my ($host, $remoteSpec) = split(':', $File);
       my $cmd = "|ssh $host cat \\> $remoteSpec";
       $Rv = FileHandle->new($cmd);
