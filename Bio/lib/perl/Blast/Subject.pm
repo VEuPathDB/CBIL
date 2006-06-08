@@ -36,7 +36,6 @@ sub new {
 sub setID{
   my($self,$id) = @_;
   $self->{"id"} = $id;
-  return $self;
 }
 
 sub getID{
@@ -47,7 +46,6 @@ sub getID{
 sub setLength{
   my($self,$length) = @_;
   $self->{"length"} = $length;
-  return $self;
 }
 
 sub getLength{
@@ -58,13 +56,49 @@ sub getLength{
 sub setQueryLength{  ##a little silly but need to calculate the query 3'end
   my($self,$length) = @_;
   $self->{"queryLength"} = $length;
-  return $self;
 }
 
 sub getQueryLength{
   my $self = shift;
   return $self->{"queryLength"};
 }   
+
+sub setDescription {
+  my($self,$desc) = @_;
+  $desc =~ s/\s+/ /g;
+  $self->{'description'} = $desc;
+}
+
+sub getDescription {
+  my($self,$ll,$indent) = @_;
+  return $ll ? $self->getLinesOfLength($self->{'description'},$ll,$indent) : $self->{description};
+}
+
+my $spaces = "                                                  ";
+sub getLinesOfLength {
+  my($self,$text,$ll,$indent) = @_;
+  my $len = $ll - $indent;
+  my $sp = substr($spaces,0,$indent);
+  my $ret;
+  my $line;
+  while($text){
+    ($line,$text) = $self->getUnbrokenSubstring($text,$len);
+    $ret .= "$sp$line\n";
+  }
+  chomp $ret;
+  return $ret;
+}
+
+sub getUnbrokenSubstring {
+  my ($self,$txt,$ll) = @_;
+  return ($txt,"") if length($txt) <= $ll;
+  my @t = split("",$txt);
+  for($ll;$ll > 0;$ll--){
+    last if $t[$ll] =~ /(\s|-)/;
+  }
+  $ll++ if $t[$ll] eq "-";
+  return (substr($txt,0,$ll),substr($txt,$t[$ll] eq " " ? $ll+1 : $ll))
+}
 
 ##each HSP gets an identifier "ID" which is the number it is in the set
 ##first one is 1;
@@ -76,7 +110,6 @@ sub addHSP{
   $self->{"hspHash"}->{$self->{"numHSPs"}} = $hsp;
   push(@{$self->{"hsp"}},$hsp);
 
-  return $self;
 }
 
 sub getHSPs{
@@ -423,7 +456,7 @@ sub getSimilaritySpans {
 
 sub getSummaryStats{
   my $self = shift;
-  return $self->getID().": Pvalue=".$self->getPValue().", Length=".$self->getTotalHSPLength().", Percent=".$self->getTotalHSPPercent().", match=\(".$self->getMinQueryStart().",".$self->getMaxQueryEnd()."\)";
+  return $self->getID().": PV=".$self->getPValue().", ML=".$self->getTotalHSPLength().", \%ID=".int($self->getTotalHSPPercent()).", MaxSpan=\(query\(".$self->getMinQueryStart().",".$self->getMaxQueryEnd()."\), sub\(".$self->getMinSubjectStart().",".$self->getMaxSubjectEnd()."\)\)";
 }
 
 ##compare query to subject to see if likely repeat sequencing of same clone..

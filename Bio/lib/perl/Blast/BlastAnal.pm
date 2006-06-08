@@ -40,7 +40,13 @@ sub new {
 ## takes in a blast result as an array and builds the entire datastructure
 sub parseBlast{
   my $self = shift;
-  my($minLength,$minPercent,$minPvalue,$regex,$blast,$remMaskedFromLen,$rpsblast) = @_;
+  my($minLength,$minPercent,$minPvalue,$regex,$blast,$remMaskedFromLen,$rpsblast,$minPercentLength) = @_;
+  print STDERR "BlastAnal->parseBlast($minLength,$minPercent,$minPvalue,$regex,$blast,$remMaskedFromLen,$rpsblast,$minPercentLength)\n" if $debug;
+  $self->{minLength} = $minLength;
+  $self->{minPercent} = $minPercent;
+  $self->{minPvalue} = $minPvalue;
+  $minPercentLength =  $minPercentLength ? $minPercentLength / 100 : .0001;
+  $self->{minPercentLength} = $minPercentLength;
   my %blast;
   my ($strand,$dir,$qStart,$qEnd,$sStart,$sEnd,$pValue,$matchLength,$matchPercent);
   my $sbjct;
@@ -50,9 +56,11 @@ sub parseBlast{
   my $parseType;
   my $frame;
   my $score;
+  my $desc;
+  my $inDesc = 0;
   my $identities;
   my $positives;
-  die 'these are the args to parseBlastNoSeqs($minLength,$minPercent,$minPvalue,$regex,$blast)\n' if scalar(@{$blast}) <= 10;
+  die 'these are the args to parseBlast($minLength,$minPercent,$minPvalue,$regex,$rpsblast,$minPercentLength)\n' if scalar(@{$blast}) <= 10;
   foreach (@{$blast}) {
     #    print STDERR $_;
     if (/^(\S*BLAST\S+)/){   ##gets the algorighm used for the query...
@@ -67,21 +75,22 @@ sub parseBlast{
     }
     if (/^Query=\s*(\S+)/) {
       $self->{queryName} = $1;	##query name/id
-    } elsif (/^\s+\((\S+)\sletters\)/) {
-      $self->{queryLength} = $1; ##query length
-      $self->{queryLength} =~ s/,//g;
+    } elsif (/^\s+\((\S+)\s+letters/) {
+      $self->setQueryLength($1); ##query length
     }
     if (/^\>$regex/ || /ctxfactor/ || ($rpsblast && /^Lambda/)) { ##ctxfactor catches the last one...Lambda last of rpsblast
       my $sbjctId;
+      $desc = "";
       if (/^\>$regex/){
         $sbjctId = $1 ? $1 : $2;
       }else{
         print STDERR "$self->{queryName}: Unable to match subject using regex '$regex' on:\n  $_" unless (/ctxfactor/ || /^Lambda/);
       }
+
       print STDERR "Matching subjectId = $sbjctId\n" if $debug;
       ##      print STDERR "REGEX matched $_";
       if ($haveQStart) {
-        print STDERR "Have last QStart:", $sbjct->getID()," SS:$sStart,SE:$sEnd, QS:$qStart, QE:$qEnd, Length=$matchLength, Percent=$matchPercent, pValue=$pValue, Frame=$frame\n" if $debug == 1;
+        print STDERR "Have last QStart:", $sbjct->getID()," SS:$sStart,SE:$sEnd, QS:$qStart, QE:$qEnd, Length=$matchLength, Percent=$matchPercent, pValue=$pValue, Frame=$frame\n" if $debug == 1 && $sbjct;
         ##have the complete HSP...
         ##want to add only if meets minimum reqs....do this on an HSP basis...
         #	print $sbjct->getID()," $sStart,$sEnd: Length=$matchLength, Percent=$matchPercent, pValue=$pValue\n";
@@ -105,19 +114,31 @@ sub parseBlast{
         $haveQStart = 0;				##reset for next one...
         $haveSStart = 0;
       } 
-      if (defined $sbjct && $sbjct->countHSPs() >= 1 && $sbjct->getID() ne $self->{"queryName"}) {
+      my $shortSeq = defined $sbjct ? $sbjct->getQueryLength() < $sbjct->getLength() ? $sbjct->getQueryLength() : $sbjct->getLength() : 0;
+##      print STDERR "QueryLength: ".$sbjct->getQueryLength().", subjectLength: ".$sbjct->getLength().", shortest sequence is $shortSeq long\n" if defined $sbjct;
+      if (defined $sbjct && $sbjct->countHSPs() >= 1 && $sbjct->getTotalHSPLength() > $minPercentLength * $shortSeq ) {
         $self->addSubject($sbjct);
       }
+
+
       ##return heree if end...
       return if (/ctxfactor/ || /^Lambda/);
       
       ##      print STDERR "New Subject $sbjctId\n";
       $sbjct = CBIL::Bio::Blast::Subject->new($sbjctId) if $sbjctId;
-      ##      $sbjct->setID($sbjctId);
+
+      ##lets get the description here could be on multiple lines so need to set something to take care of this..
+      if(/^\>\S+\s(.*)$/){
+        $desc = $1;
+        $inDesc = 1;
+        next;
+      }
       
     }
     if (/^\s+Length\s=\s(\S+)/) {
       if($sbjct){
+        $inDesc = 0;
+        $sbjct->setDescription($desc);  ##set the description
         my $sbjctLength = $1;
         $sbjctLength =~ s/,//g;
         $sbjct->setLength($sbjctLength);
@@ -125,7 +146,7 @@ sub parseBlast{
       }
       ##end remaining calculations
     }
-    if (/^\s*Score\s=\s+(\d+).*?=\s(\S+)(, Group = \d+)?$/ || ($rpsblast && /^\s*Score\s*=\s*\d+\sbits\s\((\d+).*=\s(\S+)$/)) {
+    if (/^\s*Score\s=\s(\d+).*=\s(\S+)$/ || ($rpsblast && /^\s*Score\s*=\s*\d+\sbits\s\((\d+).*=\s(\S+)$/)) {
       my $tmpScore = $1;
       my $tmpValue = $2;
 
@@ -133,8 +154,9 @@ sub parseBlast{
       if ($haveQStart) {
         ##have the complete HSP...
         ##want to add only if meets minimum reqs....do this on an HSP basis...
-        print STDERR "Adding Sbjct (score) ",$sbjct->getID()," SS:$sStart,SE:$sEnd, QS:$qStart, QE:$qEnd, Length=$matchLength, Percent=$matchPercent, pValue=$pValue, Frame=$frame\n" if $debug == 1;
         if ($matchLength >= $minLength && $matchPercent >= $minPercent && $pValue <= $minPvalue && $sbjct) {
+#        if (($minPercentLength ? ( $matchLength >= ($sbjct->getLength() < $sbjct->getQueryLength() ? $sbjct->getLength() * $minPercentLength : $sbjct->getQueryLength() * $minPercentLength))  : $matchLength >= $minLength) && $matchPercent >= $minPercent && $pValue <= $minPvalue && $sbjct) {
+          print STDERR "Adding Sbjct (score) ",$sbjct->getID()," SS:$sStart,SE:$sEnd, QS:$qStart, QE:$qEnd, Length=$matchLength, Percent=$matchPercent, pValue=$pValue, Frame=$frame\n" if $debug == 1;
           print STDERR "Adding Sbjct\n" if $debug;
           if($remMaskedFromLen){  ##want to remove Xs from the match length....
 #            print STDERR "removing X from match\n";
@@ -197,12 +219,14 @@ sub parseBlast{
       }
       $sEnd = $2;
     }
+    $desc .= $_ if $inDesc;  ##append to description if in the description
   }
   return;
 }  
 
 sub setQueryLength {
   my($self,$l) = @_;
+  $l =~ s/,//g;
   $self->{queryLength} = $l;
 }
 
@@ -661,8 +685,8 @@ sub getStats{
   my $self = shift;
   my $minNum = shift;						##minimum number of HSPs
   my $ret;
-  #  $minNum eq "" ? $minNum = 1 : $minNum;
-  print "QueryName = $self->{queryName}, QueryLength = $self->{queryLength}\n";
+  $minNum = $minNum ? $minNum : 1;
+  $ret = "QueryName = ".$self->{queryName}.", QueryLength = ".$self->{queryLength}."\n";
   if ($self->{"countSubjects"} == 0) {
     $ret = "\tNo Hits\n";
     return $ret;
@@ -670,6 +694,20 @@ sub getStats{
   foreach my $s ($self->getSubjects()) {
     next if $s->countHSPs() < $minNum; ##don't print out singletons HSPS
     $ret .= $s->toString();
+  }
+  return $ret;
+}
+
+sub getSummaryStats {
+  my($self,$doDesc) = @_;
+  my $ret = "QueryName = ".$self->{queryName}.", QueryLength = ".$self->{queryLength}."\n";
+  if ($self->{"countSubjects"} == 0) {
+    $ret .= "\tNo Hits\n";
+    return $ret;
+  }
+  foreach my $s ($self->getSubjects()) {
+    $ret .= "  ".$s->getSummaryStats()."\n";
+    $ret .= $s->getDescription(80,4)."\n" if $doDesc;
   }
   return $ret;
 }
