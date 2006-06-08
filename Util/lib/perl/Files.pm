@@ -74,6 +74,11 @@ sub SmartOpenForRead {
       $Rv = FileHandle->new($file);
    }
 
+   elsif ($File =~ /\|$/) {
+      $file = $File;
+      $Rv = FileHandle->new($file);
+   }
+
    else {
       $file = "<$File";
       $Rv = FileHandle->new($file);
@@ -92,7 +97,7 @@ sub SmartOpenForWrite {
    my $Rv;
 
    if ($File eq '-') {
-      $Rv = FileHandle->new(STDOUT);
+      $Rv = FileHandle->new('>-');
    }
 
    elsif ($File =~ /\.Z$/) {
