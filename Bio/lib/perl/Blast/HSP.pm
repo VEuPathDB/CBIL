@@ -39,6 +39,7 @@ sub _inititialize{
 
   ##note that can infer direction always by the query start and end:
   ##if direction is minus then reverse the numbers!!!! 
+  $self->{"direction"} = 1;
   if($qEnd < $qStart){
     ##for query just reverse the start asnd end as is already numbered correctly
     $self->{"qStart"} = $qEnd;
@@ -48,10 +49,17 @@ sub _inititialize{
   }else{
     $self->{"qStart"} = $qStart;
     $self->{"qEnd"} = $qEnd;
-    $self->{"direction"} = 1;
   }
-  $self->{"sStart"} = $sStart;
-  $self->{"sEnd"} = $sEnd;
+  if($sEnd < $sStart){
+    ##for subject just reverse the start asnd end as is already numbered correctly (for tblastn)
+    $self->{"sStart"} = $sEnd;
+    $self->{"sEnd"} = $sStart;
+    $self->{"direction"} = 0;
+
+  }else{
+    $self->{"sStart"} = $sStart;
+    $self->{"sEnd"} = $sEnd;
+  }
 }
 
 sub getScore { my $self = shift; return $self->{'score'}; }
