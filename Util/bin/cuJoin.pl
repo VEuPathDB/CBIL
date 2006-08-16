@@ -28,6 +28,7 @@ use strict;
 use FileHandle;
 
 use CBIL::Util::EasyCsp;
+use CBIL::Util::Files;
 
 # ========================================================================
 # --------------------------- Main Subroutines ---------------------------
@@ -62,7 +63,7 @@ sub run {
    # key {}-> ref to list of matching rows
    my $tbl = {};
 
-   my $_fh = FileHandle->new($_f =~ /\.(Z|gz)$/ ? "zcat $_f|" : "<$_f");
+   my $_fh = CBIL::Util::Files::SmartOpenForRead($_f);
    while (<$_fh>) {
       chomp;
       my $cols = [ split /\t/ ];

@@ -238,7 +238,7 @@ sub single_usage {
       push(@lines,   $littleLead. 'type:     '. $O->getType()) if defined $O->getType();
       if ($O->getIsList()) {
          my $delim = $O->getListDelimiter();
-         push(@lines, $littleLead. 'list:     delimit values with a \'$delim\'' );
+         push(@lines, $littleLead. "list:     delimit values with a '$delim'" );
       }
       push(@lines,   $littleLead. 'check:    '. $O->errorCheckDescription());
       push(@lines,   $littleLead. 'default:  '. $O->getDefault()) if defined $O->getDefault();
