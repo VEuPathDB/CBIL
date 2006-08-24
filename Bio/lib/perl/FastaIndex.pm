@@ -1,7 +1,8 @@
-#!/usr/bin/perl
 
+package CBIL::Bio::FastaIndex;
 
 =pod
+
 =head1 Name
 
 C<FastaIndex> - a package which maintains and accesses an index into a
@@ -19,12 +20,15 @@ sequence.
 
 =cut
 
-package CBIL::Bio::FastaIndex;
+# ========================================================================
+# ----------------------------- Declarations -----------------------------
+# ========================================================================
+
+use strict "vars";
+use vars qw( @ISA @EXPORT);
 
 @ISA = qw ( CBIL::Util::TO );
 @EXPORT = qw ( new );
-
-use strict "vars";
 
 use English;
 use Carp;
@@ -35,8 +39,16 @@ use GDBM_File;
 use CBIL::Util::TO;
 use CBIL::Util::A;
 
-# ----------------------------------------------------------------------
+use Bio::Seq;
+
+# ========================================================================
+# ---------------------------- Public Methods ----------------------------
+# ========================================================================
+
+# --------------------------------- new ----------------------------------
+
 =pod
+
 =item new
 
 Creates a new C<FastaIndex> object.  If an index is provided, then it is
@@ -62,32 +74,33 @@ undef      otherwise.
 =cut
 
 sub new {
-  my $class = shift;
-  my $args  = shift;
+   my $class = shift;
+   my $Args  = shift;
 
-  confess if (!$args);
-  return undef unless $args->ensure('seq_file');
+   confess if (!$Args);
+   return undef unless $Args->ensure('seq_file');
 
-  my $self = CBIL::Util::TO::e;
+   my $Self = CBIL::Util::TO::e;
 
-  bless $self, $class;
+   bless $Self, $class;
   
-  $self->copy($args, 'seq_file', 'index_file');
-  $self->{index_file} = $self->{seq_file} unless $self->{index_file};
+   $Self->copy($Args, 'seq_file', 'index_file');
+   $Self->{index_file} = $Self->{seq_file} unless $Self->{index_file};
 
-  if ($args->check('open')) {
-    $self->open();
-  }
-  else {
-    $self->{index_open} = 0;
-    $self->{seq_open} = 0;
-  }
+   if ($Args->check('open')) {
+      $Self->open();
+   } else {
+      $Self->{index_open} = 0;
+      $Self->{seq_open} = 0;
+   }
   
-  return $self;
+   return $Self;
 }
 
-# ----------------------------------------------------------------------
+# --------------------------------- open ---------------------------------
+
 =pod
+
 =item open
 
 Opens readonly access to existing index and sequence file.
@@ -103,52 +116,52 @@ B<Returns>
 =cut
 
 sub open {
-  my $self = shift;
-  my $args = shift;
+   my $Self = shift;
+   my $Args = shift;
 
-  # check for required values
-  return undef unless $self->ensure('seq_file');
+   # check for required values
+   return undef unless $Self->ensure('seq_file');
 
-  # set optional values.
-  $self->safeCopy($args, 'index_file') if defined $args;
+   # set optional values.
+   $Self->safeCopy($Args, 'index_file') if defined $Args;
   
-  # do the work
-  my %index;
+   # do the work
+   my %index;
   
-  if (tie(%index, 'GDBM_File', "$self->{index_file}.db", O_READONLY, 0)) {
-    $self->{index} = \ %index;
-    $self->{index_open} = 1;
+   if (tie(%index, 'GDBM_File', "$Self->{index_file}.db", O_READONLY, 0)) {
+      $Self->{index} = \ %index;
+      $Self->{index_open} = 1;
 
-    $self->{seq_fh} = new FileHandle "<$self->{seq_file}";
+      $Self->{seq_fh} = new FileHandle "<$Self->{seq_file}";
 
-    if (defined $self->{seq_fh}) {
-      $self->{seq_open} = 1;
-      return 1;
-    }
-    else {
-      carp(sprintf("%s: could not open %s for reading because %s.\n",
-		   "FastaIndex::open",
-		   $self->{seq_file},
-		   $ERRNO));
-      untie $self->{index};
+      if (defined $Self->{seq_fh}) {
+         $Self->{seq_open} = 1;
+         return 1;
+      } else {
+         carp(sprintf("%s: could not open %s for reading because %s.\n",
+                      "FastaIndex::open",
+                      $Self->{seq_file},
+                      $ERRNO));
+         untie $Self->{index};
+         return undef;
+      }
+   } else {
+      undef $Self->{index};
+      $Self->{index_open} = 0;
+      carp(sprintf("%s: Unable to open '%s' because, %s.\n",
+                   "FastaIndex::open",
+                   $Self->{index_file},
+                   $ERRNO
+                  )
+          );
       return undef;
-    }
-  }
-  else {
-    undef $self->{index};
-    $self->{index_open} = 0;
-    carp(sprintf("%s: Unable to open '%s' because, %s.\n",
-		 "FastaIndex::open",
-		 $self->{index_file},
-		 $ERRNO
-		)
-	);
-    return undef;
-  }
+   }
 }
 
-# ----------------------------------------------------------------------
+# -------------------------------- close ---------------------------------
+
 =pod
+
 =item close
 
 Closes the connection between the object and the index and sequence files.
@@ -156,23 +169,25 @@ Closes the connection between the object and the index and sequence files.
 =cut
 
 sub close {
-  my $self = shift;
+   my $Self = shift;
 
-  return undef unless $self->ensure('index', 'seq_fh');
+   return undef unless $Self->ensure('index', 'seq_fh');
 
-  $self->{seq_fh}->close();
-  undef $self->{seq_fh};
-  $self->{seq_open} = 0;
+   $Self->{seq_fh}->close();
+   undef $Self->{seq_fh};
+   $Self->{seq_open} = 0;
 
-  untie $self->{index};
-  undef $self->{index};
-  $self->{index_open} = 0;  
+   untie $Self->{index};
+   undef $Self->{index};
+   $Self->{index_open} = 0;  
 
-  return 1;
+   return 1;
 }
 
-# ----------------------------------------------------------------------
+# ----------------------------- getSequence ------------------------------
+
 =pod
+
 =item getSequence
 
 Returns the sequence for an EST given its accession number.
@@ -187,7 +202,7 @@ C<lc>    (opt) if set then sequence is returned in lowercase.
 
 C<uc>    (opt) if set then sequence is returned in uppercase.
 
-               uc takes precedence over lc.
+uc takes precedence over lc.
 
 B<Returns>
 
@@ -196,89 +211,98 @@ obvious things if all goes well.
 
 =cut
 
-sub getSequence {
-  my $self = shift;
-  my $args = shift;
+sub getBioSeq {
+   my $Self = shift;
+   my $Args = ref $_[0] ? shift : {@_};
 
-  if (not $self->{seq_open}) {
-    carp (sprintf("%s: sequence file is not open.\n",
-		 "FastaIndex::getSequence")
-	  );
-    return undef;
-  }
+   my $_a = $Self->getSequence($Args);
 
-  elsif (not $self->{index}) {
-    carp (sprintf("%s: index file is not open.\n",
-		 "FastaIndex::getSequence")
-	  );
-    return undef;
-  }
-
-  elsif (not $args->ensure('accno')) {
-    carp (sprintf("%s: no accession number provided.\n",
-		 "FastaIndex::getSequence")
-	  );
-    return undef;
-  }
-
-  else {
-    my $ndx = $self->{index}->{$args->{accno}};
-    if (defined $ndx) {
-      if (seek($self->{seq_fh}, $ndx, 0)) {
-	
-	# get header.
-	my $header = $self->{seq_fh}->getline();
-	chomp $header;
-
-	# get sequence.
-	my $seq;
-	READ_SEQ:
-	while (not $self->{seq_fh}->eof()) {
-	  my $chunk = $self->{seq_fh}->getline();;
-	  chomp $chunk if $args->{strip};
-	  last READ_SEQ if $chunk =~ /^>/;
-	  $seq .= $chunk;
-	}
-
-	# set case as required.
-	# ..............................
-
-	if ( $args->{ uc } ) {
-	    $seq =~ tr/a-z/A-Z/;
-	}
-	
-	elsif ( $args->{ lc } ) {
-	    $seq =~ tr/A-Z/a-z/;
-	}
-	
-
-	# return assembled object;
-	# ..............................
-
-	return new CBIL::Util::A +{ hdr => $header, seq => $seq };
-
-      }
-      else {
-	carp (sprintf("%s: could not seek to %s for %s.\n",
-		     "FastaIndex::getSequence",
-		     $ndx,
-		     $args->{accno})
-	     );
-	return undef;
-      }
-    }
-    else {
-#      carp (sprintf("%s: no index entry for %s.\n",
-#		   "FastaIndex::getSequence",
-#		   $args->{accno})
-#	   );
-      return undef;
-    }
-  }
+   return Bio::Seq->new( -display_id => $Args->{accno},
+                         -desc       => $_a->{hdr},
+                         -seq        => $_a->{seq},
+                       )
 }
 
-# ----------------------------------------------------------------------
+sub getSequence {
+   my $Self = shift;
+   my $Args = ref $_[0] ? shift : {@_};
+
+   my $Rv;
+
+   if (not $Self->{seq_open}) {
+      carp (sprintf("%s: sequence file is not open.\n",
+                    "FastaIndex::getSequence")
+           );
+   } elsif (not $Self->{index}) {
+      carp (sprintf("%s: index file is not open.\n",
+                    "FastaIndex::getSequence")
+           );
+   } elsif (not defined $Args->{'accno'}) {
+      carp (sprintf("%s: no accession number provided.\n",
+                    "FastaIndex::getSequence")
+           );
+   } else {
+      my $ndx = $Self->{index}->{$Args->{accno}};
+      if (defined $ndx) {
+
+         my $seq_fh = $Self->{seq_fh};
+
+         if (seek($seq_fh, $ndx, 0)) {
+
+            # get header.
+            my $header = <$seq_fh>; chomp $header;
+
+            # get sequence.
+            my $seq;
+            while (not $seq_fh->eof()) {
+               my $chunk = <$seq_fh>;
+               last if $chunk =~ /^>/;
+               chomp $chunk if $Args->{strip};
+               $seq .= $chunk;
+            }
+
+            # set case as required.
+            # ..............................
+
+            if ( $Args->{ uc } ) {
+               $seq =~ uc($seq);
+            } elsif ( $Args->{ lc } ) {
+               $seq =~ lc($seq);
+            }
+
+            # return assembled object;
+            # ..............................
+
+            $Rv = CBIL::Util::A->new({ hdr => $header, seq => $seq });
+         }
+
+         # error handling
+         else {
+            carp (sprintf("%s: could not seek to %s for %s.\n",
+                          "FastaIndex::getSequence",
+                          $ndx,
+                          $Args->{accno})
+                 );
+         }
+      }
+
+      # error handling
+      else {
+         carp (sprintf("%s: no index entry for %s.\n",
+                       "FastaIndex::getSequence",
+                       $Args->{accno})
+              );
+      }
+   }
+
+   return $Rv;
+}
+
+
+# ----------------------------- createIndex ------------------------------
+
 =pod
+
 =item createIndex
 
 Creates an index for the object\'s sequence file.
@@ -305,90 +329,90 @@ Here\'s one example of an invocation using an anonymous get_key
 subroutine and no echoing.  The get_key subroutine extracts the first
 gbnnnn word from the defline.
 
-  $o_fastaIndex->createIndex(new CBIL::Util::A +{ echo => 0,
-				       get_key => sub { 
-					 $_[0] =~ /(gb\d+)/; 
-					 $1; 
-				       }
-				     })
+$o_fastaIndex->createIndex(new CBIL::Util::A +{ echo => 0,
+                                                get_key => sub { 
+                                                   $_[0] =~ /(gb\d+)/; 
+                                                   $1; 
+                                                }
+                                              })
 
 =cut
 
 sub createIndex {
-  my $self = shift;
-  my $args = shift;
+   my $Self = shift;
+   my $Args = shift;
 
-  # check for required stuff
-  return undef unless $self->ensure('seq_file')
-    and $args->ensure('get_key');
+   # check for required stuff
+   return undef unless $Self->ensure('seq_file')
+   and $Args->ensure('get_key');
 
-  # set optional stuff
-  $self->safeCopy($args, 'index_file');
+   # set optional stuff
+   $Self->safeCopy($Args, 'index_file');
 
-  # get access to the index and sequence file.
+   # get access to the index and sequence file.
 
-  my %index;
+   my %index;
 
-  system "/bin/rm -f $self->{seq_file}.pag";
-  system "/bin/rm -f $self->{seq_file}.dir";
-  system "/bin/rm -f $self->{seq_file}.db";
+   system "/bin/rm -f $Self->{seq_file}.pag";
+   system "/bin/rm -f $Self->{seq_file}.dir";
+   system "/bin/rm -f $Self->{seq_file}.db";
 
-  system "touch $self->{seq_file}.pag";
-  system "touch $self->{seq_file}.dir";
+   system "touch $Self->{seq_file}.pag";
+   system "touch $Self->{seq_file}.dir";
 
-  if (tie(%index, 'GDBM_File', "$self->{index_file}.db", O_RDWR | O_CREAT, 0644)) {
-    $self->{index} = \ %index;
-    $self->{index_open} = 1;
+   if (tie(%index, 'GDBM_File', "$Self->{index_file}.db", O_RDWR | O_CREAT, 0644)) {
+      $Self->{index} = \ %index;
+      $Self->{index_open} = 1;
 
-    # open the sequence file
-    $self->{seq_fh} = new FileHandle "<$self->{seq_file}";
-    if (defined $self->{seq_fh}) {
-      $self->{seq_open} = 1;
-    }
-    else {			# could not open sequence file.
-      carp(sprintf("%s: could not open %s for reading because %s.\n",
-		  "FastaIndex::createIndex",
-		   $self->{seq_file},
-		   $ERRNO));
-      untie $self->{index};
-      return undef;
-    }
-  }
-
-  else {			# could not open index.
-    undef $self->{index};
-    $self->{index_open} = 0;
-    carp(sprintf("%s: Unable to tie index '%s' because, %s.\n",
-		 "FastaIndex::createIndex",
-		 $self->{index_file},
-		 $ERRNO
-		)
-	);
-    return undef;
-  }
-  
-  # create the index.
-  my $ndx;
-
-  #print "EOF " . $self->{seq_fh}->eof() . "\n";
-
-  while (not $self->{seq_fh}->eof()) {
-    $ndx = tell $self->{seq_fh};
-    my $line = $self->{seq_fh}->getline();
-    #print ">>> $line";
-    if ($line =~ /^>/) {
-      my $key;
-      if ($key = &{$args->{get_key}}($line)) {
-	$self->{index}->{$key} = $ndx;
-	print "$key, $ndx\n" if $args->{echo};
+      # open the sequence file
+      $Self->{seq_fh} = new FileHandle "<$Self->{seq_file}";
+      if (defined $Self->{seq_fh}) {
+         $Self->{seq_open} = 1;
+      } else {                  # could not open sequence file.
+         carp(sprintf("%s: could not open %s for reading because %s.\n",
+                      "FastaIndex::createIndex",
+                      $Self->{seq_file},
+                      $ERRNO));
+         untie $Self->{index};
+         return undef;
       }
-    }
-  }
+   } else {                     # could not open index.
+      undef $Self->{index};
+      $Self->{index_open} = 0;
+      carp(sprintf("%s: Unable to tie index '%s' because, %s.\n",
+                   "FastaIndex::createIndex",
+                   $Self->{index_file},
+                   $ERRNO
+                  )
+          );
+      return undef;
+   }
+  
+   # create the index.
+   my $ndx;
 
-  $self->close();
+   #print "EOF " . $Self->{seq_fh}->eof() . "\n";
+
+   while (not $Self->{seq_fh}->eof()) {
+      $ndx = tell $Self->{seq_fh};
+      my $line = $Self->{seq_fh}->getline();
+      #print ">>> $line";
+      if ($line =~ /^>/) {
+         my $key;
+         if ($key = &{$Args->{get_key}}($line)) {
+            $Self->{index}->{$key} = $ndx;
+            print "$key, $ndx\n" if $Args->{echo};
+         }
+      }
+   }
+
+   $Self->close();
 }
 
+# ------------------------------- getCount -------------------------------
+
 =pod
+
 =item getCount
 
 Returns the number of sequences in the file.  File must be indexed first.
@@ -396,12 +420,14 @@ Returns the number of sequences in the file.  File must be indexed first.
 =cut
 
 sub getCount {
-  my $self = shift;
-  return scalar(keys %{$self->{index}});
+   my $Self = shift;
+   return scalar(keys %{$Self->{index}});
 }
 
-# ----------------------------------------------------------------------
+# ----------------------------- gk_firstWord -----------------------------
+
 =pod
+
 =item gk_firstWord
 
 returns the first word following the '>' from a defline.
@@ -409,11 +435,14 @@ returns the first word following the '>' from a defline.
 =cut
 
 sub gk_firstWord {
-  $_[0] =~ /^>\s*(\S+)/;
-  return $1;
+   $_[0] =~ /^>\s*(\S+)/;
+   return $1;
 }
 
+# --------------------------- gk_alphaNumeric ----------------------------
+
 =pod
+
 =item gk_alphaNumeric
 
 returns words of the form [a-zA-Z]+[0-9]+.
@@ -421,14 +450,28 @@ returns words of the form [a-zA-Z]+[0-9]+.
 =cut
 
 sub gk_alphaNumeric {
-  $_[0] =~ /([a-zA-Z]+[0-9]+)/;
-  return $1;
+   $_[0] =~ /([a-zA-Z]+[0-9]+)/;
+   return $1;
 }
 
 # ----------------------------------------------------------------------
+
 =pod
+
 =back
+
 =cut
+
+sub _randomString {
+   my $Rv = join('',
+                 map { chr(ord('a') + rand(26)) } (1 .. 1000)
+                );
+   return $Rv;
+}
+
+# ========================================================================
+# ---------------------------- End of Package ----------------------------
+# ========================================================================
 
 1;
 
@@ -439,29 +482,29 @@ sub gk_alphaNumeric {
 
 Here is some sample code that creates and queries a database.
 
-  use CBIL::Util::TO;
-  use CBIL::Bio::FastaIndex;
+use CBIL::Util::TO;
+use CBIL::Bio::FastaIndex;
 
-  my $o_FastaIndex = new FastaIndex(new CBIL::Util::A +{ seq_file => "test.seq" });
+my $o_FastaIndex = new FastaIndex(new CBIL::Util::A +{ seq_file => "test.seq" });
 
-  # create the index using a simple index selection subroutine.
-  $o_FastaIndex->createIndex( 
-			     new CBIL::Util::A +{ echo => 0,
-				       get_key => \&gk_firstWord
-				     });
+# create the index using a simple index selection subroutine.
+$o_FastaIndex->createIndex( 
+                           new CBIL::Util::A +{ echo => 0,
+                                                get_key => \&gk_firstWord
+                                              });
 
-  # open and query the file.
-  $o_FastaIndex->open();
+# open and query the file.
+$o_FastaIndex->open();
 
-  while (1) {
-    print ": ";
-    my $accno = <STDIN>;
-    chomp $accno;
-    my $est = $o_FastaIndex->getSequence(new CBIL::Util::A +{ accno => $accno });
-    $est->dump() if $est;
-  }
+while (1) {
+   print ": ";
+   my $accno = <STDIN>;
+   chomp $accno;
+   my $est = $o_FastaIndex->getSequence(new CBIL::Util::A +{ accno => $accno });
+   $est->dump() if $est;
+}
 
-  $o_FastaIndex->close();
+$o_FastaIndex->close();
 
 =cut
 
