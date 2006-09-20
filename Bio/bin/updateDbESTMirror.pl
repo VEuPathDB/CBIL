@@ -118,10 +118,10 @@ sub delete {
   while (<F>){
     chomp $_;
     my $s = "delete from $t where $ids{$t} = $_";
-    $dbh->do($s) or die $dbh->errstr, $s, "\n";
+    $dbh->do($s) or die "Couldn't delete rows with $s\n    using file $f\n" . $dbh->errstr . "\n";
   }
   my $insert = "insert into dbest.processedfile name Values ('$f')";
-  $dbh->do("$insert");
+  $dbh->do("$insert") or die "Couldn't insert with $insert" . $dbh->errstr . "\n";
   $dbh->commit();
   close(F);
 }
@@ -157,21 +157,21 @@ sub insert {
 
     if (!($t =~ /dbest.cmnt|dbest.sequence/)) {
       my $del = "delete from $t where $ids{$t} = $vals[0]";
-      $dbh->do($del) or die $dbh->errstr . $del;
+      $dbh->do($del) or die "Couldn't delete with $del" . $dbh->errstr . "\n";
     }
     else {
       if($vals[1] == 0 ) {
 	my $del = "delete from $t where $ids{$t} = $vals[0]";
-	$dbh->do($del) or die $dbh->errstr . $del;
+	$dbh->do($del) or die "Couldn't delete with $del" . $dbh->errstr . "\n";
       }
     }
     my $sql = "insert into $t values (" . (join ",",@place_holders) . ")";
 
-    $dbh->do($sql,undef,@vals) or die $dbh->errstr . 
+    $dbh->do($sql,undef,@vals) or die $dbh->errstr ,$sql, . 
       "$sql\nVALS=(" . (join(', ',(map {'\'' . $_ . '\''}  @vals))) . ")\nline= $_\n";
   }
   my $insert = "insert into dbest.processedfile name Values ('$f')";
-  $dbh->do("$insert");
+  $dbh->do("$insert") or die "Couldn't insert using $insert" . $dbh->errstr . "\n";
   $dbh->commit();
   close(F);
   my $end = time;
