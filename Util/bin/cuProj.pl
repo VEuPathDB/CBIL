@@ -20,7 +20,7 @@ the column.
 # ----------------------------- Declaration ------------------------------
 # ========================================================================
 
-use constant DEBUG_FLAG => 0;
+use strict;
 
 use CBIL::Util::EasyCsp;
 
@@ -34,74 +34,93 @@ run(cla());
 # --------------------------------- run ----------------------------------
 
 sub run {
-  my $Cla = shift;
+   my $Cla = shift;
 
-  # assume string format, but pick up other requests
-  my @Cols_h;
-  foreach my $spec (@{$Cla->{Columns}}) {
-    my $format = '%s';
-    if ($spec =~ /(%.+)/) {
-      $format = $1;
-      $spec =~ s/%.+//;
-    }
+   # assume string format, but pick up other requests
+   my @Cols_h;
+   foreach my $spec (@{$Cla->{Columns}}) {
+      my $format = '%s';
+      if ($spec =~ /(%.+)/) {
+	 $format = $1;
+	 $spec =~ s/%.+//;
+      }
 
-    my @indices;
-    if ($spec =~ /^(\d+)-(\d+)$/) {
-      @indices = ($1 .. $2);
-    }
-    elsif ($spec =~ /^\d+$/) {
-      @indices = ($spec);
-    }
+      my @indices;
+      if ($spec =~ /^(\d+)-(\d+)$/) {
+	 @indices = ($1 .. $2);
+      } elsif ($spec =~ /^\d+$/) {
+	 @indices = ($spec);
+      } elsif ($spec =~ /^"(.*)"$/) {
+	 $format = $1;
+	 @indices = (0);
+      }
 
-    foreach (@indices) {
-      push(@Cols_h, { Index => $_, Format => $format });
-    }
-  }
+      foreach (@indices) {
+	 push(@Cols_h, { Index => $_, Format => $format });
+      }
+   }
 
-  # process input stream
-  # ......................................................................
+   # process input stream
+   # ......................................................................
 
-  my $line = 0;
-  while ( <> ) {
-    $line++;
+   my %seen_b = ();
 
-    chomp;
-    my @cols = ($line, split(/$Cla->{InDelimRx}/, $_));
+   my $line = 0;
+   while ( <> ) {
+      $line++;
 
-    print join($Cla->{OutDelim},
-	       map {
-                 sprintf $_->{Format}, $cols[$_->{Index}]
-	       } @Cols_h
-	      ), "\n";
-  }
+      chomp;
+      my @cols = ($line, split(/$Cla->{InDelimRx}/, $_));
+
+      my $text = join($Cla->{OutDelim},
+		      map {
+			  sprintf $_->{Format}, $cols[$_->{Index}]
+			  } @Cols_h
+		      );
+
+      # just print it.
+      if (!$Cla->{Unique}) {
+	  print "$text\n";
+      }
+
+      # only print if we've never seen this before.
+      elsif (!$seen_b{$text}++) {
+	 print "$text\n";
+      }
+   }
 }
 
 # --------------------------------- cla ----------------------------------
 
 sub cla {
-  my $Rv = CBIL::Util::EasyCsp::DoItAll
-    ( [ { h => 'select these 1-based columns: column[:format]',
-	  t => CBIL::Util::EasyCsp::StringType,
-	  l => 1,
-	  o => 'Columns',
-	  d => '1',
-	},
+   my $Rv = CBIL::Util::EasyCsp::DoItAll
+   ( [ { h => 'select these 1-based columns: column[:format]',
+	 t => CBIL::Util::EasyCsp::StringType,
+	 l => 1,
+	 o => 'Columns',
+	 d => '1',
+       },
 
-	{ h => 'input stream is delimited by this RX',
-	  t => CBIL::Util::EasyCsp::StringType,
-	  o => 'InDelimRx',
-	  d => "\t",
-	},
+       { h => 'input stream is delimited by this RX',
+	 t => CBIL::Util::EasyCsp::StringType,
+	 o => 'InDelimRx',
+	 d => "\t",
+       },
 
-	{ h => 'delimit output with this string',
-	  t => CBIL::Util::EasyCsp::StringType,
-	  o => 'OutDelim',
-	  d => "\t",
-	},
-       ],
+       { h => 'delimit output with this string',
+	 t => CBIL::Util::EasyCsp::StringType,
+	 o => 'OutDelim',
+	 d => "\t",
+       },
 
-      'project and reformat columns from the input stream'
-    ) || exit 0;
+       { h => 'just print the unique combos seen',
+	 t => CBIL::Util::EasyCsp::BooleanType(),
+	 o => 'Unique',
+       },
+     ],
 
-  return $Rv;
+     'project and reformat columns from the input stream'
+   ) || exit 0;
+
+   return $Rv;
 }

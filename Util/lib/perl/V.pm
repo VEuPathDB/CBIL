@@ -17,59 +17,67 @@ use strict 'vars';
 # ======================================================================
 
 sub max {
-	my $rv = shift;
-	foreach ( @_ ) {
-		$rv = $_ if $rv < $_;
-	}
-	return $rv;
+   my $rv = shift;
+   foreach ( @_ ) {
+      $rv = $_ if $rv < $_;
+   }
+   return $rv;
 }
 
 sub min {
-	my $rv = shift;
-	foreach ( @_ ) {
-		$rv = $_ if $rv > $_;
-	}
-	return $rv;
+   my $rv = shift;
+   foreach ( @_ ) {
+      $rv = $_ if $rv > $_;
+   }
+   return $rv;
 }
 
 sub intersection {
-	my $alist = shift;
-	my $blist = shift;
+   my $alist = shift;
+   my $blist = shift;
 
-	my $keys;
+   my $keys;
 
-	foreach ( @{ $alist } ) { $keys->{ $_ } = 1 }
-	foreach ( @{ $blist } ) { $keys->{ $_ }++ }
+   foreach ( @{ $alist } ) {
+      $keys->{ $_ } = 1;
+   }
+   foreach ( @{ $blist } ) {
+      $keys->{ $_ }++;
+   }
 
-	return [ grep { $keys->{ $_ } == 2 } keys %{ $keys } ];
+   return [ grep { $keys->{ $_ } == 2 } keys %{ $keys } ];
 }
 
 sub sum {
-	my $rv = 0;
-	foreach ( @_ ) { $rv += $_ }
-	$rv
+   my $rv = 0;
+   foreach ( @_ ) {
+      $rv += $_;
+   }
+   $rv
 }
 
 sub product {
-	my $rv = 1;
-	foreach ( @_ ) { $rv *= $_ }
-	$rv
+   my $rv = 1;
+   foreach ( @_ ) {
+      $rv *= $_;
+   }
+   $rv
 }
 
 sub entropy {
-	my $rv = 0;
-	foreach ( @_ ) {
-		next unless $_ > 0;
-		$rv -= $_ * log( $_ );
-	}
-	$rv /= log( 2.0 );
-	$rv
+   my $rv = 0;
+   foreach ( @_ ) {
+      next unless $_ > 0;
+      $rv -= $_ * log( $_ );
+   }
+   $rv /= log( 2.0 );
+   $rv
 }
 
 sub average {
-	my $n  = scalar @_;
-	return undef unless $n > 0;
-	sum( @_ ) / scalar @_
+   my $n  = scalar @_;
+   return undef unless $n > 0;
+   sum( @_ ) / scalar @_
 }
 
 sub median {
@@ -79,24 +87,38 @@ sub median {
    if ($n % 2 == 0) {
       my $i = $n/2;
       return ($sortedData[$i] + $sortedData[$i-1]) / 2;
-   }
-   else {
+   } else {
       return $sortedData[($n-1)/2];
    }
 }
 
+sub variance {
+   my $Rv = 0;
+
+   my $n       = scalar @_;
+   my $average = average(@_);
+
+   foreach (@_) {
+      $Rv += ($_ - $average)**2;
+   }
+
+   $Rv /= ($n-1);
+
+   return $Rv;
+}
+
 sub dot_product {
-	my $av = shift;
-	my $bv = shift;
+   my $av = shift;
+   my $bv = shift;
 
-	my $n = min( scalar @{ $av }, scalar @{ $bv } );
+   my $n = min( scalar @{ $av }, scalar @{ $bv } );
 
-	my $rv = 0;
-	for ( my $i = 0; $i < $n; $i++ ) {
-		$rv += $av->[ $i ] * $bv->[ $i ] / $n;
-	}
+   my $rv = 0;
+   for ( my $i = 0; $i < $n; $i++ ) {
+      $rv += $av->[ $i ] * $bv->[ $i ] / $n;
+   }
 
-	$rv
+   $rv
 }
 
 # ----------------------------------------------------------------------

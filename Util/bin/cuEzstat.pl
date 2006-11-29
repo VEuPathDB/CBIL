@@ -104,7 +104,7 @@ sub cla {
        },
 
        { h => 'format statistics with this C-style format spec',
-         t => CBIL::Util::EasyCsp::BooleanType(),
+         t => CBIL::Util::EasyCsp::StringType(),
          o => 'format',
          d => '%0.3f',
        },
@@ -112,6 +112,11 @@ sub cla {
        { h => 'put label in the last column',
          t => CBIL::Util::EasyCsp::BooleanType(),
          o => 'LabelLast',
+       },
+
+       { h => 'print data values',
+	 t => CBIL::Util::EasyCsp::BooleanType(),
+	 o => 'printData',
        },
      ],
      'compute statistics of (tagged) numeric values'
@@ -340,6 +345,7 @@ sub tabulateData {
                  $median_r, $mean_r, $std_r, $var_r, $d_min, $d_max, $d_span, $PtsN
                ),
                $Cla->{LabelLast} ? ($Tag) : (),
+	       $Cla->{printData} ? join(',', @$Data) : ()
              ), "\n";
 }
 

@@ -14,8 +14,8 @@ Implements a simple join operation between two or more files.
 
 The FILE is read in and indexed using the values in column --FileCol.
 Then the STREAM or OTHER_FILES are read and are joined with rows from
-FILE if their --StreamCol value matches a row in FILE.  If --Anti is
-used, then STREAM rows that do not match are output.
+FILE if their --StreamCol value(s) matches a row in FILE.  If --Anti
+is used, then STREAM rows that do not match are output.
 
 =cut
 
@@ -61,13 +61,15 @@ sub run {
    # ........................................
 
    # key {}-> ref to list of matching rows
-   my $tbl = {};
+   my %tbl = ();
 
    my $_fh = CBIL::Util::Files::SmartOpenForRead($_f);
    while (<$_fh>) {
       chomp;
       my $cols = [ split /\t/ ];
-      push( @{ $tbl->{ $cols->[ $fileCol_i ] } }, $cols );
+      #push( @{ $tbl{ $cols->[ $fileCol_i ] } }, $cols );
+      my $key  = extractJoinKey($Cla, $Cla->{FileCol}, $cols);
+      push( @{$tbl{$key}}, $cols );
    }
    $_fh->close if $_fh;
 
@@ -80,14 +82,19 @@ sub run {
       # split on tab to get columns
       my @cols = split /\t/;
 
+      # get a key from the stream cols.
+      my $key = extractJoinKey($Cla, $Cla->{StreamCol}, \@cols);
+
       # in NOT mode; look for novel ids
       if ($not) {
-         print "$_\n" unless $tbl->{$cols[$streamCol_i]};
+         #print "$_\n" unless $tbl{$cols[$streamCol_i]};
+         print "$_\n" unless $tbl{$key};
       }
 
       # JOIN mode; report all matches
       else {
-         foreach my $row (@{$tbl->{$cols[$streamCol_i]}}) {
+         #foreach my $row (@{$tbl{$cols[$streamCol_i]}}) {
+         foreach my $row (@{$tbl{$key}}) {
             print join( "\t", @cols, @$row ), "\n";
          }
       }
@@ -100,12 +107,14 @@ sub cla {
    my $Rv = CBIL::Util::EasyCsp::DoItAll
    ( [ { h => 'join on this column in the listed file',
          t => CBIL::Util::EasyCsp::IntType(),
+	 l => 1,
          o => 'FileCol',
          d => 1,
        },
 
        { h => 'join on this column in the stream or secondary files',
          t => CBIL::Util::EasyCsp::IntType(),
+	 l => 1,
          o => 'StreamCol',
          d => 1,
        },
@@ -117,6 +126,22 @@ sub cla {
      ],
      'joins (or not) a file and a stream of tab-delimited rows'
    ) || exit 0;
+
+   return $Rv;
+}
+
+# ========================================================================
+# -------------------------- Support Functions ---------------------------
+# ========================================================================
+
+# ---------------------------- extractJoinKey ----------------------------
+
+sub extractJoinKey {
+   my $Cla  = shift;
+   my $Cols = shift;
+   my $Data = shift;
+
+   my $Rv = join("\t", map { $Data->[$_-1] } @$Cols);
 
    return $Rv;
 }
