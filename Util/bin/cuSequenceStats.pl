@@ -65,18 +65,18 @@ sub run {
 
         my @bases      = grep { /[acgt]/i } @seq;
         my $bases_n    = scalar @bases;
-	my %bases_n    = ();
+        my %bases_n    = ();
 
         my $cgs_n      = 0;
         my $cg_percent = 0;
         my $cg_bar     = '';
 
-	# count the number of each base in sequence
-	foreach (@seq) {
-	    my $b = uc $_;
-	    $b = 'N' unless $b =~ /[ACGT]/;
-	    $bases_n{$b}++;
-	}
+        # count the number of each base in sequence
+        foreach (@seq) {
+           my $b = uc $_;
+           $b = 'N' unless $b =~ /[ACGT]/;
+           $bases_n{$b}++;
+        }
 
         # make the CG bar
         if ($bases_n > 0) {
@@ -87,10 +87,11 @@ sub run {
 
         print join($Cla->{outputDelimiter},
                    $id,
+                   $length,
                    sprintf('%0.2f', $n_percent),
                    sprintf('%0.2f', $cg_percent),
                    $bases_n,
-		   (map { $bases_n{$_} || 0 } qw( A C G T N ) ),
+                   (map { $bases_n{$_} || 0 } qw( A C G T N ) ),
                    $cg_bar,
                    $Cla->{outputSequence} ? ($_) : (),
                    $_seq->desc(),
