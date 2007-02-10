@@ -4,8 +4,6 @@
 
 =head1 Synopsis
 
-  cbSelectorMatchingBaseComps.pl [OPTIONS] TEMPLATE_SEQUENCES TARGET_SEQUENCES > MATCHING_SEQUENCES
-
 =head1 Purpose
 
 Use this program to select sequences from the C<target_sequences_file>
@@ -98,6 +96,7 @@ sub cla {
        },
 
      ],
+     "$0 [OPTIONS] TEMPLATE_SEQUENCES TARGET_SEQUENCES > MATCHING_SEQUENCES"
    ) || exit 0;
 
    $Rv->{OutFormat} = $Rv->{InFormat} unless defined $Rv->{OutFormat};
