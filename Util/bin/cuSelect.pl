@@ -155,6 +155,9 @@ sub getValue {
 	 if ( $Tag =~ /^\%(\d+)$/ ) {
 			return $_[$1];
 	 }
+   elsif ($Tag =~ /^\%\%(\d+)$/ ) {
+      return length($_[$1]);
+   }
 	 else {
 			return $Tag
 	 }
