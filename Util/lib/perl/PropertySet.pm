@@ -39,7 +39,7 @@ sub new {
       while (<F>) {
         chomp;
         s/\s+$//;
-        next if (!$_ || /^#/);
+        next if (!$_ || /^\s*#/);
 	if (! /(\S+?)\s*=\s*(.+)/) {
 	  print STDERR "Can't parse '$_' in property file '$propsFile'\n";
 	  $fatalError = 1;
