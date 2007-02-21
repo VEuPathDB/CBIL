@@ -146,7 +146,7 @@ sub parseBlast{
       }
       ##end remaining calculations
     }
-    if (/^\s*Score\s=\s(\d+).*=\s(\S+)$/ || ($rpsblast && /^\s*Score\s*=\s*\d+\sbits\s\((\d+).*=\s(\S+)$/)) {
+    if (/^\s*Score\s=\s+(\d+).*?=\s(\S+)(, Group = \d+)?$/ || ($rpsblast && /^\s*Score\s*=\s*\d+\sbits\s\((\d+).*=\s(\S+)$/)) {
       my $tmpScore = $1;
       my $tmpValue = $2;
 
