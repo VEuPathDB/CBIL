@@ -78,7 +78,7 @@ sub parseBlast{
     } elsif (/^\s+\((\S+)\s+letters/) {
       $self->setQueryLength($1); ##query length
     }
-    if (/^\>$regex/ || /ctxfactor/ || ($rpsblast && /^Lambda/)) { ##ctxfactor catches the last one...Lambda last of rpsblast
+    if (/^\>$regex/ || /ctxfactor/ || /^Lambda/) { ##ctxfactor catches the last one...Lambda last of rpsblast
       my $sbjctId;
       $desc = "";
       if (/^\>$regex/){
