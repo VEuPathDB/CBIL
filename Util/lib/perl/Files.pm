@@ -49,6 +49,7 @@ sub AbsPath {
 
 sub SmartOpenForRead {
    my $File = shift;
+   my $Hint = shift || 'file';
 
    my $Rv;
    my $file;
@@ -84,7 +85,7 @@ sub SmartOpenForRead {
       $Rv = FileHandle->new($file);
    }
 
-   $Rv || die "Can not open '$File' for reading as '$file': $!";
+   $Rv || die "Can not open ${Hint} '$File' for reading as '$file': $!";
 
    return $Rv;
 }
@@ -93,32 +94,40 @@ sub SmartOpenForRead {
 
 sub SmartOpenForWrite {
    my $File = shift;
+   my $Hint = shift || 'file';
 
    my $Rv;
 
+   my $file;
+
    if ($File eq '-') {
-      $Rv = FileHandle->new('>-');
+      $file = '>-';
    }
 
    elsif ($File =~ /\.Z$/) {
-      $Rv = FileHandle->new("|compress -c > $File");
+      $file = "|compress -c > $File";
    }
 
    elsif ($File =~ /\.gz$/) {
-      $Rv = FileHandle->new("| gzip -f -c > $File");
+      $file = "| gzip -f -c > $File";
    }
 
    elsif ($File =~ /:/) {
       my ($host, $remoteSpec) = split(':', $File);
-      my $cmd = "|ssh $host cat \\> $remoteSpec";
-      $Rv = FileHandle->new($cmd);
+      $file = "|ssh $host cat \\> $remoteSpec";
+   }
+
+   elsif ($File =~ /^\|/ || $File =~ /^>/) {
+      $file = $File;
    }
 
    else {
-      $Rv = FileHandle->new(">$File");
+      $file = ">$File";
    }
 
-   $Rv || die "Can not open '$File' for writing : $!";
+   $Rv = FileHandle->new($file);
+
+   $Rv || die "Can not open $Hint '$File' for writing as '$file': $!";
 
    return $Rv;
 }
