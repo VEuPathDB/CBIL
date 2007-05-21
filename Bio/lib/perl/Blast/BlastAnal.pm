@@ -60,7 +60,7 @@ sub parseBlast{
   my $inDesc = 0;
   my $identities;
   my $positives;
-  die 'these are the args to parseBlast($minLength,$minPercent,$minPvalue,$regex,$rpsblast,$minPercentLength)\n' if scalar(@{$blast}) <= 10;
+  die "these are the args to parseBlast($minLength,$minPercent,$minPvalue,$regex,$rpsblast,$minPercentLength)\n" if scalar(@{$blast}) <= 10;
   foreach (@{$blast}) {
     #    print STDERR $_;
     if (/^(\S*BLAST\S+)/){   ##gets the algorighm used for the query...
