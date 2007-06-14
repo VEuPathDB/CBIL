@@ -40,7 +40,9 @@ sub addRecord  { push(@{$_[0]->{Records}},$_[1]); $_[0] }
 sub getEntries { $_[0]->{Entries} }
 sub setEntries { $_[0]->{Entries} = $_[1]; $_[0] }
 
-sub setEntry   { $_[0]->{Entries}->{$_[1]->getId} = $_[1]; $_[0] }
+sub setEntry   { #$_[0]->{Entries}->{$_[1]->getId()}        = $_[1];
+                 $_[0]->{Entries}->{$_[1]->getAccession()} = $_[1];
+                 $_[0] }
 sub getEntry   { $_[0]->{Entries}->{$_[1]} }
 
 1;

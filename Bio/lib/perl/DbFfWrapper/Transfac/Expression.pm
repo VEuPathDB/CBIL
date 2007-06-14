@@ -92,6 +92,20 @@ sub parse {
 
 			$Self->setText($T);
 	 }
+
+   # short form in v10.2
+	 elsif (my @parts = $T =~ /(.*), \s*(.*), \s*(.*), \s*(.*); \s*([^;]+);?/x) {
+			$Self->setOrgan                ($parts[0]);
+			$Self->setCellName             ($parts[1]);
+			$Self->setSystem               ($parts[2]);
+			$Self->setDevelopmentalStage   ($parts[3]);
+			$Self->setRelativeLevel        ($parts[4]);
+			$Self->setDetectionMethod      ($parts[5]);
+			$Self->setMolecule             ($parts[6]);
+			$Self->setReference            ($parts[7]);
+
+			$Self->setText($T);
+	 }
 	 else {
 			print STDERR join("\t", ref $Self, 'BadFormat', $T), "\n";
 	 }

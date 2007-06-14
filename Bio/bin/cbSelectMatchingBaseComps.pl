@@ -46,8 +46,14 @@ sub run {
    my $template_f = shift @ARGV;
    my $target_f   = shift @ARGV;
 
-   my %templateProb_dict = _loadCompositionStats( $Cla, -file => $template_f);
-   my %targetList_dict   = _loadCompositionStats( $Cla, -file => $target_f  );
+   my %templateProb_dict = _loadCompositionStats( $Cla,
+                                                  -file => $template_f,
+                                                  -skip => {},
+                                                );
+   my %targetList_dict   = _loadCompositionStats( $Cla,
+                                                  -file => $target_f,
+                                                  -skip => $templateProb_dict{Ids},
+                                                );
 
    my %idsToTake_dict = _selectIds( $Cla,
                                     -template => \%templateProb_dict,
@@ -89,6 +95,12 @@ sub cla {
          o => 'sequenceNumber',
        },
 
+       { h => 'factor more (or less) sequences to select than found in input file',
+         t => CBIL::Util::EasyCsp::IntType(),
+         d => 20,
+         o => 'sequenceFold',
+       },
+
        { h => 'bin C+G fraction to this resolution',
          t => CBIL::Util::EasyCsp::FloatType(),
          o => 'resolution',
@@ -126,7 +138,7 @@ of sequences, or the actual ids, in each bin are counted or collected.
 
 sub _loadCompositionStats {
    my $Cla  = shift;
-   my %Args = @_; # ( -file => string, -counts => boolean );
+   my %Args = @_; # ( -file => string, -counts => boolean, -skip => dict );
 
    my %Rv;
 
@@ -148,8 +160,12 @@ sub _loadCompositionStats {
       my @cols = split /\t/;
 
       my $id = $cols[0];
-      my $cg = int($cols[2]/$rez + 0.5) * $rez;
 
+      next if $Args{-skip}->{$id};
+
+      my $cg = int($cols[3]/$rez + 0.5) * $rez;
+
+      $Rv{Ids}->{$id}++;
       $Rv{Count}->{$cg}++;
       push(@{$Rv{List}->{$cg}}, $id);
    }
@@ -190,10 +206,14 @@ sub _selectIds {
                                           );
    my @bins         = sort { $a <=> $b } keys %bins_dict;
 
+   my $template_n   = $Args{-template}->{Total};
    my $targets_n    = $Args{-target}->{Total};
 
    # determine maximum number of total sequences.
-   my $maxPossible_n = CBIL::Util::V::min($Cla->{sequenceNumber}, $targets_n);
+   my $maxPossible_n = CBIL::Util::V::min($Cla->{sequenceNumber},
+                                          $Cla->{sequenceFold} * $template_n,
+                                          $targets_n,
+                                         );
 
    foreach my $bin (@bins) {
 
@@ -204,6 +224,13 @@ sub _selectIds {
          my $n = int($possible_n / $Args{-template}->{Prob}->{$bin});
          $maxPossible_n = $n if $n < $maxPossible_n;
       }
+   }
+
+   if ($maxPossible_n < $template_n) {
+      $maxPossible_n = $template_n;
+      print STDERR join("\t", 'TOOFEW',
+                        "Set target number of sequences to $template_n."
+                       ), "\n";
    }
 
    # select sequence ids for each bin
@@ -224,7 +251,7 @@ sub _selectIds {
          foreach (@selectedIds) {
             $Rv{$_} = 1;
          }
-         print STDERR join("\t", $bin, $take_n, @selectedIds), "\n";
+         print STDERR join("\t", $bin, $take_n, $Cla->{verbose} ? @selectedIds : ()), "\n";
       }
       else {
          print STDERR join("\t", $bin, $take_n ), "\n";

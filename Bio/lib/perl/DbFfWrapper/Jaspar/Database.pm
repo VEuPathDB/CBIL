@@ -111,23 +111,39 @@ sub _loadFactorsAndPwms {
    my $Self = shift;
    my $Path = shift;
 
-   my $_f   = "$Path/MatrixDir/matrix_list.txt";
-   my $_fh  = CBIL::Util::Files::SmartOpenForRead($_f);
-   while (<$_fh>) {
-      chomp;
-      my $_factor = CBIL::Bio::DbFfWrapper::Jaspar::Factor->new()->initFromString($_);
-      $Self->getFactors()->{$_factor->getAccession()} = $_factor;
+   my $base_p = "$Path/MatrixDir";
+
+   my @places;
+   if (-e "$base_p/JASPAR_CORE") {
+      @places = ( 'JASPAR_CORE', 'JASPAR_FAM' );
    }
-   $_fh->close();
 
-   my @_factors = values %{$Self->getFactors()};
-   foreach my $_factor (@_factors) {
+   else {
+      @places = '';
+   }
 
-      my $_pwm = CBIL::Bio::DbFfWrapper::Jaspar::Matrix
-      ->new( Accession => $_factor->getAccession())
-      ->initFromFile($Path. '/MatrixDir/'. $_factor->getAccession(). '.pfm');
+   foreach my $place (@places) {
 
-      $Self->getMatrices()->{$_pwm->getAccession()} = $_pwm;
+      my $_f   = "$Path/MatrixDir/$place/matrix_list.txt";
+      my $_fh  = CBIL::Util::Files::SmartOpenForRead($_f);
+
+      my @_factors;
+
+      while (<$_fh>) {
+         chomp;
+         my $_factor = CBIL::Bio::DbFfWrapper::Jaspar::Factor->new()->initFromString($_);
+         push(@_factors, $_factor);
+         $Self->getFactors()->{$_factor->getAccession()} = $_factor;
+      }
+      $_fh->close();
+
+      foreach my $_factor (@_factors) {
+         my $_pwm = CBIL::Bio::DbFfWrapper::Jaspar::Matrix
+         ->new( Accession => $_factor->getAccession())
+         ->initFromFile($Path. "/MatrixDir/$place/". $_factor->getAccession(). '.pfm');
+
+         $Self->getMatrices()->{$_pwm->getAccession()} = $_pwm;
+      }
    }
 
    return $Self;

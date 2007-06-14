@@ -90,9 +90,9 @@ sub setTrrdId { $_[0]->{TrrdId} = $_[1]; $_[0] }
 sub getCompelId { $_[0]->{CompelId} }
 sub setCompelId { $_[0]->{CompelId} = $_[1]; $_[0] }
 
-sub getDbRef    { $_[0]->{DbRef} }
-sub setDbRef    { $_[0]->{DbRef} = $_[1]; $_[0] }
-sub addDbRef    { push(@{$_[0]->{DbRef}},$_[1]); $_[0] }
+sub getDbRefs    { $_[0]->{DbRefs} || [] }
+sub setDbRefs    { $_[0]->{DbRefs} = $_[1]; $_[0] }
+sub addDbRefs    { push(@{$_[0]->{DbRefs}},$_[1]); $_[0] }
 
 sub getChromosome { $_[0]->{Chromosome} }
 sub setChromosome { $_[0]->{Chromosome} = $_[1]; $_[0] }
@@ -115,53 +115,52 @@ sub parse {
 
     # ACTIONS
     {
-     AC   => [ '(G\d{6})'  , sub { $Self->setAccession($_[0]);        } ],
+     AC   => [ '(G\d{6})'  , sub { $Self->setAccession($_[1]);        } ],
 
-     ID   => [ '(\S+)'     , sub { $Self->setId($_[0]);               } ],
+     ID   => [ '(\S+)'     , sub { $Self->setId($_[1]);               } ],
 
-     DT   => [ '(.+)'      , sub { my $history = CBIL::Bio::DbFfWrapper::Transfac::History->new();
-                                   $history->parse($_[0]);
+     DT   => [ '(.+)'      , sub { my $history = CBIL::Bio::DbFfWrapper::Transfac::History->new($_[1]);
                                    $Self->addHistory($history);
                                 } ],
 
-     SD   => [ '(.+)'      , sub { $Self->setName($_[0]);             } ],
+     SD   => [ '(.+)'      , sub { $Self->setName($_[1]);             } ],
 
-     DE   => [ '(.+)'      , sub { $Self->setDesignation($_[0]);      } ],
+     DE   => [ '(.+)'      , sub { $Self->setDesignation($_[1]);      } ],
 
      OS   => [ '(.+)\.?'   , sub { $Self->setSpecies
-                                   (CBIL::Bio::DbFfWrapper::Transfac::Species->new($_[0]));
+                                   (CBIL::Bio::DbFfWrapper::Transfac::Species->new($_[1]));
                                 } ],
 
-     OC   => [ '(.+)'      , sub { my $tax = $_[0]; $tax =~ s/\.$//;
+     OC   => [ '(.+)'      , sub { my $tax = $_[1]; $tax =~ s/\.$//;
                                    $Self->addTaxonomy($1);
                                 } ],
 
      BS   => [ '(.+)'      , sub { $Self->addBindingSite
-                                   (CBIL::Bio::DbFfWrapper::Transfac::BindingSite->new($_[0]));
+                                   (CBIL::Bio::DbFfWrapper::Transfac::BindingSite->new($_[1]));
                                 } ],
 
-     BC   => [ '(.+)'      , sub { $Self->setBucherClass($_[0]) } ],
+     BC   => [ '(.+)'      , sub { $Self->setBucherClass($_[1]) } ],
 
-     TR   => [ '(\d+)'     , sub { $Self->setTrrdId($_[0]) } ],
+     TR   => [ '(\d+)'     , sub { $Self->setTrrdId($_[1]) } ],
 
-     FA   => [ '(T\d+)'    , sub { $Self->setFactor($_[0]) } ],
+     FA   => [ '(T\d+)'    , sub { $Self->setFactor($_[1]) } ],
 
-     CH   => [ '(.+)'      , sub { $Self->getChromosome($_[0]) } ],
+     CH   => [ '(.+)'      , sub { $Self->getChromosome($_[1]) } ],
 
      CO   => [ 'Copyright' , sub { },
-               '(\d+)'     , sub { $Self->setCompelId($_[0]) },
+               '(\d+)'     , sub { $Self->setCompelId($_[1]) },
              ],
 
-     CE   => [ 'TRANSCOMPEL: (C\d+)' , sub { $Self->setCompelId($1) },
-               '(\d+)'               , sub { $Self->setCompelId($_[0]) } ],
+     CE   => [ 'TRANSCOMPEL: (C\d+)' , sub { $Self->setCompelId($_[1]) },
+               '(\d+)'               , sub { $Self->setCompelId($_[1]) } ],
 
-     DR   => [ '(.+)'       , sub { $Self->addDbRef
-                                    (CBIL::Bio::DbFfWrapper::Transfac::DbRef->new($_[0]));
+     DR   => [ '(.+)'       , sub { $Self->addDbRefs
+                                    (CBIL::Bio::DbFfWrapper::Transfac::DbRef->new($_[1]));
                                  } ],
 
-     SY   => [ '(.+)(\.|;)' , sub { $Self->addSynonyms(split(/;\s*/, $_[0])); } ],
+     SY   => [ '(.+)(\.|;)' , sub { $Self->addSynonyms(split(/;\s*/, $_[1])); } ],
 
-     RG   => [ '(.+)'       , sub { $Self->addRegulation($_[0]) } ],
+     RG   => [ '(.+)'       , sub { $Self->addRegulation($_[1]) } ],
 
      RN => 1,
      RX => 1,
@@ -169,6 +168,10 @@ sub parse {
      RT => 1,
      RL => 1,
      XX => 1,
+
+     # new in v10.2
+     AS => 1, # TBD
+     BR => 1, # TBD
     },
 
     # END OF LINE WRAPS

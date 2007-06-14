@@ -159,7 +159,7 @@ sub parse {
       DT => ['(.+)'              , sub { $Self->addHistory(CBIL::Bio::DbFfWrapper::Transfac::History->new($_[1])) } ],
       TY => ['(.+)'              , sub { $Self->setType($_[1])} ],
       DE => ['(.+); Gene: (G\d+)', sub { $Self->setElement($_[1]);
-                                         $Self->setGene($_[1]);},
+                                         $Self->setGene($_[2]);},
              'Gene: (G\d+)'      , sub { $Self->setGene($_[1]); },
              '(.+)'              , sub { $Self->setElement($_[1]); },
             ],
@@ -189,6 +189,9 @@ sub parse {
       RT => 1,
       RL => 1,
       XX => 1,
+
+      # v10.2
+      AS => 1,
      },
 
      # END OF LINE WRAPS

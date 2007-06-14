@@ -187,7 +187,7 @@ sub getCellNegative    { $_[0]->{CellNegative} }
 sub setCellNegative    { $_[0]->{CellNegative} = $_[1]; $_[0] }
 sub addCellNegative    { push(@{$_[0]->{CellNegative}},$_[1]); $_[0] }
 
-sub getGenes           { $_[0]->{Genes} }
+sub getGenes           { $_[0]->{Genes} || [] }
 sub setGenes           { $_[0]->{Genes} = $_[1]; $_[0] }
 sub addGenes {
 	my $Self = shift;
@@ -213,44 +213,54 @@ sub parse {
 		 # ACTIONS
 		 {
 			AC => [ '(T\d{5})', sub { $Self->setAccession($_[1]); } ],
-			ID => [ '(\S+)'   , sub { $Self->setId($_[1]);        } ],
+			BS => [ '(.+)'    , sub { $Self->addBoundSite(CBIL::Bio::DbFfWrapper::Transfac::BoundSite->new($_[1])); } ],
+			CC => [ '(.+)'    , sub { $Self->addComment($_[1]);   } ],
+			CL => [ '(.+?)(;|\.)' , sub { $Self->getClass($_[1]);     } ],
+			CN => [ '(.+)'    , sub { $Self->addCellNegative($_[1]);      } ],
+			CO => 1,
+			CP => [ '(.+)'    , sub { $Self->addCellPositive($_[1]);      } ],
+			DR => [ '(.+)\.'  , sub { $Self->addDbRef(CBIL::Bio::DbFfWrapper::Transfac::DbRef->new($_[1])); } ],
 			DT => [ '(.+)'    , sub { my $history = CBIL::Bio::DbFfWrapper::Transfac::History->new($_[1]);
 																$Self->addHistory($history);
 														 } ],
+			EX => [ '(.+)'    , sub { $Self->addExpression(CBIL::Bio::DbFfWrapper::Transfac::Expression->new($_[1])); } ],
 			FA => [ '(.+)'    , sub { $Self->setName($_[1]);      } ],
-			OS => [ '(.+)\.?' , sub { $Self->setSpecies(CBIL::Bio::DbFfWrapper::Transfac::Species->new($_[1])); } ],
-			OC => [ '(.+)'    , sub { my $tax = $_[1]; $tax =~ s/\.$//;
-																$Self->addTaxonomy($1);
-														 } ],
-			CO => 1,
-			SZ => [ '(.+)'    , sub { $Self->setSize($_[1]);      } ],
-			CL => [ '(.+?)(;|\.)' , sub { $Self->getClass($_[1]);     } ],
-			SY => [ '(.+)'    , sub { $Self->addSynonym($_[1]);   } ],
-			HO => [ '(.+)'    , sub { $Self->setHomolog($_[1]);   } ],
-			CC => [ '(.+)'    , sub { $Self->addComment($_[1]);   } ],
-			SQ => [ '(.+)'    , sub { $Self->addSequence($_[1]);  } ],
 			FF => [ '(.+)'    , sub { $Self->addFunctionalFeature($_[1]); },
 							'^\s*$'   , sub {},
 						],
+			FT => [ '(.+)'    , sub { $Self->addFeature($_[1]);   } ],
+			GE => [ '(G\d+)'  , sub { $Self->addGenes($_[1]); } ],
+			HO => [ '(.+)'    , sub { $Self->setHomolog($_[1]);   } ],
+			ID => [ '(\S+)'   , sub { $Self->setId($_[1]);        } ],
+			IN => [ '(T\d{5})', sub { $Self->addInteraction($_[1]);       } ],
+			MX => [ '(M\d{5})', sub { $Self->setMatrix($_[1]); } ],
+			OC => [ '(.+)'    , sub { my $tax = $_[1]; $tax =~ s/\.$//;
+																$Self->addTaxonomy($1);
+														 } ],
+			OS => [ '(.+)\.?' , sub { $Self->setSpecies(CBIL::Bio::DbFfWrapper::Transfac::Species->new($_[1])); } ],
+			RA => 1,
+			RL => 1,
+			RN => 1,
+			RT => 1,
+			RX => [ '(.+)',     sub { $Self->addDbRef(CBIL::Bio::DbFfWrapper::Transfac::DbRef->new($_[1])); } ],
+			SC => 1,
 			SF => [ '(.+)'    , sub { $Self->addStructuralFeature($_[1]); },
 							'^\s*$'   , sub {},
 						],
-			CP => [ '(.+)'    , sub { $Self->addCellPositive($_[1]);      } ],
-			CN => [ '(.+)'    , sub { $Self->addCellNegative($_[1]);      } ],
-			IN => [ '(T\d{5})', sub { $Self->addInteraction($_[1]);       } ],
-			BS => [ '(.+)'    , sub { $Self->addBoundSite(CBIL::Bio::DbFfWrapper::Transfac::BoundSite->new($_[1])); } ],
-			FT => [ '(.+)'    , sub { $Self->addFeature($_[1]);   } ],
-			DR => [ '(.+)\.'  , sub { $Self->addDbRef(CBIL::Bio::DbFfWrapper::Transfac::DbRef->new($_[1])); } ],
-			MX => [ '(M\d{5})', sub { $Self->setMatrix($_[1]); } ],
-			GE => [ '(G\d+)'  , sub { $Self->addGenes($_[1]); } ],
-			EX => [ '(.+)'    , sub { $Self->addExpression(CBIL::Bio::DbFfWrapper::Transfac::Expression->new($_[1])); } ],
-			RN => 1,
-			RX => [ '(.+)',     sub { $Self->addDbRef(CBIL::Bio::DbFfWrapper::Transfac::DbRef->new($_[1])); } ],
-			RA => 1,
-			RT => 1,
-			RL => 1,
-			XX => 1,
-			SC => 1,
+			SQ => [ '(.+)'    , sub { $Self->addSequence($_[1]);  } ],
+			SY => [ '(.+)'    , sub { $Self->addSynonym($_[1]);   } ],
+			SZ => [ '(.+)'    , sub { $Self->setSize($_[1]);      } ],
+      XX => 1,
+
+      # added for v10.2
+      AS => 1, # list of T\d{5}
+      BR => 1, # 
+      CX => 1, # e.g. T08127; CLIM2(h):E2A(h):Lmo2(h):Tal-1(h):pRb(h).
+      HC => 1, # T02512; HNF-3alpha(h).
+      HP => 1, # T01947; NF-AT2(m).
+      ST => 1, # T01978; JunD(h).
+      TY => 1, # CV : basic, basic_mod, complex, family, isogroup, isogroup_mod
+
 		 },
 
 		 # EOL WRAPS

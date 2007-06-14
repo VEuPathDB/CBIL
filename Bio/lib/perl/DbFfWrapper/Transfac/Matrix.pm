@@ -87,8 +87,8 @@ sub parse {
 			NA   => [ '(.+)'    , sub { $Self->setName($_[1]);             } ],
 			DE   => [ '(.+)'    , sub { $Self->setDesignation($_[1]);      } ],
 			CC   => [ '(.+)'    , sub { $Self->addComment($_[1]);          } ],
-			BS   => [ '(.+)'    , sub { $Self->addBoundSite(CBIL::Bio::DbFfWrapper::Transfac::BoundSite->new($_[1])); } ],
 			BF   => [ '(T\d{5})', sub { $Self->addBoundFactor($_[1]);      } ],
+      BS   => [ '(.+)'    , sub { $Self->addBoundSite(CBIL::Bio::DbFfWrapper::Transfac::BoundSite->new($_[1])); } ],
 			P0   => [ '(.+)'    , sub { $Self->setMatrix(CBIL::Bio::DbFfWrapper::Transfac::ObservedCounts->new("$_[0]  $_[1]")); } ],
 			'00' => [ '(.+)'    , sub { $Self->getMatrix->parse("$_[0]  $_[1]"); } ],
 			BA   => [ '(.+)'    , sub { $Self->addBasis($_[1]);            } ],
@@ -101,10 +101,14 @@ sub parse {
 			RT   => 1,
 			RL   => 1,
 			XX   => 1,
+
+      # new in v10.2
+      AS   => 1,
 		 },
 
 		 # EOL WRAPS
 		 { BF => [ '\.$' ],
+       BS => [ '\.$' ],
 		 },
 
 		 # LA WRAPS

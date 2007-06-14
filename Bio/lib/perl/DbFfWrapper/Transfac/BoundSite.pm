@@ -56,8 +56,8 @@ sub parse {
    my $Self = shift;
    my $T = shift; # string ; text of line
 
-   # from Matrix (v4.0 (e.g.))
-   if ($T =~ m/^(R\d{5}); Start:\s+(-?\d+); Length:\s+(\d+); Gaps: (.+); Orientation: (.)/) {
+   # from Matrix (v4.0 (e.g.)), gaps can be empty in v6.0
+   if ($T =~ m/^(R\d{5}); Start:\s+(-?\d+); Length:\s+(\d+); Gaps:\s*(.*?); Orientation: (.)/) {
      my $gaps = $4 eq '-' ? [] : [split(/,/,$4)];
      $Self->setSite($1);
      $Self->setStart($2);
@@ -96,7 +96,7 @@ sub parse {
       print STDERR "Unexpected BoundSite line: '$T'\n";
    }
 
-return $Self
+   return $Self
 
 }
 
