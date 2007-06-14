@@ -338,6 +338,7 @@ $HIFY::a_standby        = 'standby="%s"';
 $HIFY::a_style          = 'style="%s"';
 $HIFY::a_summary        = 'summary="%s"';
 $HIFY::a_tabindex       = 'tabindex="%s"';
+$HIFY::a_target         = 'target="%s"';
 $HIFY::a_title          = 'title="%s"';
 $HIFY::a_type           = 'type="%s"';
 $HIFY::a_usemap         = 'usemap="%s"';
@@ -478,7 +479,7 @@ $HIFY::d_width          = 'width="%s"';
 										 @HIFY::a_CoreAttrs, @HIFY::a_i18n, @HIFY::a_Events, $HIFY::a_charset,
 										 $HIFY::a_type, $HIFY::a_name, $HIFY::a_href, $HIFY::a_hreflang,
 										 $HIFY::a_rel, $HIFY::a_rev, $HIFY::a_accesskey, $HIFY::a_shape,
-										 $HIFY::a_coords, $HIFY::a_tabindex,
+										 $HIFY::a_coords, $HIFY::a_tabindex, $HIFY::a_target,
 										],
 							},
 

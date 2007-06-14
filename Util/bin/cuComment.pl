@@ -8,24 +8,33 @@ Make standard comments for Perl and other languages.
 
 =cut
 
-# ----------------------------------------------------------------------
+# ========================================================================
+# ----------------------------- Declarations -----------------------------
+# ========================================================================
 
 use strict;
 
 use CBIL::Util::EasyCsp;
 
-# ----------------------------------------------------------------------
-
-$| = 1;
+# ========================================================================
+# --------------------------- Global Variables ---------------------------
+# ========================================================================
 
 our %CommentChars = ( 'perl' => [ '#',       '' ],
-		      'tex'  => [ '%',       '' ],
-		      'cpp'  => [ '//',      '' ],
-		      'c'    => [ '/*',    '*/' ],
-		      'xml'  => [ '<!--', '-->' ],
-		      'html' => [ '<!--', '-->' ],
-		      'basic' => [ 'REM', '' ],
-		    );
+                      'tex'  => [ '%',       '' ],
+                      'cpp'  => [ '//',      '' ],
+                      'c'    => [ '/*',    '*/' ],
+                      'xml'  => [ '<!--', '-->' ],
+                      'html' => [ '<!--', '-->' ],
+                      'basic' => [ 'REM', '' ],
+                    );
+
+our %MinorFill    = ( 'xml' => '.',
+                    );
+
+# ========================================================================
+# ----------------------------- Trivial Body -----------------------------
+# ========================================================================
 
 run(cla());
 
@@ -65,31 +74,30 @@ sub cla {
   my $Rv = CBIL::Util::EasyCsp::DoItAll
   (
     [ { h => 'format for this language',
-        t => CBIL::Util::EasyCsp::StringType,
+        t => CBIL::Util::EasyCsp::StringType(),
 	e => [ sort keys %CommentChars ],
         o => 'Language',
         d => 'perl',
       },
 
       { h => 'add section lines',
-        t => CBIL::Util::EasyCsp::BooleanType,
+        t => CBIL::Util::EasyCsp::BooleanType(),
         o => 'Section',
       },
 
       { h => 'produce a comment that is this wide, excluding delimiters',
-        t => CBIL::Util::EasyCsp::IntType,
+        t => CBIL::Util::EasyCsp::IntType(),
         o => 'Width',
         d => 72,
       },
 
       { h => 'minor fill character',
-        t => CBIL::Util::EasyCsp::StringType,
+        t => CBIL::Util::EasyCsp::StringType(),
         o => 'MinorFill',
-        d => '-',
       },
 
       { h => 'minor fill character',
-        t => CBIL::Util::EasyCsp::StringType,
+        t => CBIL::Util::EasyCsp::StringType(),
         o => 'MajorFill',
         d => '=',
       },
@@ -102,6 +110,11 @@ sub cla {
     ],
     'make nicely formatted comments in a standard format for a variety of languages',
   ) || exit 0;
+
+
+  if (not defined $Rv->{MinorFill}) {
+     $Rv->{MinorFill} = $MinorFill{$Rv->{Language}} || '-';
+  }
 
   return $Rv;
 }
