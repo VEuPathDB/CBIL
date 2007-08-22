@@ -14,6 +14,8 @@ Make standard comments for Perl and other languages.
 
 use strict;
 
+use lib "$ENV{GUS_HOME}/lib/perl";
+
 use CBIL::Util::EasyCsp;
 
 # ========================================================================
@@ -27,9 +29,12 @@ our %CommentChars = ( 'perl' => [ '#',       '' ],
                       'xml'  => [ '<!--', '-->' ],
                       'html' => [ '<!--', '-->' ],
                       'basic' => [ 'REM', '' ],
+                      'sql'   => [ '/*',    '*/' ],
+                      ''      => [ '',        '' ],
                     );
 
-our %MinorFill    = ( 'xml' => '.',
+our %MinorFill    = ( 'xml'  => '.',
+                      'html' => '.',
                     );
 
 # ========================================================================
@@ -38,44 +43,49 @@ our %MinorFill    = ( 'xml' => '.',
 
 run(cla());
 
+# ========================================================================
+# --------------------------- Basic Functions ----------------------------
+# ========================================================================
+
 # --------------------------------- run ----------------------------------
 
 sub run {
-  my $Cla = shift || cla();
+   my $Cla = shift || cla();
 
-  my @texts  = $Cla->{Multiple} ? @ARGV : join(' ', @ARGV);
+   my @texts  = $Cla->{Multiple} ? @ARGV : join(' ', @ARGV);
 
-  foreach my $text (@texts) {
+   my $td     = scalar localtime;
+   my $user   = $ENV{USER};
 
-     my $td     = scalar localtime;
-     $text      =~ s/%d/$td/g;
+   foreach my $text (@texts) {
 
-     my $text_n = length $text;
+      $text      =~ s/%d/$td/g;
+      $text      =~ s/%u/$user/g;
 
-     my $pad_n  = int(($Cla->{Width} - $text_n) / 2) - 1;
+      my $text_n = length $text;
+      my $pad_n  = int(($Cla->{Width} - $text_n) / 2) - 1;
 
-     my $lPad   = $Cla->{MinorFill} x $pad_n;
-     my $rPad   = $Cla->{MinorFill} x $pad_n; $rPad .= $Cla->{MinorFill} if $text_n % 2 == 1;
+      my $lPad   = $Cla->{MinorFill} x $pad_n;
+      my $rPad   = $Cla->{MinorFill} x $pad_n; $rPad .= $Cla->{MinorFill} if $text_n % 2 == 1;
 
-     my $head   = $CommentChars{$Cla->{Language}}->[0];
-     my $tail   = $CommentChars{$Cla->{Language}}->[1];
+      my $head   = $CommentChars{$Cla->{Language}}->[0];
+      my $tail   = $CommentChars{$Cla->{Language}}->[1];
+      my $section = $Cla->{Section} ? $Cla->{MajorFill} x $Cla->{Width} : undef;
 
-     my $section = $Cla->{Section} ? $Cla->{MajorFill} x $Cla->{Width} : undef;
-
-     output($head, $section, $tail) if $Cla->{Section};
-     output($head, $lPad, $text, $rPad, $tail );
-     output($head, $section, $tail) if $Cla->{Section};
-  }
+      output($head, $section, $tail) if $Cla->{Section};
+      output($head, $lPad, $text, $rPad, $tail );
+      output($head, $section, $tail) if $Cla->{Section};
+   }
 }
 
 # --------------------------------- cla ----------------------------------
 
 sub cla {
-  my $Rv = CBIL::Util::EasyCsp::DoItAll
-  (
+   my $Rv = CBIL::Util::EasyCsp::DoItAll
+   (
     [ { h => 'format for this language',
         t => CBIL::Util::EasyCsp::StringType(),
-	e => [ sort keys %CommentChars ],
+        e => [ sort keys %CommentChars ],
         o => 'Language',
         d => 'perl',
       },
@@ -109,8 +119,7 @@ sub cla {
 
     ],
     'make nicely formatted comments in a standard format for a variety of languages',
-  ) || exit 0;
-
+   ) || exit 0;
 
   if (not defined $Rv->{MinorFill}) {
      $Rv->{MinorFill} = $MinorFill{$Rv->{Language}} || '-';
@@ -123,8 +132,8 @@ sub cla {
 
 sub output {
 
-  my $text = join(' ', grep { length $_ > 0 } @_);
+   my $text = join(' ', grep { length $_ > 0 } @_);
 
-  print "$text\n";
+   print "$text\n";
 }
 

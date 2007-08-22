@@ -56,6 +56,9 @@ sub run {
    # print the things that don't join
    my $not = $Cla->{Anti};
 
+   # print lines even if they don't join
+   my $outer_b = $Cla->{Outer};
+
    # ........................................
    # read the file and build a cache on key
    # ........................................
@@ -93,10 +96,15 @@ sub run {
 
       # JOIN mode; report all matches
       else {
-         #foreach my $row (@{$tbl{$cols[$streamCol_i]}}) {
-         foreach my $row (@{$tbl{$key}}) {
+
+	if (my $_matching = $tbl{$key}) {
+	  foreach my $row (@{$tbl{$key}}) {
             print join( "\t", @cols, @$row ), "\n";
-         }
+	  }
+	}
+	elsif ($outer_b) {
+	  print join("\t", @cols), "\n";
+	}
       }
    }
 }
@@ -122,6 +130,11 @@ sub cla {
        { h => 'report stream lines that do not join',
          t => CBIL::Util::EasyCsp::BooleanType(),
          o => 'Anti',
+       },
+
+       { h => 'do an outer join so that even lines with no matches are passed',
+	 t => CBIL::Util::EasyCsp::BooleanType(),
+	 o => 'Outer',
        },
      ],
      'joins (or not) a file and a stream of tab-delimited rows'
