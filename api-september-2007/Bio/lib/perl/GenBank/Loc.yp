@@ -1,0 +1,160 @@
+
+%%
+location:			loc |
+							ID ':' loc 								{ [ 'xref', $_[1], $_[3] ] } ;
+
+loc:					literal | range | midpoint | endpoint | operator ;
+
+literal:			LIT												{ [ 'literal', $_[1] ] } ;
+
+#single:				NUM												{ [ 'base', $_[1] ] } ;
+
+singlechoose: endpoint SINGLE endpoint	{ [ 'single', $_[1], $_[3] ] };
+
+operator:			OP '(' listoflocs ')' 		{ [ $_[1], @{$_[3]} ] } ;
+
+range:				endpoint RANGE  endpoint  { [ 'span', $_[1], $_[3] ] } ;
+
+endpoint: 		NUM 											{ [ 'exact', $_[1] ] } 
+				| 		'>' NUM 									{ [ 'above', $_[2] ] } 
+				|			'<' NUM 									{ [ 'below', $_[2] ] } 
+				|			'(' singlechoose ')' 			{ [ $_[2] ] } 
+	      |      operator 
+        ;
+
+midpoint:			NUM MIDP NUM 							{ [ 'midpoint', $_[1], $_[3] ] } ;
+
+listoflocs: 	location morelocs 				{ [ $_[1], @{$_[2]} ] } ;
+
+morelocs:   	',' location morelocs 		{ [ $_[2], @{$_[3]} ] } |
+																				{ [] } ;
+
+%%
+
+#package CBIL::Bio::GenBank::Loc;
+#use vars qw ( @ISA );
+use strict;
+
+#@ISA= qw ( Parse::Yapp::Driver );
+#use Parse::Yapp::Driver;
+
+# ----------------------------------------------------------------------
+
+my $ActiveString;
+my $InitialString;
+my $IsValid;
+
+sub _Error {
+  my $P = shift;
+
+	$IsValid = 0;
+  print join( "\t", 'ERR', 'syntax in CBIL::Bio::GenBank::Loc', $InitialString, $P->YYData ), "\n";
+  exists $P->YYData->{ERRMSG}
+  and do {
+    print $P->YYData->{ERRMSG};
+    delete $P->YYData->{ERRMSG};
+    return;
+  };
+  CBIL::Util::CBIL::Util::Disp:: Display($P);
+}
+
+sub _Lexer {
+  my $P = shift;
+
+	#print "_Lexer\n";
+
+  my $yyd = $P->YYData;
+
+  # scan for significant text
+  while ( ! $yyd->{INPUT} ) {
+    $yyd->{INPUT} = $ActiveString or return ('',undef);
+    undef $ActiveString;
+    $yyd->{INPUT} =~ s/^[ \t]+//;
+    $yyd->{INPUT} =~ s/[ \n]$//;
+    last if length $yyd->{INPUT} > 0;
+    delete $yyd->{INPUT};
+  }
+
+  my @rv;
+  #print join( "\t", 'LYP', $yyd->{INPUT} ), "\n";
+
+  for ( $yyd->{INPUT} ) {
+    s/^\s+//;
+
+    # positive integers
+    if ( s/^(\d+)// ) {
+      @rv = ('NUM',$1);        last;
+    }
+
+    # operators
+    elsif(
+          s/^(complement)// ||
+          s/^(join)// ||
+          s/^(oneof)// ||
+          s/^(one-of)// ||
+          s/^(order)// ||
+          s/^(group)// ||
+          s/^(replace)// ||
+          0
+         ) {
+      @rv = ( 'OP', $1);       last;
+    }
+
+    # literal
+    elsif ( s/^"([^"]*)"// ) {
+      @rv = ( 'LIT', $1);      last;
+    }
+
+    # id
+    elsif ( s/^([a-zA-Z]+\d+)(?:\.(\d+))?// ) {
+      @rv = ( 'ID', [ $1, $2 ] );  last;
+    }
+
+		# range
+		elsif ( s/^\.\.// ) {
+			@rv = ( 'RANGE' ); last;
+		}
+
+		# single choose
+		elsif ( s/^\.// ) {
+			@rv = ( 'SINGLE' ); last;
+		}
+
+		# mid point
+		elsif ( s/^\^// ) {
+			@rv = ( 'MIDP' ); last;
+		}
+
+    # single char
+    elsif ( s/^(.)// ) {
+      @rv = ( $1,$1 );
+    }
+  }
+
+  #print join( "\t", 'LYP', @rv ), "\n";
+
+  @rv
+}
+
+sub Run {
+  my $M = shift;
+  $ActiveString = shift;
+  $InitialString = $ActiveString;
+
+	$IsValid = 1;
+  print join( "\t", 'RUN', $InitialString ), "\n";
+  my $rv = $M->YYParse( yylex   => \&_Lexer,
+                        yyerror => \&_Error
+                      );
+
+#  CBIL::Util::CBIL::Util::Disp:: Display( $rv );
+
+  $rv
+}
+
+sub IsValid {
+	my $M = shift;
+
+	# RETURN
+	$IsValid
+}
