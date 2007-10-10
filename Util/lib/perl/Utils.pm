@@ -2,7 +2,7 @@ package CBIL::Util::Utils;
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(runCmd log timeformat);
+@EXPORT = qw(runCmd log timeformat mail);
 
 use strict;
 
@@ -35,5 +35,25 @@ sub timeformat {
     $hours = "0$hours" if $hours < 10;
     return "$hours:$mins:$secs";
 }
+
+sub mail {
+  my ($to, $from, $subject, $body, $cc, $bcc) = @_;
+
+  unless($to && $from && $subject && $body) {
+    die "mail usage:  CBIL::Util::Utils::mail(to, from, subject, body, cc, bcc)";
+  }
+
+  my $ccString = $cc ? "-c $cc" : "";
+  my $bccString = $bcc ? "-b $bcc" : "";
+
+  my $cmd = "export EMAIL=$from; echo '$body'|mutt -s '$subject' $ccString $bccString $to";
+
+  my $result = system($cmd);
+
+  unless($result / 256 == 0) {
+    die "ERROR running the following command:  $cmd";
+  }
+}
+
 
 1;
