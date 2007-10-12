@@ -96,13 +96,15 @@ sub variance {
    my $Rv = 0;
 
    my $n       = scalar @_;
-   my $average = average(@_);
+   if ($n > 1) {
+      my $average = average(@_);
 
-   foreach (@_) {
-      $Rv += ($_ - $average)**2;
+      foreach (@_) {
+         $Rv += ($_ - $average)**2;
+      }
+
+      $Rv /= ($n-1);
    }
-
-   $Rv /= ($n-1);
 
    return $Rv;
 }
