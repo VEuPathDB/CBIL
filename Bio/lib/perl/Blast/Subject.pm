@@ -129,9 +129,56 @@ sub getPValue{
 sub getTotalHSPLength{
   my $self = shift;
   if(!exists $self->{"totalHSPLength"}){
-    $self->{'totalHSPLength'} = $self->getMaxSubjectEnd() - $self->getMinSubjectStart() - $self->getTotalSubjectGaps();
+    my @hsps = $self->getHSPsBySubjectStart();
+    my $first = shift @hsps;
+    return 0 unless $first;
+    my $start = $first->getSubjectStart(); 
+    my $end = $first->getSubjectEnd(); 
+    my $len = 0;
+    foreach my $h (@hsps){
+      next if $h->getSubjectEnd() <= $end; ##does not extend
+      if($h->getSubjectStart <= $end){  ##overlaps
+        $end = $h->getSubjectEnd();  #extend end ... already dealt with if new end is less
+      }else{  ##there is a gap in between ..
+        $len += $end - $start + 1;
+        $end = $h->getSubjectEnd();
+        $start = $h->getSubjectStart();
+      }
+    }
+    $len += $end - $start + 1; # deal with the last one 
+    $self->{"totalHSPLength"} = $len;
   }
   return $self->{"totalHSPLength"};
+}
+
+sub getNonoverlappingQueryMatchLength {
+  my $self = shift;
+  if(!exists $self->{"totalQueryMatchLength"}){
+    my @hsps = $self->getHSPsByQueryStart();
+    my $first = shift @hsps;
+    return 0 unless $first;
+    my $start = $first->getQueryStart(); 
+    my $end = $first->getQueryEnd(); 
+    my $len = 0;
+    foreach my $h (@hsps){
+      next if $h->getQueryEnd() <= $end; ##does not extend
+      if($h->getQueryStart <= $end){  ##overlaps
+        $end = $h->getQueryEnd();  #extend end ... already dealt with if new end is less
+      }else{  ##there is a gap in between ..
+        $len += $end - $start + 1;
+        $end = $h->getQueryEnd();
+        $start = $h->getQueryStart();
+      }
+    }
+    $len += $end - $start + 1; # deal with the last one 
+    $self->{"totalQueryMatchLength"} = $len;
+  }
+  return $self->{"totalQueryMatchLength"};
+}
+
+sub getNonoverlappingSubjectMatchLength {
+  my $self = shift;
+  return $self->getTotalHSPLength();
 }
 
 sub getTotalHSPPercent{
@@ -439,7 +486,7 @@ sub getSimilaritySummary {
 	my $tmp = "  Sum: ".$self->getID().$d.$self->getBestHSP()->getScore().$d.$self->getBestHSP()->getPValue().$d;
 	$tmp .= $self->getMinSubjectStart().$d.$self->getMaxSubjectEnd().$d.$self->getMinQueryStart().$d.$self->getMaxQueryEnd().$d;
 	$tmp .= $self->countHSPs().$d.$self->getTotalMatchLength().$d.$self->getTotalIdentities().$d.$self->getTotalPositives().$d;
-	$tmp .= ($self->getBestHSP()->getDirection() ? 0 : 1).$d.$self->getBestHSP()->getFrame(); 
+	$tmp .= ($self->getBestHSP()->getDirection() ? 0 : 1).$d.$self->getBestHSP()->getFrame().$d.$self->getNonoverlappingQueryMatchLength().$d.$self->getNonoverlappingSubjectMatchLength();
 	return $tmp;
 }
 
