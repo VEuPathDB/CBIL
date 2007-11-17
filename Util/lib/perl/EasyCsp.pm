@@ -169,6 +169,12 @@ sub DoItAll {
       }
    }
 
+   # add in standard options
+   my $so = StandardOptions();
+   foreach (keys %$so) {
+      $Desc->{$_} = $so->{$_};
+   }
+
    # gather the command line parameters
    $Rv = GetOptions( $Desc );
 
@@ -187,7 +193,7 @@ sub DoItAll {
    $Global_Usage  = $Usage;
    $Global_Values = $Rv;
 
-   return $Rv;
+   return $Rv || exit 0;
 }
 
 # ------------------------------ GetOptions ------------------------------
@@ -198,12 +204,9 @@ sub GetOptions {
    # arguments from command line.
    my %Rv = ();
 
-   # standards
-   my $so = &StandardOptions;
-
    # assemble an options descriptor
    my %cld;
-   foreach my $_desc (values %$so, values %$D) {
+   foreach my $_desc (values %$D) {
       my @goDesc = $_desc->optionTag();
       foreach (@goDesc) {
          $cld{$_} = \$Rv{$_desc->getOption()};
