@@ -20,10 +20,58 @@ declaration.
 
 use strict 'vars';
 
+use Carp;
+
 use FileHandle;
 require Getopt::Long;
 
 use CBIL::Util::EasyCsp::Decl;
+
+# ========================================================================
+# ---------------------------- Object Methods ----------------------------
+# ========================================================================
+
+our $Global_Desc;
+our $Global_Values;
+our $Global_Usage;
+
+our $AUTOLOAD;
+
+# --------------------------------- new ----------------------------------
+
+sub new {
+   my $Class = shift;
+   my $Desc  = shift;
+   my $Usage = shift;
+
+   my $Self  = bless {}, $Class;
+
+   $Global_Values = DoItAll($Desc, $Usage);
+
+   return $Global_Values ? $Self : undef;
+}
+
+# ------------------------------- AUTOLOAD -------------------------------
+
+sub AUTOLOAD {
+   my $Self = shift;
+
+   my $Rv;
+
+   my $type = ref ($Self) or croak "$Self is not an object";
+
+   my $name = $AUTOLOAD;
+   $name =~ s/.*://;
+
+   if (my $_desc = $Global_Desc->{$name}) {
+      $Rv = $Global_Values->{$name};
+   }
+   else {
+      croak "'$name' is not a legal command line option.";
+   }
+
+   return $Rv;
+}
 
 # ======================================================================
 # --------------------------- TYPE NAMES -------------------------------
@@ -135,6 +183,10 @@ sub DoItAll {
       $Rv->{ARGV} = \@ARGV;
    }
 
+   $Global_Desc   = $Desc;
+   $Global_Usage  = $Usage;
+   $Global_Values = $Rv;
+
    return $Rv;
 }
 
@@ -239,6 +291,7 @@ sub single_usage {
       if ($O->getIsList()) {
          my $delim = $O->getListDelimiter();
          push(@lines, $littleLead. "list:     delimit values with a '$delim'" );
+         push(@lines, $littleLead. '          '. $O->explainListLength());
       }
       push(@lines,   $littleLead. 'check:    '. $O->errorCheckDescription());
       push(@lines,   $littleLead. 'default:  '. $O->getDefault()) if defined $O->getDefault();
@@ -343,6 +396,16 @@ sub ErrorCheck {
       if ( $_decl->getIsList() ) {
          my $ld = $_decl->getListDelimiter();
          $V->{$tag} = [ split( /$ld/, $V->{$tag} ) ];
+      }
+
+      # check for valid list length
+      if ( my $err = $_decl->checkListLength(scalar @{$V->{$tag} || []})) {
+         print STDERR join("\t",
+                           'ERR',
+                           "--$tag",
+                           $err
+                          ), "\n";
+         $Rv = 0;
       }
 
       # enforce pattern matching requirements if defined

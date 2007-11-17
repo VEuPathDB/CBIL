@@ -40,15 +40,16 @@ sub init {
    my $Self = shift;
    my $Args = ref $_[0] ? shift : {@_};
 
-   $Self->setOption               ( $Args->{Option              } || $Args->{o}  );
-   $Self->setShortOption          ( $Args->{ShortOption         } || $Args->{s}  );
-   $Self->setHint                 ( $Args->{Hint                } || $Args->{h}  || 'no hint supplied' );
-   $Self->setDefault              ( $Args->{Default             } || $Args->{d}  );
-   $Self->setErrorCheck           ( $Args->{ErrorCheck          } || $Args->{e}  );
-   $Self->setIsList               ( $Args->{IsList              } || $Args->{l}  );
-   $Self->setListDelimiter        ( $Args->{ListDelimiter       } || $Args->{ld} || ',' );
-   $Self->setType                 ( $Args->{Type                } || $Args->{t}  || CBIL::Util::EasyCsp::BooleanType() );
-   $Self->setIsRequired           ( $Args->{IsRequired          } || $Args->{r}  );
+   $Self->setOption               ( $Args->{Option              } || $Args->{'o'}  );
+   $Self->setShortOption          ( $Args->{ShortOption         } || $Args->{'s'}  );
+   $Self->setHint                 ( $Args->{Hint                } || $Args->{'h'}  || 'no hint supplied' );
+   $Self->setDefault              ( $Args->{Default             } || $Args->{'d'}  );
+   $Self->setErrorCheck           ( $Args->{ErrorCheck          } || $Args->{'e'}  );
+   $Self->setIsList               ( $Args->{IsList              } || $Args->{'l'}  );
+   $Self->setListLength           ( $Args->{ListLength          } || $Args->{'ll'} );
+   $Self->setListDelimiter        ( $Args->{ListDelimiter       } || $Args->{'ld'} || ',' );
+   $Self->setType                 ( $Args->{Type                } || $Args->{'t'}  || CBIL::Util::EasyCsp::StringType() );
+   $Self->setIsRequired           ( $Args->{IsRequired          } || $Args->{'r'}  );
 
    return $Self;
 }
@@ -85,6 +86,9 @@ definitions.
 
   ListDelimiters     ld          what delimits members of list, default is comma.
 
+  ListLength         ll          how long the list can be, default is any length
+                                 specified as { min => , max => }
+
   Type               t           what kind of variable, use
                                  CBIL::Util::EasyCsp::*Type functions!
 
@@ -114,6 +118,9 @@ sub setIsList               { $_[0]->{'IsList'                      } = $_[1]; $
 
 sub getListDelimiter        { $_[0]->{'ListDelimiter'               } }
 sub setListDelimiter        { $_[0]->{'ListDelimiter'               } = $_[1]; $_[0] }
+
+sub getListLength           { $_[0]->{'ListLength'                  } }
+sub setListLength           { $_[0]->{'ListLength'                  } = $_[1]; $_[0] }
 
 sub getType                 { $_[0]->{'Type'                        } }
 sub setType                 { $_[0]->{'Type'                        } = $_[1]; $_[0] }
@@ -184,6 +191,7 @@ sub optionTag {
 
 =head1 Error Checking
 
+Error checks the values and returns a list of the processed values.
 
 =cut
 
@@ -276,6 +284,58 @@ sub errorCheckDescription {
 
    return $Rv;
 }
+
+# --------------------------- checkListLength ----------------------------
+
+sub checkListLength {
+   my $Self = shift;
+   my $N    = shift;
+
+   my $Rv;
+
+   # check list length
+   if (my $_ll = $Self->getListLength()) {
+      if (defined $_ll->{min} && $N < $_ll->{min} ||
+          defined $_ll->{max} && $N > $_ll->{max}
+         ) {
+         $Rv = "$N is not a legal list length; ". $Self->explainListLength();
+      }
+   }
+
+   return $Rv;
+}
+
+# -------------------------- explainListLength ---------------------------
+
+sub explainListLength {
+   my $Self = shift;
+
+   my $Rv = 'length of the list is not contrained';
+
+   if (my $_ll = $Self->getListLength()) {
+
+      # both are contrained
+      if (defined $_ll->{min} && defined $_ll->{max}) {
+         if ($_ll->{min} == $_ll->{max}) {
+            $Rv = "there must be exactly $_ll->{min} items in the list.";
+         }
+         else {
+            $Rv = "there must be between $_ll->{min} and $_ll->{max} items in the list.";
+         }
+      }
+
+      elsif (defined $_ll->{min}) {
+         $Rv = "there must be at least $_ll->{min} items.";
+      }
+
+      elsif (defined $_ll->{max}) {
+         $Rv = "there must be at most $_ll->{max} items.";
+      }
+   }
+
+   return $Rv;
+}
+
 
 # ========================================================================
 # ---------------------------- End of Package ----------------------------
