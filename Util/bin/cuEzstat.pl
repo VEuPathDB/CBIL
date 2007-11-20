@@ -42,9 +42,14 @@ sub run {
    my @sortedKeys = sortKeys($Cla, \%data_r, \%pts_n);
 
    if ($Cla->{header} && $Cla->{statistics}) {
-      print join("\t",
-                 qw( label n_pts f_pts median mean std var min max span total )
-                ), "\n";
+      my @heads = qw( n_pts f_pts median mean std var min max span total );
+      if ($Cla->{LabelLast}) {
+	push(@heads, 'label');
+      }
+      else {
+	unshift(@heads, 'label');
+      }
+      print join("\t", @heads), "\n";
    }
 
    foreach my $tag (@sortedKeys) {

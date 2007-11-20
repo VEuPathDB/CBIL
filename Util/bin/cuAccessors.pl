@@ -18,6 +18,7 @@ as a call suitable for an init method.
 # ========================================================================
 
 use strict;
+use lib "$ENV{GUS_HOME}/lib/perl";
 
 use CBIL::Util::V;
 use CBIL::Util::EasyCsp;

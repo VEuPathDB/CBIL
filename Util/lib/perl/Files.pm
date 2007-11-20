@@ -91,25 +91,39 @@ sub SmartOpenForRead {
 }
 
 # ----------------------------- openForWrite -----------------------------
-
 sub SmartOpenForWrite {
    my $File = shift;
    my $Hint = shift || 'file';
+
+   return output($File, $Hint, '>');
+}
+
+sub SmartOpenForAppend {
+   my $File = shift;
+   my $Hint = shift || 'file';
+
+   return output($File, $Hint, '>>');
+}
+
+sub output {
+   my $File = shift;
+   my $Hint = shift;
+   my $Mode = shift;
 
    my $Rv;
 
    my $file;
 
    if ($File eq '-') {
-      $file = '>-';
+      $file = "$Mode-";
    }
 
    elsif ($File =~ /\.Z$/) {
-      $file = "|compress -c > $File";
+      $file = "|compress -c $Mode $File";
    }
 
    elsif ($File =~ /\.gz$/) {
-      $file = "| gzip -f -c > $File";
+      $file = "| gzip -f -c $Mode $File";
    }
 
    elsif ($File =~ /:/) {
@@ -122,7 +136,7 @@ sub SmartOpenForWrite {
    }
 
    else {
-      $file = ">$File";
+      $file = "$Mode$File";
    }
 
    $Rv = FileHandle->new($file);
