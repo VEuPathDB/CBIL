@@ -32,6 +32,28 @@ sub Track {
    return Generic($Args, 'track', \@atts, \@noQuotes);
 }
 
+# -------------------------------- Wiggle --------------------------------
+
+sub Wiggle_variableStep {
+   my $Args = ref $_[0] ? shift : {@_};
+
+   my @atts = qw( chrom span );
+
+   my @noQuotes = qw( );
+
+   return  Generic($Args, 'variableStep', \@atts, \@noQuotes);
+}
+
+sub Wiggle_fixedStep {
+   my $Args = ref $_[0] ? shift : {@_};
+
+   my @atts = qw( chrom start step span );
+
+   my @noQuotes = qw( );
+
+   return  Generic($Args, 'fixedStep', \@atts, \@noQuotes);
+}
+
 # ------------------------------- generic --------------------------------
 
 sub Generic {
