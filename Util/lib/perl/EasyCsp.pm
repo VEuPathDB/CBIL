@@ -44,11 +44,18 @@ sub new {
    my $Desc  = shift;
    my $Usage = shift;
 
-   my $Self  = bless {}, $Class;
+   my $_dict = DoItAll($Desc, $Usage);
 
-   $Global_Values = DoItAll($Desc, $Usage);
+   my $Rv;
 
-   return $Global_Values ? $Self : undef;
+   if ($_dict) {
+      $_dict->{-Descriptor} = $Global_Desc;
+      $_dict->{-Usage}      = $Global_Usage;
+
+      $Rv = bless $_dict, $Class;
+   }
+
+   return $Rv;
 }
 
 # ------------------------------- AUTOLOAD -------------------------------
@@ -63,8 +70,11 @@ sub AUTOLOAD {
    my $name = $AUTOLOAD;
    $name =~ s/.*://;
 
-   if (my $_desc = $Global_Desc->{$name}) {
-      $Rv = $Global_Values->{$name};
+   if (my $_desc = $Self->{-Descriptor}->{$name}) {
+      $Rv = $Self->{$name};
+   }
+   elsif ($name eq 'ARGV') {
+      $Rv = $Self->{ARGV};
    }
    else {
       croak "'$name' is not a legal command line option.";
@@ -321,7 +331,8 @@ sub UsageString {
 
    my @all_options = sort {
       lc $a->getOption() cmp lc $b->getOption()
-   } ( (values %{&StandardOptions}), (values %$D) );
+   #} ( (values %{&StandardOptions}), (values %$D) );
+   } ( values %$D );
 
    $Rv .= join("\n",
                map {single_usage($_)} @all_options
@@ -343,7 +354,8 @@ sub PodUsage {
 
    my @all_options = sort {
       lc $a->getOption() cmp lc $b->getOption()
-   } ( (values %{&StandardOptions}), (values %$D) );
+   #} ( (values %{&StandardOptions}), (values %$D) );
+   } ( values %$D );
 
    my $options_pod = join("\n",
                           map {single_usage($_,1)} @all_options
