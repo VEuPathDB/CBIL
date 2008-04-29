@@ -487,6 +487,8 @@ sub getSimilaritySummary {
 	$tmp .= $self->getMinSubjectStart().$d.$self->getMaxSubjectEnd().$d.$self->getMinQueryStart().$d.$self->getMaxQueryEnd().$d;
 	$tmp .= $self->countHSPs().$d.$self->getTotalMatchLength().$d.$self->getTotalIdentities().$d.$self->getTotalPositives().$d;
 	$tmp .= ($self->getBestHSP()->getDirection() ? 0 : 1).$d.$self->getBestHSP()->getFrame().$d.$self->getNonoverlappingQueryMatchLength().$d.$self->getNonoverlappingSubjectMatchLength();
+        # add percentage match to shortest sequence
+        $tmp .= $d.(int(($self->getLength() < $self->getQueryLength() ? $self->getNonoverlappingSubjectMatchLength() / $self->getLength() : $self->getNonoverlappingQueryMatchLength() / $self->getQueryLength()) * 10000) / 100 );
 	return $tmp;
 }
 
