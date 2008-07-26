@@ -1,4 +1,4 @@
-package CBIL::Util::PropertySet;
+package CBIL::Util::MultiPropertySet;
 
 use strict;
 use Carp;
@@ -8,7 +8,7 @@ use Carp;
 # propsDeclraration is a hash keyed on the names of the sets
 # if $singleSet is set, then ignore other sets
 sub new {
-    my ($class, $propsFile, $propsDeclaration, $relax, $singleSet) = @_;
+    my ($class, $propsFile, $propsDeclaration, $singleSet, $relax) = @_;
 
     my $self = {};
     bless($self, $class);
@@ -19,7 +19,7 @@ sub new {
 
     my $fatalError;
 
-    foreach my $setName (keys(%{$propsDeclaration}) {
+    foreach my $setName (keys(%{$propsDeclaration})) {
       next if ($singleSet && $setName ne $singleSet);
       foreach my $decl (@{$propsDeclaration->{$setName}}) {
         my $name = $decl->[0];
@@ -28,51 +28,58 @@ sub new {
       }
     }
 
-    if ($propsFile) {
-#      print STDERR "Reading properties from $propsFile\n";
+    open(F, $propsFile) || die "Can't open property file $propsFile";
 
-      open(F, $propsFile) || die "Can't open property file $propsFile";
-
-      my $duplicateCheck;
-      my $setName;
-      while (<F>) {
-        chomp;
-        s/\s+$//;
-	if (/\# \?(\w+)\//) {
-	  $setName = $1;
-	  next;
-	}
-	die "can't find set name" unless $setName;
-	next if ($singleSet && $setName ne $singleSet);
-        next if (!$_ || /^\s*#/);
-	if (! /(\S+?)\s*=\s*(.+)/) {
-	  print STDERR "Can't parse '$_' in property file '$propsFile', set '$setName'\n";
+    my $duplicateCheck;
+    my $setName;
+    my $setNames = {};
+    while (<F>) {
+      chomp;
+      s/\s+$//;
+      next if (!$_);
+      if (/\# \/(\w+)\//) {
+	$setName = $1;
+	if ($setNames->{$setName}) {
+	  print STDERR "'$setName' configured in duplicate\n";
 	  $fatalError = 1;
 	}
-        my $key = $1;
-        my $value = $2;
-
-        if ($duplicateCheck->{$setName}->{$key}) {
-          print STDERR "Property name '$key' is duplicated in property file '$propsFile' for property set '$setName'\n";
-          $fatalError = 1;
-	}
-        $duplicateCheck->{$setName}->{$key} = 1;
-
-        if (!$relax && !$self->{props}->{$setName}->{$key}) {
-          print STDERR "Invalid property name '$key' in property file '$propsFile'\n";
-          $fatalError = 1;
-	}
-
-        # allow value to include $ENV{} expressions to include environment vars
-        $value =~ s/\$ENV\{"?'?(\w+)"?'?\}/$ENV{$1}/g;
-
-        $self->{props}->{$setName}->{$key} = $value;
+	$setNames->{$setName} = 1;
+	next;
       }
-      close(F);
+      next if (/^\s*\#/);
+      die "can't find set name" unless $setName;
+      next if ($singleSet && $setName ne $singleSet);
+      if (! /(\S+?)\s*=\s*(.+)/) {
+	print STDERR "Can't parse '$_' in property file '$propsFile', set '$setName'\n";
+	$fatalError = 1;
+      }
+      my $key = $1;
+      my $value = $2;
+
+      if ($duplicateCheck->{$setName}->{$key}) {
+	print STDERR "Property name '$key' is duplicated in property file '$propsFile' for property set '$setName'\n";
+	$fatalError = 1;
+      }
+      $duplicateCheck->{$setName}->{$key} = 1;
+
+      if (!$relax && !$self->{props}->{$setName}->{$key}) {
+	print STDERR "Invalid property name '$key' in property file '$propsFile'\n";
+	$fatalError = 1;
+      }
+
+      # allow value to include $ENV{} expressions to include environment vars
+      $value =~ s/\$ENV\{"?'?(\w+)"?'?\}/$ENV{$1}/g;
+
+      $self->{props}->{$setName}->{$key} = $value;
     }
+    close(F);
 
     foreach my $setName (keys %{$self->{props}}) {
       next if ($singleSet && $setName ne $singleSet);
+      if (!$setNames->{$setName}) {
+	print STDERR "No configuration found for '$setName'\n";
+	$fatalError = 1;
+      }
       foreach my $name (keys %{$self->{props}->{$setName}}) {
 	if ($self->{props}->{$setName}->{$name} eq "REQD_PROP") {
 	  print STDERR "Required property '$name' must be specified in property file '$propsFile' for set '$setName'\n";
@@ -94,10 +101,10 @@ sub getProp {
 }
 
 sub toString {
-  my $self = shift;
-  my $ret = "property = value, help\n----------------------\n";
-  foreach my $p (sort keys %{$self->{props}}){
-    $ret .= "$p = $self->{props}->{$p}".($self->{help}->{$p} ? ", \"$self->{help}->{$p}\"\n" : "\n");
+  my ($self, $setName) = @_;
+  my $ret;
+  foreach my $p (sort keys %{$self->{props}->{$setName}}){
+    $ret .= "$p=$self->{props}->{$setName}->{$p}\n";
   }
   return $ret;
 }
