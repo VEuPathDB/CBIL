@@ -37,7 +37,7 @@ sub new {
       chomp;
       s/\s+$//;
       next if (!$_);
-      if (/\# \/(\w+)\//) {
+      if (/\# \/(\S+)\//) {
 	$setName = $1;
 	if ($setNames->{$setName}) {
 	  print STDERR "'$setName' configured in duplicate\n";
@@ -63,7 +63,7 @@ sub new {
       $duplicateCheck->{$setName}->{$key} = 1;
 
       if (!$relax && !$self->{props}->{$setName}->{$key}) {
-	print STDERR "Invalid property name '$key' in property file '$propsFile'\n";
+	print STDERR "Invalid property name '$key' for '$setName' in property file '$propsFile'\n";
 	$fatalError = 1;
       }
 
