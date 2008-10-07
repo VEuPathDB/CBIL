@@ -19,6 +19,7 @@ sub new {
     bless($self, $class);
 
     $self->{props} = {};
+    $self->{dynamicDefaults} = {};
     $self->{decl} = $propsDeclaration;
     $self->{file} = $propsFile;
 
@@ -28,6 +29,9 @@ sub new {
         my $name = $decl->[0];
         my $value = $decl->[1];
         $self->{props}->{$name} = $value? $value : "REQD_PROP";
+	if (defined($decl->[3])) {
+	  $self->{dynamicDefaults}->{$name} = $decl->[3];
+	}
       }
 
     if ($propsFile) {
@@ -67,8 +71,19 @@ sub new {
     }
 
     foreach my $name (keys %{$self->{props}}) {
+
+      # if we don't have a value for a required key, try to find a
+      # dynamic default
       if ($self->{props}->{$name} eq "REQD_PROP") {
-        print STDERR "Required property '$name' must be specified in property file '$propsFile'\n";
+	my $dynamicDefaultKey = $self->{dynamicDefaults}->{$name};
+	if ($dynamicDefaultKey && defined($self->{props}->{$dynamicDefaultKey})) {
+	  $self->{props}->{$name} = $self->{props}->{$dynamicDefaultKey};
+	}
+      }
+
+      # if still don't then error
+      if ($self->{props}->{$name} eq "REQD_PROP")  {
+	print STDERR "Required property '$name' must be specified in property file '$propsFile'\n";
 	$fatalError = 1;
       }
     }
@@ -83,6 +98,12 @@ sub getProp {
     my $value = $self->{props}->{$name};
     confess "trying to call getProp('$name') on invalid property name '$name'\n" unless ($value ne "");
     return $value;
+}
+
+sub getPropRelaxed {
+    my ($self, $name) = @_;
+
+    return $self->{props}->{$name};
 }
 
 sub toString {
