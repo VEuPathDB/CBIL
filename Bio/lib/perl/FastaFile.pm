@@ -10,19 +10,46 @@ sub new {
     my $self = {};
     bless $self;
 
-    $self->{count} = 1;  # must be base 1 (0 is a bummer key)
-
     my $fiArgs = { seq_file => $fastaFileName };
-    $self->{fastaIndex} = CBIL::Bio::FastaIndex->new(CBIL::Util::TO->new($fiArgs));
 
-    my $whatever = sub { $self->{count}++ };
+    ##want to test to see if there is already a valid index .. if so, do not recreate rather use existing
+    my @ls = `ls -rt $fastaFileName $fastaFileName.db`;
 
-    my $ciArgs = {echo => 0, get_key => $whatever};
-    $self->{fastaIndex}->createIndex(CBIL::Util::TO->new($ciArgs));
+    map { chomp } @ls;
+    if (scalar(@ls) != 2 || $ls[0] ne $fastaFileName) { 
+#      print STDERR "failed time stamp test\n";
+      $self->{fastaIndex} = CBIL::Bio::FastaIndex->new(CBIL::Util::TO->new($fiArgs));
+      $self->runCreateIndex();
+    }else {  ##already have an appropriate index file so check to see that counts are the same... if so, don't reindex 
+#      $fiArgs->{index_file} = "$fastaFileName.db";
+      $self->{fastaIndex} = CBIL::Bio::FastaIndex->new(CBIL::Util::TO->new($fiArgs));
+      $self->{fastaIndex}->open();
+      ##count sequences in file
+      my $ctSeqsFromFile = `fgrep -c '>' $fastaFileName`;
+      chomp $ctSeqsFromFile;
+#      print STDERR "From file = $ctSeqsFromFile\nFrom index = ".$self->{fastaIndex}->getCount()."\n";
+      
+      if($ctSeqsFromFile != $self->{fastaIndex}->getCount()){
+        print "Creating index for $fastaFileName (may take a while)\n";
+        $self->runCreateIndex();
+      }else{
+        print "Index exists .. using $fastaFileName.db\n";
+        $self->{count} = $self->{fastaIndex}->getCount();
+      }
+    }
 
-    $self->{count}--;
+
 
     return $self;
+}
+
+sub runCreateIndex {
+  my($self) = @_;
+  $self->{count} = 1;  # must be base 1 (0 is a bummer key)
+  my $whatever = sub { $self->{count}++ };
+  my $ciArgs = {echo => 0, get_key => $whatever};
+  $self->{fastaIndex}->createIndex(CBIL::Util::TO->new($ciArgs));
+  $self->{count}--;
 }
 
 sub getCount {
