@@ -29,17 +29,18 @@ sub new {
       chomp $ctSeqsFromFile;
 #      print STDERR "From file = $ctSeqsFromFile\nFrom index = ".$self->{fastaIndex}->getCount()."\n";
       
-      if($ctSeqsFromFile != $self->{fastaIndex}->getCount()){
+      my $indexCount = $self->{fastaIndex}->getCount();
+      if($ctSeqsFromFile != $indexCount){
         print "Creating index for $fastaFileName (may take a while)\n";
         $self->runCreateIndex();
       }else{
         print "Index exists .. using $fastaFileName.db\n";
-        $self->{count} = $self->{fastaIndex}->getCount();
+        $self->{count} = $indexCount;
       }
     }
 
 
-
+ print "DEBUG: FastaFile L44\n";
     return $self;
 }
 
