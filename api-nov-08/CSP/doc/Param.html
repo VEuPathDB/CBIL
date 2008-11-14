@@ -1,0 +1,91 @@
+<!-- $Id$ -->
+<HTML><HEAD>
+<CENTER><TITLE>Param</TITLE>
+</HEAD>
+<BODY></CENTER><p><hr>
+
+<H1> 
+<A NAME="Param_name_0">
+Name</A>
+</H1>
+<CODE>param</CODE> - a <CODE>csp::item</CODE> which can be used to gather information.
+<p><p><hr>
+
+<H1> 
+<A NAME="Param_description_0">
+Description</A>
+</H1>
+<p><p><hr>
+
+<H1> 
+<A NAME="Param_attributes_0">
+Attributes</A>
+</H1>
+<CODE>optional</CODE>
+<p><CODE>type</CODE>
+<p><CODE>default</CODE>
+<p><CODE>ranges</CODE>
+<p><p><hr>
+
+<H1> 
+<A NAME="Param_style_config_0">
+Style_Config</A>
+</H1>
+<CODE>CSP_DEFAULT_FIELD_WIDTH</CODE> default width of fields.
+<p><p><hr>
+
+<H1> 
+<A NAME="Param_backward_0">
+Backward Compatibility of Tags</A>
+</H1>
+Here are the conversions from the non-oo CSP tags to current tags.
+<p>
+<A HREF="Param.html#Param_name_0">Name</A>
+ -&gt; <CODE>name</CODE> which is inherited from <CODE>item</CODE>.
+<p><CODE>Prompt</CODE> -&gt; <CODE>text</CODE> which is inherited from <CODE>item</CODE>.
+<p><CODE>Optional</CODE> -&gt; <CODE>optional</CODE>
+<p><CODE>Defaults</CODE> -&gt; <CODE>defaults</CODE>
+<p><CODE>Range</CODE> -&gt; <CODE>range</CODE>
+<p><CODE>Length</CODE> -&gt; <CODE>length</CODE>
+<p><CODE>Type</CODE> -&gt; <CODE>type</CODE>
+<p><p><hr>
+
+<H1> 
+<A NAME="Param_methods_0">
+Methods</A>
+</H1>
+<p>
+<DL COMPACT>
+<DT><STRONG>
+
+<A NAME="Param_new_0">
+new</A>
+
+</STRONG>
+<DD>
+creates a new object.
+<p>Arguments:
+<p>
+<DT><STRONG>
+
+<A NAME="Param_makemodality_0">
+makeModality</A>
+
+</STRONG>
+<DD>
+return some HTML which is the input modality for the parameter.
+<p>For now we use a text field and assume this is a scalar.
+<p>
+<DT><STRONG>
+
+<A NAME="Param_makestencil_0">
+makeStencil</A>
+
+</STRONG>
+<DD>
+returns a template for placing the input in a nice context.
+<p>
+</DL>
+
+</BODY>
+</HTML>
