@@ -96,7 +96,7 @@ sub getProp {
     my ($self, $name) = @_;
 
     my $value = $self->{props}->{$name};
-    confess "trying to call getProp('$name') on invalid property name '$name'\n" unless ($value ne "");
+    confess "Cannot find value for property '$name' in file '$self->{file}'\n" unless ($value ne "");
     return $value;
 }
 
