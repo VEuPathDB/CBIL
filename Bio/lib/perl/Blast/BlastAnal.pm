@@ -256,7 +256,7 @@ sub sortSubjectsByMaxQueryEnd{
 sub sortSubjectsByPValue{
   my $self = shift;
   if (!exists $self->{"sortByPValue"}) {
-    @{$self->{"sortByPvalue"}} = sort{$a->getPValue() <=> $b->getPValue()} $self->getSubjects();
+    @{$self->{"sortByPValue"}} = sort{$a->getPValue() <=> $b->getPValue()} $self->getSubjects();
   }
   return @{$self->{"sortByPValue"}};
 }
