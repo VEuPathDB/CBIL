@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 ## perl module for dealing with blast results...
+## contains the hits for one query sequence
 ## will parse both  --noseqs and normal blast.
 ## does not parse out the alignments, rather meta information for each subject and hsp
 
@@ -250,6 +251,14 @@ sub sortSubjectsByMaxQueryEnd{
     @{$self->{"sortByQEnd"}} = sort{$a->getMaxQueryEnd() <=> $b->getMaxQueryEnd()} $self->getSubjects();
   }
   return @{$self->{"sortByQEnd"}};
+}
+
+sub sortSubjectsByPValue{
+  my $self = shift;
+  if (!exists $self->{"sortByPValue"}) {
+    @{$self->{"sortByPvalue"}} = sort{$a->getPValue() <=> $b->getPValue()} $self->getSubjects();
+  }
+  return @{$self->{"sortByPValue"}};
 }
 
 ##detecting chimeras
