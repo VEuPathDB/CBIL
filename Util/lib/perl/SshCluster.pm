@@ -1,4 +1,4 @@
-package GUS::Workflow::SshCluster;
+package CBIL::Util::SshCluster;
 
 use strict;
 use File::Basename;
@@ -8,6 +8,9 @@ use CBIL::Util::Utils;
 #          Public Methods
 #############################################################################
 
+# $mgr is an object with the following methods:
+#  $mgr->run($testmode, $cmd)
+#  $mgr->error($msg)
 sub new {
     my ($class, $server, $user, $mgr) = @_;
 
@@ -25,9 +28,9 @@ sub new {
 sub copyTo {
     my ($self, $fromDir, $fromFile, $toDir) = @_;
           # buildDIr, release/speciesNickname, serverPath
-  
+
     chdir $fromDir || $self->{mgr}->error("Can't chdir $fromDir\n" . __FILE__ . " line " . __LINE__ . "\n\n");
-    
+
     my @arr = glob("$fromFile");
     $self->{mgr}->error("origin directory $fromDir/$fromFile doesn't exist\n" . __FILE__ . " line " . __LINE__ . "\n\n") unless (@arr >= 1);
 
@@ -36,7 +39,7 @@ sub copyTo {
     my $ssh_to = "$user$self->{server}";
 
     print STDERR "tar cf - $fromFile | gzip -c | ssh -2 $ssh_to 'cd $toDir; gunzip -c | tar xf -' \n" . __FILE__ . " line " . __LINE__ . "\n\n";
-    
+
     # workaround scp problems
     $self->{mgr}->runCmd(0, "tar cf - $fromFile | gzip -c | ssh -2 $ssh_to 'cd $toDir; gunzip -c | tar xf -'");
 
