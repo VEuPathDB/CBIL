@@ -47,21 +47,6 @@ sub munge {
   system("rm $rFile");
 }
 
-
-sub runR {
-  my ($self, $script) = @_;
-
-  my $executable = $self->getPathToExecutable() ? $self->getPathToExecutable() : 'R';
-
-  my $command = "cat $script  | $executable --no-save ";
-
-  my $systemResult = system($command);
-
-  unless($systemResult / 256 == 0) {
-    CBIL::TranscriptExpression::Error->new("Error while attempting to run R:\n$command")->throw();
-  }
-}
-
 sub writeRScript {
   my ($self, $samples) = @_;
 
