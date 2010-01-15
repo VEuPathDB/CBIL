@@ -28,6 +28,7 @@
                                             CBIL/Util-Installation,
                                             CBIL/Cider-Installation,
                                             CBIL/HQ-Installation,
+                                            CBIL/TranscriptExpression-Installation,
                                             CBIL/ObjectMapper-Installation" >
 
     <ant target="defaultProjectInstall"/>
@@ -91,6 +92,13 @@
     <ant target="defaultComponentInstall">
       <property name="project" value="CBIL"/>
       <property name="component" value="HQ"/>
+    </ant>
+  </target>  
+
+  <target name="CBIL/TranscriptExpression-Installation">
+    <ant target="defaultComponentInstall">
+      <property name="project" value="CBIL"/>
+      <property name="component" value="TranscriptExpression"/>
     </ant>
   </target>  
 
