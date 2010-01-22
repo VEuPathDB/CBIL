@@ -96,8 +96,14 @@ sub munge {
 sub translatePageOutput {
   my ($self, $baseX, $pageGeneConf) = @_;
 
-  my $translator = "$ENV{GUS_HOME}/lib/xml/pageConfAndFoldChangeTranslator.xml";
+  my $translator;
 
+  if($self->getDesign() eq 'D') {
+    $translator = "$ENV{GUS_HOME}/lib/xml/pageOneClassConfAndFC.xml";
+  }
+  else {
+    $translator = "$ENV{GUS_HOME}/lib/xml/pageTwoClassConfAndFC.xml";
+  }
   my $functionArgs = {baseX => $baseX};
 
   my $outputFile = $self->getOutputFile();
@@ -158,7 +164,7 @@ sub makePageInput {
 
   my $conditions = $self->groupListHashRef($self->getConditions());
 
-  unless(scalar keys %$conditions == 2) {
+  unless(scalar keys %$conditions <= 2) {
     die "Expecting 2 state comparison... expected 2 conditions";
   }
 

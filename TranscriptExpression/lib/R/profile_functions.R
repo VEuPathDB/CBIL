@@ -111,3 +111,22 @@ write.expr.profile.individual.files <- function(p=NULL, m=NULL, v=NULL, ext=".tx
     write.table(cbind(m[,j], p[,j]), file=filenames[j], quote=F, sep="\t", row.names=v, col.names=my.colnames)
   }
 }
+
+#--------------------------------------------------------------------------------
+
+mOrInverse <- function (df=NULL, ds=NULL) {
+
+  if (is.null(df) || is.null(ds)){
+    stop("data.frame df and vector ds are required.");
+  }
+
+  for(j in 1:length(ds)) {
+    dye.swap.sample = ds[j];
+
+    df[[dye.swap.sample]] = df[[dye.swap.sample]] * -1;
+  }
+  
+  return(df);
+}
+
+#--------------------------------------------------------------------------------

@@ -51,16 +51,11 @@ sub makeDataFilesRString {
 
   my $rv = "";
 
+  my $n = 1;
   # this is an ordered hash
   foreach my $filename (keys %$dataFilesHash) {
-    my $isDyeSwap = $dataFilesHash->{$filename};
-
-    if($isDyeSwap) {
-      $rv .= "data.files[[\"$filename\"]] = -1;\n";
-    }
-    else {
-      $rv .= "data.files[[\"$filename\"]] = 1;\n";
-    }
+    $rv .= "data.files[$n] = \"$filename\";\n";
+    $n++;
   }
   return $rv;
 }

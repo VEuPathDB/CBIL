@@ -47,18 +47,16 @@ load.gcrma = library(gcrma, logical.return=TRUE)
 
 if(load.makecdfenv && load.gcrma) {
 
-  data.files = list();
+  data.files = vector();
   $samples
 
   pkgpath = tempdir();
   my.cdf <- make.cdf.package("$cdfFileBasename", species="Who_cares", cdf.path="$cdfFileDirname", package.path =pkgpath, compress=$compress);
 
-  files = rownames(summary(data.files));
+  dat = justGCRMA(filenames=data.files, normalize=TRUE, affinity.info=NULL, type="fullmodel", verbose=TRUE, fast=FALSE, cdfname=my.cdf, celfile.path="$celFilePath");
 
-  dat = justGCRMA(filenames=files, normalize=TRUE, affinity.info=NULL, type="fullmodel", verbose=TRUE, fast=FALSE, cdfname=my.cdf, celfile.path="$celFilePath");
-
-  files[1] = paste("ID\t", files[1], sep="");
-  colnames(exprs(dat)) = files;
+  data.files[1] = paste("ID\t", data.files[1], sep="");
+  colnames(exprs(dat)) = data.files;
 
   write.table(exprs(dat), file="$outputFile",quote=F,sep="\\t", row.names=TRUE);
 

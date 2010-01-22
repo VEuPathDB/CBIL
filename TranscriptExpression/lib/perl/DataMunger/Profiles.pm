@@ -12,6 +12,7 @@ use CBIL::TranscriptExpression::Error;
 sub getInputFile            { $_[0]->{inputFile} }
 sub getOutputFile           { $_[0]->{outputFile} }
 sub getSamples              { $_[0]->{samples} }
+sub getDyeSwaps             { $_[0]->{dyeSwaps} }
 sub getPathToExecutable     { $_[0]->{pathToExecutable} }
 
 #-------------------------------------------------------------------------------
@@ -63,11 +64,15 @@ sub writeRScript {
 
 source("$ENV{GUS_HOME}/lib/R/TranscriptExpression/profile_functions.R");
 
-dat = read.table("$inputFile", header=T, sep="\\t");
+dat = read.table("$inputFile", header=T, sep="\\t", check.names=FALSE);
 
 dat.samples = list();
+dye.swaps = vector();
 $samples
 #-----------------------------------------------------------------------
+
+dat = mOrInverse(df=dat, ds=dye.swaps);
+
 reorderedSamples = reorderAndAverageColumns(pl=dat.samples, df=dat);
 reorderedSamples\$percentile = percentileMatrix(m=reorderedSamples\$data);
 
@@ -89,6 +94,7 @@ sub makeSamplesRString {
   my ($self) = @_;
 
   my $samplesHash = $self->groupListHashRef($self->getSamples());
+  my $dyeSwapsHash = $self->groupListHashRef($self->getDyeSwaps());
 
   my $rv = "";
 
@@ -96,8 +102,15 @@ sub makeSamplesRString {
   foreach my $group (keys %$samplesHash) {
     my $samples = $samplesHash->{$group};
 
-    $rv .= "dat.samples[[\"$group\"]] = c(" . join(',', map { "\"$_\""} @$samples ) . ");\n";
+    $rv .= "dat.samples[[\"$group\"]] = c(" . join(',', map { "\"$_\""} @$samples ) . ");\n\n";
   }
+
+  my $n = 1;
+  foreach my $dyeSwap (keys %$dyeSwapsHash) {
+    $rv .= "dye.swaps[$n] = \"$dyeSwap\";\n\n";
+    $n++;
+  }
+
   return $rv;
 }
 

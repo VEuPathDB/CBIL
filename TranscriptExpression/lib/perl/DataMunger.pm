@@ -5,6 +5,7 @@ use strict;
 use Tie::IxHash;
 
 use CBIL::TranscriptExpression::Error;
+use CBIL::TranscriptExpression::Utils;
 
 sub new {
   my ($class, $args, $requiredParamArrayRef) = @_;
@@ -14,16 +15,13 @@ sub new {
         new("try to instantiate an abstract class:  $class")->throw();
   }
 
-  if($requiredParamArrayRef) {
-    foreach my $param (@$requiredParamArrayRef) {
-      unless($args->{$param}) {
-        CBIL::TranscriptExpression::Error->new("Parameter [$param] is missing in the xml file for $class")->throw();
-      }
-    }
-  }
+  CBIL::TranscriptExpression::Utils::checkRequiredParams($requiredParamArrayRef, $args);
 
   bless $args, $class; 
 }
+
+
+
 
 sub munge {}
 
