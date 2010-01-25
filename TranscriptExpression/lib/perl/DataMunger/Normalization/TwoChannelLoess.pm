@@ -71,7 +71,7 @@ sub munge {
 
   $self->runR($rFile);
 
-#  system("rm $rFile");
+  system("rm $rFile");
 }
 
 
