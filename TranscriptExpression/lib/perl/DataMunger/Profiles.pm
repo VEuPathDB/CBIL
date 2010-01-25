@@ -56,6 +56,8 @@ sub writeRScript {
   my $inputFileBase = basename($inputFile);
   my $rFile = "/tmp/$inputFileBase.R";
 
+  my $hasDyeSwaps = $self->getDyeSwaps() ? "TRUE" : "FALSE";
+
   open(RCODE, "> $rFile") or die "Cannot open $rFile for writing:$!";
 
   my $rString = <<RString;
@@ -69,7 +71,9 @@ dye.swaps = vector();
 $samples
 #-----------------------------------------------------------------------
 
-dat = mOrInverse(df=dat, ds=dye.swaps);
+if($hasDyeSwaps) {
+  dat = mOrInverse(df=dat, ds=dye.swaps);
+}
 
 reorderedSamples = reorderAndAverageColumns(pl=dat.samples, df=dat);
 reorderedSamples\$percentile = percentileMatrix(m=reorderedSamples\$data);
