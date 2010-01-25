@@ -8,9 +8,7 @@ use CBIL::TranscriptExpression::Error;
 #-------------------------------------------------------------------------------
 
 sub getMappingFile          { $_[0]->{mappingFile} }
-sub getOutputFile           { $_[0]->{outputFile} }
 sub getDataFiles            { $_[0]->{dataFiles} }
-sub getPathToExecutable     { $_[0]->{pathToExecutable} }
 sub getPathToDataFiles      { $_[0]->{pathToDataFiles} }
 
 sub isMappingFileZipped     {

@@ -7,6 +7,22 @@ use Tie::IxHash;
 use CBIL::TranscriptExpression::Error;
 use CBIL::TranscriptExpression::Utils;
 
+#--------------------------------------------------------------------------------
+
+sub getPathToExecutable     { $_[0]->{pathToExecutable} }
+sub setPathToExecutable     { $_[0]->{pathToExecutable} = $_[1] }
+
+sub getOutputFile           { $_[0]->{outputFile} }
+sub setOutputFile           { $_[0]->{outputFile} = $_[1] }
+
+sub getBaseLogDir           { $_[0]->{baseLogDir} }
+sub setBaseLogDir           { $_[0]->{baseLogDir} = $_[1] }
+
+sub getChecker              { $_[0]->{_checker} }
+sub setChecker              { $_[0]->{_checker} = $_[1] }
+
+#--------------------------------------------------------------------------------
+
 sub new {
   my ($class, $args, $requiredParamArrayRef) = @_;
 
@@ -20,25 +36,9 @@ sub new {
   bless $args, $class; 
 }
 
-
-
+#-------------------------------------------------------------------------------
 
 sub munge {}
-
-sub headerIndexHashRef {
-  my ($self, $headerString, $delRegex)  = @_;
-
-  my %rv;
-
-  my @a = split($delRegex, $headerString);
-  for(my $i = 0; $i < scalar @a; $i++) {
-    my $value = $a[$i];
-
-    $rv{$value} = $i;
-  }
-
-  return \%rv;
-}
 
 #-------------------------------------------------------------------------------
 

@@ -6,6 +6,8 @@ use strict;
 use CBIL::TranscriptExpression::Utils;
 use CBIL::TranscriptExpression::Error;
 
+use CBIL::TranscriptExpression::Check::ConsistentIdOrder;
+
 use File::Basename;
 
 #--------------------------------------------------------------------------------
@@ -15,6 +17,7 @@ sub getGridColumns                         { $_[0]->{gridColumns} }
 sub getSpotRows                            { $_[0]->{spotRows} }
 sub getSpotColumns                         { $_[0]->{spotColumns} }
 
+sub getIdColumnName                        { $_[0]->{idColumnName} }
 sub getGreenColumnName                     { $_[0]->{greenColumnName} }
 sub getRedColumnName                       { $_[0]->{redColumnName} }
 sub getFlagColumnName                      { $_[0]->{flagColumnName} }
@@ -32,6 +35,7 @@ sub new {
 
   my $additionalRequiredParams = ['greenColumnName',
                                   'redColumnName',
+                                  'idColumnName',
                                   'flagColumnName',
                                   'withinSlideNormalizationType',
                                   'gridRows',
@@ -46,6 +50,15 @@ sub new {
   if($normType ne 'loess' && $normType ne 'printTipLoess' && $normType ne 'median') {
     CBIL::TranscriptExpression::Error->new("within slide normalizationType must be one of [loess,printTipLoess, or median]")->throw();
   }
+
+  my $mappingFile = $self->getMappingFile();
+  my $pathToDataFiles = $self->getPathToDataFiles();
+  my $dataFiles = $self->getDataFiles();
+  my $idColumnName = $self->getIdColumnName();
+
+  my $checker = CBIL::TranscriptExpression::Check::ConsistentIdOrder->new($mappingFile, $dataFiles, $pathToDataFiles, $idColumnName);
+  $checker->check();
+
   return $self;
 }
 

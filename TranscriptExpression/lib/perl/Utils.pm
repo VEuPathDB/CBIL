@@ -17,4 +17,20 @@ sub checkRequiredParams {
 }
 
 
+sub headerIndexHashRef {
+  my ($headerString, $delRegex)  = @_;
+
+  my %rv;
+
+  my @a = split($delRegex, $headerString);
+  for(my $i = 0; $i < scalar @a; $i++) {
+    my $value = $a[$i];
+
+    $rv{$value} = $i;
+  }
+
+  return \%rv;
+}
+
+
 1;

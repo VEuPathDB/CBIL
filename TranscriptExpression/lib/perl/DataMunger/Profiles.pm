@@ -10,10 +10,8 @@ use CBIL::TranscriptExpression::Error;
 #-------------------------------------------------------------------------------
 
 sub getInputFile            { $_[0]->{inputFile} }
-sub getOutputFile           { $_[0]->{outputFile} }
 sub getSamples              { $_[0]->{samples} }
 sub getDyeSwaps             { $_[0]->{dyeSwaps} }
-sub getPathToExecutable     { $_[0]->{pathToExecutable} }
 
 #-------------------------------------------------------------------------------
 

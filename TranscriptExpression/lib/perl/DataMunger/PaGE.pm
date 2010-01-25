@@ -4,6 +4,7 @@ use base qw(CBIL::TranscriptExpression::DataMunger);
 use strict;
 
 use CBIL::TranscriptExpression::Error;
+use CBIL::TranscriptExpression::Utils;
 
 use GUS::Community::FileTranslator;
 
@@ -14,11 +15,8 @@ my $USE_LOGGED_DATA = 1;
 
 #-------------------------------------------------------------------------------
 
-sub getBaseLogDir           { $_[0]->{baseLogDir} }
 sub getInputFile            { $_[0]->{inputFile} }
-sub getOutputFile           { $_[0]->{outputFile} }
 sub getAnalysisName         { $_[0]->{analysisName} }
-sub getPathToExecutable     { $_[0]->{pathToExecutable} }
 
 sub getConditions           { $_[0]->{conditions} }
 sub getNumberOfChannels     { $_[0]->{numberOfChannels} }
@@ -160,7 +158,7 @@ sub makePageInput {
   my $header;
   chomp($header = <FILE>);
 
-  my $headerIndexHash = $self->headerIndexHashRef($header, qr/\t/);
+  my $headerIndexHash = CBIL::TranscriptExpression::Utils::headerIndexHashRef($header, qr/\t/);
 
   my $conditions = $self->groupListHashRef($self->getConditions());
 
