@@ -12,6 +12,9 @@ use CBIL::TranscriptExpression::Error;
 sub getInputFile            { $_[0]->{inputFile} }
 sub getSamples              { $_[0]->{samples} }
 sub getDyeSwaps             { $_[0]->{dyeSwaps} }
+sub getHasRedGreenFiles     { $_[0]->{hasRedGreenFiles} }
+sub getMakePercentiles      { $_[0]->{makePercentiles} }
+
 
 #-------------------------------------------------------------------------------
 
@@ -57,6 +60,8 @@ sub writeRScript {
   my $rFile = "/tmp/$inputFileBase.R";
 
   my $hasDyeSwaps = $self->getDyeSwaps() ? "TRUE" : "FALSE";
+  my $hasRedGreenFiles = $self->getHasRedGreenFiles() ? "TRUE" : "FALSE";
+  my $makePercentiles = $self->getMakePercentiles() ? "TRUE" : "FALSE";
 
   open(RCODE, "> $rFile") or die "Cannot open $rFile for writing:$!";
 
@@ -76,10 +81,39 @@ if($hasDyeSwaps) {
 }
 
 reorderedSamples = reorderAndAverageColumns(pl=dat.samples, df=dat);
-reorderedSamples\$percentile = percentileMatrix(m=reorderedSamples\$data);
-
 write.table(reorderedSamples\$data, file="$outputFile",quote=F,sep="\\t",row.names=reorderedSamples\$id);
-write.table(reorderedSamples\$percentile, file="$pctOutputFile",quote=F,sep="\\t",row.names=reorderedSamples\$id);
+
+if($hasRedGreenFiles) {
+  redDat = read.table(paste("$inputFile", ".red", sep=""), header=T, sep="\\t", check.names=FALSE);
+  greenDat = read.table(paste("$inputFile", ".green", sep=""), header=T, sep="\\t", check.names=FALSE);
+
+  if($hasDyeSwaps) {
+    newRedDat = swapColumns(t1=redDat, t2=greenDat, ds=dye.swaps);
+    newGreenDat = swapColumns(t1=greenDat, t2=redDat, ds=dye.swaps);
+  } else {
+    newRedDat = redDat;
+    newGreenDat = greenDat;
+  }
+
+  reorderedRedSamples = reorderAndAverageColumns(pl=dat.samples, df=newRedDat);
+  reorderedGreenSamples = reorderAndAverageColumns(pl=dat.samples, df=newGreenDat);
+
+  write.table(reorderedRedSamples\$data, file=paste("$outputFile", ".red", sep=""), quote=F,sep="\\t",row.names=reorderedRedSamples\$id);
+  write.table(reorderedGreenSamples\$data, file=paste("$outputFile", ".green", sep=""), quote=F,sep="\\t",row.names=reorderedGreenSamples\$id);
+}
+
+if($makePercentiles) {
+  if($hasRedGreenFiles) {
+    reorderedRedSamples\$percentile = percentileMatrix(m=reorderedRedSamples\$data);
+    reorderedGreenSamples\$percentile = percentileMatrix(m=reorderedGreenSamples\$data);
+
+    write.table(reorderedRedSamples\$percentile, file=paste("$outputFile", ".redPct", sep=""), quote=F,sep="\\t",row.names=reorderedRedSamples\$id);
+    write.table(reorderedGreenSamples\$percentile, file=paste("$outputFile", ".greenPct", sep=""), quote=F,sep="\\t",row.names=reorderedGreenSamples\$id);
+  } else {
+    reorderedSamples\$percentile = percentileMatrix(m=reorderedSamples\$data);
+    write.table(reorderedSamples\$percentile, file="$pctOutputFile",quote=F,sep="\\t",row.names=reorderedSamples\$id);
+  }
+}
 
 quit("no");
 RString

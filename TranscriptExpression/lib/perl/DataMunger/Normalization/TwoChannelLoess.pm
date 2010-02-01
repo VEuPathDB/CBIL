@@ -136,11 +136,18 @@ if($doAcrossSlideScaling) {
 
 # Avg Spotted Replicates based on "genes" in Mapping File
 avgM = aggregate(norm.data\@maM, list(norm.data\@maGnames\@maInfo[,2]), mean, na.rm=TRUE);
+avgRed = aggregate(raw.data\@maRf, list(raw.data\@maGnames\@maInfo[,2]), mean, na.rm=TRUE);
+avgGreen = aggregate(raw.data\@maGf, list(raw.data\@maGnames\@maInfo[,2]), mean, na.rm=TRUE);
 
 colnames(avgM) = c("ID", data.files);
+colnames(avgRed) = c("ID", data.files);
+colnames(avgGreen) = c("ID", data.files);
 
 # write data
 write.table(avgM, file="$outputFile", quote=F, sep="\\t", row.names=FALSE);
+write.table(avgRed, file=paste("$outputFile", ".red", sep=""), quote=F, sep="\\t", row.names=FALSE);
+write.table(avgGreen, file=paste("$outputFile", ".green", sep=""), quote=F, sep="\\t", row.names=FALSE);
+
 
 } else {
   stop("ERROR:  could not load required marray library");

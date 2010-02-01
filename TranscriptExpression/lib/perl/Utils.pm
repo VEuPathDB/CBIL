@@ -26,6 +26,8 @@ sub headerIndexHashRef {
   for(my $i = 0; $i < scalar @a; $i++) {
     my $value = $a[$i];
 
+    $value =~ s/\"//g;
+
     $rv{$value} = $i;
   }
 

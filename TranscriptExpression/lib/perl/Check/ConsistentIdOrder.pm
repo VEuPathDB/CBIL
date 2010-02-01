@@ -93,6 +93,8 @@ sub readColumn {
 
     my $value = $a[$idIndex];
 
+    $value =~ s/\"//g;
+
     push @res, $value;
   }
 
