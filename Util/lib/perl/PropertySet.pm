@@ -106,6 +106,13 @@ sub getPropRelaxed {
     return $self->{props}->{$name};
 }
 
+
+sub addProperty {
+    my ($name, $value) = @_;
+    
+    $self->{props}->{$name} = $value;
+}
+
 sub toString {
   my $self = shift;
   my $ret = "property = value, help\n----------------------\n";
