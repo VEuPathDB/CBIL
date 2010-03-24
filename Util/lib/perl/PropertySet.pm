@@ -45,7 +45,7 @@ sub new {
         s/\s+$//;
         next if (!$_ || /^\s*#/);
 	if (! /(\S+?)\s*=\s*(.+)/) {
-	  print STDERR "Can't parse '$_' in property file '$propsFile'\n";
+	  print STDERR "In property file '$propsFile', the following line is malformed: '$_'\n";
 	  $fatalError = 1;
 	}
         my $key = $1;
