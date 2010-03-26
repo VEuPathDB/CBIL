@@ -19,4 +19,29 @@ setFlaggedValuesToNA <- function (gM=NULL, rM=NULL, wM=NULL, fv=NULL) {
 }
 
 
+averageSpottedReplicates <- function (m=NULL, nm=NULL) {
+  
+  if (is.null(m) || is.null(nm)){
+    stop("m matrix, and nm vector required;");
+  }
+
+  newData = vector();
+  newName = vector();
+
+  index = 1;
+  
+  for(i in 1:length(nm)) {
+    rowAllNames = unlist(strsplit(as.character(nm[i]), ','));
+
+    for(k in 1:length(rowAllNames)) {
+      newName[index] = rowAllNames[k];
+      newData = rbind(newData, m[i,]);
+      index = index + 1;
+    }
+  }
+
+  return(aggregate(newData, list(newName), mean, na.rm=TRUE));
+}
+
+
 #--------------------------------------------------------------------------------
