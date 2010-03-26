@@ -84,7 +84,7 @@ percentileMatrix <- function(m=NULL) {
   my.rank = vector();
   
   for(j in 1:ncol(m)) {
-    my.rank = cbind(my.rank, rank(m[,j]));
+    my.rank = cbind(my.rank, rank(m[,j], na.last=F));
   }
     
   res = (my.rank * 100) / nrow(my.rank);
@@ -127,6 +127,23 @@ mOrInverse <- function (df=NULL, ds=NULL) {
   }
   
   return(df);
+}
+
+#--------------------------------------------------------------------------------
+
+swapColumns <- function (t1=NULL, t2=NULL, ds=NULL) {
+
+  if (is.null(t1) || is.null(t2) || is.null(ds)){
+    stop("data.frames t1 and t2 and vector ds are required.");
+  }
+
+  for(j in 1:length(ds)) {
+    dye.swap.sample = ds[j];
+
+    t1[[dye.swap.sample]] = t2[[dye.swap.sample]];
+  }
+  
+  return(t1);
 }
 
 #--------------------------------------------------------------------------------
