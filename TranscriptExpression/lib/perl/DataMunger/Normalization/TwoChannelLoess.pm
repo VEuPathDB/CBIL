@@ -135,9 +135,9 @@ if($doAcrossSlideScaling) {
 }
 
 # Avg Spotted Replicates based on "genes" in Mapping File
-avgM = aggregate(norm.data\@maM, list(norm.data\@maGnames\@maInfo[,2]), mean, na.rm=TRUE);
-avgRed = aggregate(raw.data\@maRf, list(raw.data\@maGnames\@maInfo[,2]), mean, na.rm=TRUE);
-avgGreen = aggregate(raw.data\@maGf, list(raw.data\@maGnames\@maInfo[,2]), mean, na.rm=TRUE);
+avgM = averageSpottedReplicates(m=norm.data\@maM, nm=norm.data\@maGnames\@maInfo[,2]);
+avgRed = averageSpottedReplicates(m=raw.data\@maRf, nm=norm.data\@maGnames\@maInfo[,2]);
+avgGreen = averageSpottedReplicates(m=raw.data\@maGf, nm=norm.data\@maGnames\@maInfo[,2]);
 
 colnames(avgM) = c("ID", data.files);
 colnames(avgRed) = c("ID", data.files);
