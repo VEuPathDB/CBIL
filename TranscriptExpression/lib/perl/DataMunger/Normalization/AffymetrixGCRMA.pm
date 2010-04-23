@@ -1,9 +1,11 @@
-package CBIL::TranscriptExpression::DataMunger::Normalization::AffymetrixGCRMA;
+package CBIL::TranscriptExpression::DataMunger::Normalization::AffymetrixRMA;
 use base qw(CBIL::TranscriptExpression::DataMunger::Normalization);
 
 use strict;
 
 use File::Basename;
+
+use Cwd;
 
 sub getCdfFile     { $_[0]->getMappingFile }
 sub getCelFilePath { $_[0]->getPathToDataFiles }
@@ -11,28 +13,92 @@ sub getCelFilePath { $_[0]->getPathToDataFiles }
 sub munge {
   my ($self) = @_;
 
+  my $dir = getcwd();
+
+  my $executable = $self->getPathToExecutable() ? $self->getPathToExecutable() : 'R';
+
+  my $rTempPackageDir = "/tmp/RtempPackage";
+  mkdir $rTempPackageDir;
+  chdir $rTempPackageDir;
+
+  my $cdfFile = $self->getCdfFile();
+  my $cdfFileBasename = basename($cdfFile);
+  my $cleanCdfName = $cdfFileBasename;
+  $cleanCdfName =~  tr/[A-Z]/[a-z]/;
+  $cleanCdfName =~ s/[_\- ]//g;
+  $cleanCdfName =~ s/\.//i;
+
   my $dataFilesRString = $self->makeDataFilesRString();
 
-  my $rFile = $self->writeRScript($dataFilesRString);
+  my $makeCdfPackageRFile = $self->writeCdfPackage($rTempPackageDir);
+  $self->runR($makeCdfPackageRFile);
+
+  my $buildCmd = "$executable CMD build $cleanCdfName";
+  my $buildRes = system($buildCmd);
+  unless($buildRes / 256 == 0) {
+    CBIL::TranscriptExpression::Error->new("Error while attempting to run R\n$buildCmd")->throw();
+  }
+
+  my $installCmd = "$executable CMD INSTALL $cleanCdfName" . "*.tar.gz";
+  my $installRes = system($installCmd);
+  unless($installRes / 256 == 0) {
+    CBIL::TranscriptExpression::Error->new("Error while attempting to run R:\n$installCmd")->throw();
+  }
+
+
+  my $rFile = $self->writeRScript($dataFilesRString, $cleanCdfName);
 
   $self->runR($rFile);
 
+  chdir $dir;
+
   system("rm $rFile");
+  system("rm $makeCdfPackageRFile");
+  system("rm -r $rTempPackageDir");
 }
 
-sub writeRScript {
-  my ($self, $samples) = @_;
+
+sub writeCdfPackage {
+  my ($self, $pkgPath) = @_;
 
   my $compress = "FALSE";
   if($self->isMappingFileZipped()) {
     $compress = "TRUE";
   }
 
+  my $cdfFile = $self->getCdfFile();
+  my $cdfFileBasename = basename($cdfFile);
+  my $cdfFileDirname = dirname($cdfFile);
+
+  my $rFile = "/tmp/$cdfFileBasename.R";
+
+  open(RCODE, "> $rFile") or die "Cannot open $rFile for writing:$!";
+
+  my $rString = <<RString;
+load.makecdfenv = library(makecdfenv, logical.return=TRUE)
+
+if(load.makecdfenv) {
+  pkgpath = "$pkgPath";
+  my.cdf <- make.cdf.package("$cdfFileBasename", species="Who_cares", cdf.path="$cdfFileDirname", package.path =pkgpath, compress=$compress, unlink=TRUE);
+} else {
+  stop("ERROR:  could not load required libraries makecdfenv");
+}
+RString
+
+  print RCODE $rString;
+
+  close RCODE;
+
+  return $rFile;
+}
+
+sub writeRScript {
+  my ($self, $samples, $cdfLibrary) = @_;
+
   my $celFilePath = $self->getCelFilePath();
 
   my $cdfFile = $self->getCdfFile();
   my $cdfFileBasename = basename($cdfFile);
-  my $cdfFileDirname = dirname($cdfFile);
 
   my $outputFile = $self->getOutputFile();
   my $outputFileBase = basename($outputFile);
@@ -41,30 +107,24 @@ sub writeRScript {
   open(RCODE, "> $rFile") or die "Cannot open $rFile for writing:$!";
 
   my $rString = <<RString;
+load.affy = library(affy, logical.return=TRUE);
+load.cdf = library($cdfLibrary, logical.return=TRUE);
 
-load.makecdfenv = library(makecdfenv, logical.return=TRUE)
-load.gcrma = library(gcrma, logical.return=TRUE)
-
-if(load.makecdfenv && load.gcrma) {
+if(load.affy && load.cdf) {
 
   data.files = vector();
   $samples
 
-  pkgpath = tempdir();
-  my.cdf <- make.cdf.package("$cdfFileBasename", species="Who_cares", cdf.path="$cdfFileDirname", package.path =pkgpath, compress=$compress);
-
-  dat = justGCRMA(filenames=data.files, normalize=TRUE, affinity.info=NULL, type="fullmodel", verbose=TRUE, fast=FALSE, cdfname=my.cdf, celfile.path="$celFilePath");
+  dat = ReadAffy(filenames=data.files, cdfname="$cdfLibrary", celfile.path="$celFilePath")
+  res = rma(dat)
 
   data.files[1] = paste("ID\t", data.files[1], sep="");
-  colnames(exprs(dat)) = data.files;
+  colnames(exprs(res)) = data.files;
 
-  write.table(exprs(dat), file="$outputFile",quote=F,sep="\\t", row.names=TRUE);
+  write.table(exprs(res), file="$outputFile",quote=F,sep="\\t", row.names=TRUE);
 
-  unlink(pkgpath, recursive=TRUE);
-
-  quit("no");
 } else {
-  stop("ERROR:  could not load required libraries makecdfenv and gcrma");
+  stop("ERROR:  could not load required libraries affy and $cdfLibrary");
 }
 
 RString
