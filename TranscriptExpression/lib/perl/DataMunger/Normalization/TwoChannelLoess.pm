@@ -52,11 +52,11 @@ sub new {
   }
 
   my $mappingFile = $self->getMappingFile();
-  my $pathToDataFiles = $self->getPathToDataFiles();
   my $dataFiles = $self->getDataFiles();
   my $idColumnName = $self->getIdColumnName();
+  my $mainDirectory = $self->getMainDirectory();
 
-  my $checker = CBIL::TranscriptExpression::Check::ConsistentIdOrder->new($mappingFile, $dataFiles, $pathToDataFiles, $idColumnName);
+  my $checker = CBIL::TranscriptExpression::Check::ConsistentIdOrder->new($mappingFile, $dataFiles, $mainDirectory, $idColumnName);
   $checker->check();
 
   return $self;
@@ -81,7 +81,7 @@ sub writeRScript {
   my $mappingFile = $self->getMappingFile();
   my $outputFile = $self->getOutputFile();
   my $outputFileBase = basename($outputFile);
-  my $pathToDataFiles = $self->getPathToDataFiles();
+  my $pathToDataFiles = $self->getMainDirectory();
 
   my $ngr = $self->getGridRows();
   my $ngc = $self->getGridColumns();

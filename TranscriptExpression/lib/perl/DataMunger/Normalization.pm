@@ -3,13 +3,24 @@ use base qw(CBIL::TranscriptExpression::DataMunger);
 
 use strict;
 
+use Data::Dumper;
+
 use CBIL::TranscriptExpression::Error;
 
 #-------------------------------------------------------------------------------
 
-sub getMappingFile          { $_[0]->{mappingFile} }
+
 sub getDataFiles            { $_[0]->{dataFiles} }
-sub getPathToDataFiles      { $_[0]->{pathToDataFiles} }
+sub inputFileIsMappingFile  { $_[0]->{inputFileIsMappingFile} }
+sub getMappingFile          { 
+  my ($self) = @_;
+
+  if($self->inputFileIsMappingFile()) {
+    return $self->{inputFile};
+  }
+
+  return $self->{mappingFile};
+}
 
 sub isMappingFileZipped     {
   my ($self) = @_;
@@ -26,17 +37,16 @@ sub isMappingFileZipped     {
 sub new {
   my ($class, $args) = @_;
 
-  my $requiredParams = ['mappingFile',
-                        'outputFile',
+  my $requiredParams = ['outputFile',
                         'dataFiles',
-                        'pathToDataFiles',
                         ];
 
   my $self = $class->SUPER::new($args, $requiredParams);
 
-  my $mappingFile = $args->{mappingFile};
+  my $mappingFile = $self->getMappingFile();
+
   unless(-e $mappingFile) {
-    CBIL::TranscriptExpression::Error->new("input file $mappingFile does not exist")->throw();
+    CBIL::TranscriptExpression::Error->new("Required Mapping file not provided")->throw();
   }
 
   return $self;

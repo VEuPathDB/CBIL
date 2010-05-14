@@ -9,12 +9,10 @@ use CBIL::TranscriptExpression::Error;
 
 #-------------------------------------------------------------------------------
 
-sub getInputFile            { $_[0]->{inputFile} }
 sub getSamples              { $_[0]->{samples} }
 sub getDyeSwaps             { $_[0]->{dyeSwaps} }
 sub getHasRedGreenFiles     { $_[0]->{hasRedGreenFiles} }
 sub getMakePercentiles      { $_[0]->{makePercentiles} }
-
 
 #-------------------------------------------------------------------------------
 

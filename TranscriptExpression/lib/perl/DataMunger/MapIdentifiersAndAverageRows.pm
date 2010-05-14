@@ -10,7 +10,6 @@ use File::Basename;
 #-------------------------------------------------------------------------------
 
 sub getMappingFile          { $_[0]->{mappingFile} }
-sub getInputFile            { $_[0]->{inputFile} }
 sub hasHeader               { $_[0]->{filesHaveHeaderRows} }
 
 #--------------------------------------------------------------------------------

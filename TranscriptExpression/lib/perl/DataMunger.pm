@@ -9,14 +9,14 @@ use CBIL::TranscriptExpression::Utils;
 
 #--------------------------------------------------------------------------------
 
-sub getPathToExecutable     { $_[0]->{pathToExecutable} }
-sub setPathToExecutable     { $_[0]->{pathToExecutable} = $_[1] }
-
 sub getOutputFile           { $_[0]->{outputFile} }
 sub setOutputFile           { $_[0]->{outputFile} = $_[1] }
 
-sub getBaseLogDir           { $_[0]->{baseLogDir} }
-sub setBaseLogDir           { $_[0]->{baseLogDir} = $_[1] }
+sub getInputFile            { $_[0]->{inputFile} }
+sub setInputFile            { $_[0]->{inputFile} = $_[1] }
+
+sub getMainDirectory        { $_[0]->{mainDirectory} }
+sub setMainDirectory        { $_[0]->{mainDirectory} = $_[1] }
 
 sub getChecker              { $_[0]->{_checker} }
 sub setChecker              { $_[0]->{_checker} = $_[1] }
@@ -25,6 +25,14 @@ sub setChecker              { $_[0]->{_checker} = $_[1] }
 
 sub new {
   my ($class, $args, $requiredParamArrayRef) = @_;
+
+
+  if(my $mainDirectory = $args->{mainDirectory}) {
+    chdir $mainDirectory;
+  }
+  else {
+    CBIL::TranscriptExpression::Error->new("Main Directory was not provided")->throw();
+  }
 
   if(ref($class) eq 'CBIL::TranscriptExpression::DataMunger') {
     CBIL::TranscriptExpression::Error->
@@ -45,9 +53,7 @@ sub munge {}
 sub runR {
   my ($self, $script) = @_;
 
-  my $executable = $self->getPathToExecutable() ? $self->getPathToExecutable() : 'R';
-
-  my $command = "cat $script  | $executable --no-save ";
+  my $command = "cat $script  | R --no-save ";
 
   my $systemResult = system($command);
 

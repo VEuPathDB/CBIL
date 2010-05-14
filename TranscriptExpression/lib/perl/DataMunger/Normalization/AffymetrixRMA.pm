@@ -7,15 +7,13 @@ use File::Basename;
 
 use Cwd;
 
-sub getCdfFile     { $_[0]->getMappingFile }
-sub getCelFilePath { $_[0]->getPathToDataFiles }
+sub getCdfFile                 { $_[0]->getMappingFile }
+sub getCelFilePath             { $_[0]->getMainDirectory }
 
 sub munge {
   my ($self) = @_;
 
   my $dir = getcwd();
-
-  my $executable = $self->getPathToExecutable() ? $self->getPathToExecutable() : 'R';
 
   my $rTempPackageDir = "/tmp/RtempPackage";
   mkdir $rTempPackageDir;
@@ -33,18 +31,17 @@ sub munge {
   my $makeCdfPackageRFile = $self->writeCdfPackage($rTempPackageDir);
   $self->runR($makeCdfPackageRFile);
 
-  my $buildCmd = "$executable CMD build $cleanCdfName";
+  my $buildCmd = "R CMD build $cleanCdfName";
   my $buildRes = system($buildCmd);
   unless($buildRes / 256 == 0) {
     CBIL::TranscriptExpression::Error->new("Error while attempting to run R\n$buildCmd")->throw();
   }
 
-  my $installCmd = "$executable CMD INSTALL $cleanCdfName" . "*.tar.gz";
+  my $installCmd = "R CMD INSTALL $cleanCdfName" . "*.tar.gz";
   my $installRes = system($installCmd);
   unless($installRes / 256 == 0) {
     CBIL::TranscriptExpression::Error->new("Error while attempting to run R:\n$installCmd")->throw();
   }
-
 
   my $rFile = $self->writeRScript($dataFilesRString, $cleanCdfName);
 
@@ -52,9 +49,7 @@ sub munge {
 
   chdir $dir;
 
-  system("rm $rFile");
-  system("rm $makeCdfPackageRFile");
-  system("rm -r $rTempPackageDir");
+#  unlink($rFile, $makeCdfPackageRFile, $rTempPackageDir);
 }
 
 
@@ -100,7 +95,7 @@ sub writeRScript {
   my $cdfFile = $self->getCdfFile();
   my $cdfFileBasename = basename($cdfFile);
 
-  my $outputFile = $self->getOutputFile();
+  my $outputFile = $celFilePath . "/" . $self->getOutputFile();
   my $outputFileBase = basename($outputFile);
   my $rFile = "/tmp/$outputFileBase.R";
 
