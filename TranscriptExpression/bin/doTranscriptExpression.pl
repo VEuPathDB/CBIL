@@ -7,14 +7,26 @@ use Getopt::Long;
 use CBIL::TranscriptExpression::XmlParser;
 use CBIL::TranscriptExpression::Error;
 
-my ($help, $xmlFile);
+my ($help, $xmlFile, $mainDirectory, $inputFile, @executableDirectory);
 
 &GetOptions('help|h' => \$help,
             'xml_file=s' => \$xmlFile,
+            'main_directory=s' => \$mainDirectory,
+            'input_file=s' => \$inputFile,
+            'executable_path=s' => \@executableDirectory,
            );
 
-unless($xmlFile) {
-  &usage("Error:  xml file required.");
+
+foreach(@executableDirectory) {
+  $ENV{PATH} .= ":$_";
+}
+
+unless(-e $xmlFile) {
+  &usage("Error:  xml file $xmlFile dies not exist");
+}
+
+unless(-d $mainDirectory) {
+  &usage("Error:  Main Directory $mainDirectory does not exist.");
 }
 
 my $xmlParser = CBIL::TranscriptExpression::XmlParser->new($xmlFile);
@@ -23,6 +35,12 @@ my $nodes = $xmlParser->parse();
 foreach my $node (@$nodes) {
   my $args = $node->{arguments};
   my $class = $node->{class};
+
+  $args->{mainDirectory} = $mainDirectory;
+
+  unless($args->{inputFile}) {
+    $args->{inputFile} = $inputFile;
+  }
 
   eval "require $class";
 
