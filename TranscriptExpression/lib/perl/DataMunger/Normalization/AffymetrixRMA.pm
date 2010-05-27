@@ -49,7 +49,7 @@ sub munge {
 
   chdir $dir;
 
-#  unlink($rFile, $makeCdfPackageRFile, $rTempPackageDir);
+  unlink($rFile, $makeCdfPackageRFile, $rTempPackageDir);
 }
 
 
