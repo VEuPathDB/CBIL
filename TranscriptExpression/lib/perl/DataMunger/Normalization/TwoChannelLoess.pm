@@ -139,14 +139,18 @@ avgM = averageSpottedReplicates(m=norm.data\@maM, nm=norm.data\@maGnames\@maInfo
 avgRed = averageSpottedReplicates(m=raw.data\@maRf, nm=norm.data\@maGnames\@maInfo[,2]);
 avgGreen = averageSpottedReplicates(m=raw.data\@maGf, nm=norm.data\@maGnames\@maInfo[,2]);
 
+allRaw = cbind(avgRed[,1], avgRed[,2:ncol(avgRed)], avgGreen[,2:ncol(avgGreen)]);
+
 colnames(avgM) = c("ID", data.files);
 colnames(avgRed) = c("ID", data.files);
 colnames(avgGreen) = c("ID", data.files);
+colnames(allRaw) = c("ID", paste(data.files, ".red", sep=""), paste(data.files, ".green", sep=""));
 
 # write data
 write.table(avgM, file="$outputFile", quote=F, sep="\\t", row.names=FALSE);
 write.table(avgRed, file=paste("$outputFile", ".red", sep=""), quote=F, sep="\\t", row.names=FALSE);
 write.table(avgGreen, file=paste("$outputFile", ".green", sep=""), quote=F, sep="\\t", row.names=FALSE);
+write.table(allRaw, file=paste("$outputFile", ".all_raw", sep=""), quote=F, sep="\\t", row.names=FALSE);
 
 
 } else {
