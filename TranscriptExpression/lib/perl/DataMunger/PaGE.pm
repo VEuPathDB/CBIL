@@ -35,8 +35,7 @@ sub getBaseX                { $_[0]->{baseX} }
 sub new {
   my ($class, $args) = @_;
 
-  my $requiredParams = ['baseLogDir',
-                        'inputFile',
+  my $requiredParams = ['inputFile',
                         'outputFile',
                         'analysisName',
                         'conditions',
@@ -47,12 +46,6 @@ sub new {
                        ];
 
   my $self = $class->SUPER::new($args, $requiredParams);
-
-  my $logDir = $args->{baseLogDir};
-
-  unless(-d $logDir) {
-    CBIL::TranscriptExpression::Error->new("baseLogDir dirrectory $logDir does not exist")->throw();
-  }
 
   unless(defined($args->{isDataLogged})) {
     CBIL::TranscriptExpression::Error->new("Parameter [isDataLogged] is missing in the config file")->throw();
@@ -79,8 +72,6 @@ sub new {
 
 sub munge {
   my ($self) = @_;
-
-  chdir $self->getBaseLogDir;
 
   my ($pageInputFile, $pageGeneConfFile) = $self->makePageInput();
 
@@ -164,7 +155,7 @@ sub makePageInput {
     die "Expecting 2 state comparison... expected 2 conditions";
   }
 
-  my $logDir = $self->getBaseLogDir();
+  my $logDir = $self->getMainDirectory();
 
   my $analysisName = $self->getAnalysisName;
   $analysisName =~ s/\s/_/g;
