@@ -33,6 +33,12 @@ sub getMappingFileHasHeader                { $_[0]->{mappingFileHasHeader} }
 
 #--------------------------------------------------------------------------------
 
+my $MAP_HAS_HEADER = 1;
+my $MAP_GENE_COL = 'first';
+my $MAP_OLIGO_COL = 'second';
+
+#--------------------------------------------------------------------------------
+
 sub new {
   my ($class, $args) = @_;
 
@@ -47,9 +53,6 @@ sub new {
                                   'gridColumns',
                                   'spotRows',
                                   'spotColumns',
-                                  'mappingFileHasHeader',
-                                  'mappingFileOligoColumn',
-                                  'mappingFileGeneColumn',
                                  ];
 
   CBIL::TranscriptExpression::Utils::checkRequiredParams($additionalRequiredParams, $args);
@@ -59,12 +62,13 @@ sub new {
     CBIL::TranscriptExpression::Error->new("within slide normalizationType must be one of [loess,printTipLoess, or median]")->throw();
   }
 
-  my $dataFiles = $self->getDataFiles();
-  my $idColumnName = $self->getIdColumnName();
-  my $mainDirectory = $self->getMainDirectory();
+  $self->setMappingFileHasHeader($MAP_HAS_HEADER) unless(defined $self->getMappingFileHasHeader());
+  $self->setMappingFileGeneColumn($MAP_GENE_COL) unless(defined $self->getMappingFileGeneColumn());
+  $self->setMappingFileOligoColumn($MAP_OLIGO_COL) unless(defined $self->getMappingFileOligoColumn());
 
   my $oligoColumn = $self->getMappingFileOligoColumn();
   my $geneColumn = $self->getMappingFileGeneColumn();
+  my $hasHeader = $self->getMappingFileHasHeader();
 
   if($oligoColumn eq $geneColumn) {
     CBIL::TranscriptExpression::Error->new("oligo column cannot be the same as gene column")->throw();
@@ -77,6 +81,11 @@ sub new {
   unless($geneColumn eq 'first' || $geneColumn eq 'second') {
     CBIL::TranscriptExpression::Error->new("gene column must equal first or second")->throw();
   }
+
+
+  my $dataFiles = $self->getDataFiles();
+  my $idColumnName = $self->getIdColumnName();
+  my $mainDirectory = $self->getMainDirectory();
 
   my $checker = CBIL::TranscriptExpression::Check::ConsistentIdOrder->new($dataFiles, $mainDirectory, $idColumnName);
   $self->setChecker($checker);
