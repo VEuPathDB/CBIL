@@ -10,7 +10,7 @@ sub checkRequiredParams {
   }
 
   foreach my $param (@$requiredParamArrayRef) {
-    unless($args->{$param}) {
+    unless(defined $args->{$param}) {
       CBIL::TranscriptExpression::Error->new("Parameter [$param] is missing in the xml file.")->throw();
     }
   }

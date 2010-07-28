@@ -6,9 +6,6 @@ use strict;
 use CBIL::TranscriptExpression::Utils;
 use CBIL::TranscriptExpression::Error;
 
-sub getMappingFile    { $_[0]->{_mapping_file} }
-sub setMappingFile    { $_[0]->{_mapping_file} = $_[1] }
-
 sub getDataDirPath     { $_[0]->{_data_dir_path} }
 sub setDataDirPath     { $_[0]->{_data_dir_path} = $_[1] }
 
@@ -18,13 +15,14 @@ sub setDataFiles      { $_[0]->{_data_files} = $_[1] }
 sub getIdColumnName   { $_[0]->{_id_column_names} }
 sub setIdColumnName   { $_[0]->{_id_column_names} = $_[1] }
 
+sub getIdArray        { $_[0]->{_id_array} }
+sub setIdArray        { $_[0]->{_id_array} = $_[1] }
 
 sub new {
-  my ($class, $mappingFile, $dataFiles, $pathToDataFiles, $idColName) = @_;
+  my ($class, $dataFiles, $pathToDataFiles, $idColName) = @_;
 
   my $self = bless {}, $class;
 
-  $self->setMappingFile($mappingFile);
   $self->setDataDirPath($pathToDataFiles);
   $self->setDataFiles($dataFiles);
   $self->setIdColumnName($idColName);
@@ -39,19 +37,22 @@ sub check {
   my $del = qr/\t/;
 
   my $idColName = $self->getIdColumnName();
-  my $mappingFile = $self->getMappingFile();
 
   my $dataFiles = $self->getDataFiles();
   my $dirPath = $self->getDataDirPath();
 
-  my $mapOrder = $self->readColumn($mappingFile, $idColName, $del);
+  my $firstDataFile = $dataFiles->[0];
+  my $firstDataFilePath = $dirPath . "/" . $firstDataFile;
+
+  my $idArray = $self->readColumn($firstDataFilePath, $idColName, $del);
+  $self->setIdArray($idArray);
 
   foreach my $file (@$dataFiles) {
     my $fullFilePath = $dirPath . "/" . $file;
 
     my $dataFileOrder = $self->readColumn($fullFilePath, $idColName, $del);
 
-    $self->compare($mapOrder, $dataFileOrder);
+    $self->compare($idArray, $dataFileOrder);
   }
   return 1;
 }

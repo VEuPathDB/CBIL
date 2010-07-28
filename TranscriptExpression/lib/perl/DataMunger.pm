@@ -19,7 +19,13 @@ sub getMainDirectory        { $_[0]->{mainDirectory} }
 sub setMainDirectory        { $_[0]->{mainDirectory} = $_[1] }
 
 sub getChecker              { $_[0]->{_checker} }
-sub setChecker              { $_[0]->{_checker} = $_[1] }
+sub setChecker { 
+  my ($self, $checker) = @_;
+
+  $checker->check();
+
+  $self->{_checker} = $checker;
+}
 
 #--------------------------------------------------------------------------------
 

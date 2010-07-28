@@ -9,6 +9,7 @@ use CBIL::TranscriptExpression::Error;
 use CBIL::TranscriptExpression::Check::ConsistentIdOrder;
 
 use File::Basename;
+use File::Temp qw/ tempfile /;
 
 #--------------------------------------------------------------------------------
 
@@ -26,6 +27,10 @@ sub getExcludeSpotsByFlagValue             { $_[0]->{excludeSpotsByFlagValue} }
 sub getWithinSlideNormalizationType        { $_[0]->{withinSlideNormalizationType} }
 sub getDoAcrossSlideNormalization          { $_[0]->{doAcrossSlideNormalization} }
 
+sub getMappingFileOligoColumn              { $_[0]->{mappingFileOligoColumn} }
+sub getMappingFileGeneColumn               { $_[0]->{mappingFileGeneColumn} }
+sub getMappingFileHasHeader                { $_[0]->{mappingFileHasHeader} }
+
 #--------------------------------------------------------------------------------
 
 sub new {
@@ -42,6 +47,9 @@ sub new {
                                   'gridColumns',
                                   'spotRows',
                                   'spotColumns',
+                                  'mappingFileHasHeader',
+                                  'mappingFileOligoColumn',
+                                  'mappingFileGeneColumn',
                                  ];
 
   CBIL::TranscriptExpression::Utils::checkRequiredParams($additionalRequiredParams, $args);
@@ -51,13 +59,27 @@ sub new {
     CBIL::TranscriptExpression::Error->new("within slide normalizationType must be one of [loess,printTipLoess, or median]")->throw();
   }
 
-  my $mappingFile = $self->getMappingFile();
   my $dataFiles = $self->getDataFiles();
   my $idColumnName = $self->getIdColumnName();
   my $mainDirectory = $self->getMainDirectory();
 
-  my $checker = CBIL::TranscriptExpression::Check::ConsistentIdOrder->new($mappingFile, $dataFiles, $mainDirectory, $idColumnName);
-  $checker->check();
+  my $oligoColumn = $self->getMappingFileOligoColumn();
+  my $geneColumn = $self->getMappingFileGeneColumn();
+
+  if($oligoColumn eq $geneColumn) {
+    CBIL::TranscriptExpression::Error->new("oligo column cannot be the same as gene column")->throw();
+  }
+
+  unless($oligoColumn eq 'first' || $oligoColumn eq 'second') {
+    CBIL::TranscriptExpression::Error->new("oligo column must equal first or second")->throw();
+  }
+
+  unless($geneColumn eq 'first' || $geneColumn eq 'second') {
+    CBIL::TranscriptExpression::Error->new("gene column must equal first or second")->throw();
+  }
+
+  my $checker = CBIL::TranscriptExpression::Check::ConsistentIdOrder->new($dataFiles, $mainDirectory, $idColumnName);
+  $self->setChecker($checker);
 
   return $self;
 }
@@ -65,20 +87,87 @@ sub new {
 sub munge {
   my ($self) = @_;
 
+  my $checker = $self->getChecker();
+  my $idArray = $checker->getIdArray();
+
+  my $tmpMappingFile = $self->mappingFileForR($idArray);
+
   my $dataFilesRString = $self->makeDataFilesRString();
 
-  my $rFile = $self->writeRScript($dataFilesRString);
+  my $rFile = $self->writeRScript($dataFilesRString, $tmpMappingFile);
 
   $self->runR($rFile);
 
-  system("rm $rFile");
+  unlink($rFile, $tmpMappingFile);
+}
+
+sub mappingFileForR {
+  my ($self, $idArray) = @_;
+
+  my ($fh, $filename) = tempfile();
+
+  my $mappingFile = $self->getMappingFile();  
+
+  my $oligoColumn = $self->getMappingFileOligoColumn();
+
+  my $oligoIndex = $oligoColumn eq 'first' ? 0 : 1;
+  my $geneIndex = $oligoColumn eq 'first' ? 1 : 0;
+
+  open(MAP, $mappingFile) or die "Cannot open file $mappingFile for reading: $!";
+
+  # remove the first line if there is a header
+  <MAP> if($self->getMappingFileHasHeader() == 1);
+
+  my %oligoToGene;
+
+  while(<MAP>) {
+    my @cols = split(/\t/, $_);
+
+    my $oligoString = $cols[$oligoIndex];
+    my $geneString = $cols[$geneIndex];
+
+    my @oligos = split(',', $oligoString);
+    my @genes =  split(',', $geneString);
+
+    foreach my $oligo (@oligos) {
+      my @seenGenes;
+      @seenGenes = @{$oligoToGene{$oligo}} if($oligoToGene{$oligo});
+
+      foreach my $gene (@genes) {
+        next if(&alreadyExists($gene, \@seenGenes));
+        push @{$oligoToGene{$oligo}}, $gene;
+      }
+    }
+  }
+
+  print $fh "ID\tGENES\n";
+  foreach my $oligo (@$idArray) {
+    my @genes;
+    @genes = @{$oligoToGene{$oligo}} if($oligoToGene{$oligo});
+    my $genesString = join(',', @genes);
+
+    print $fh "$oligo\t$genesString\n";
+  }
+
+  close $fh;
+
+  return $filename;
+}
+
+# static method
+sub alreadyExists {
+  my ($val, $ar) = @_;
+
+  foreach(@$ar) {
+    return 1 if($_ eq $val);
+  }
+  return 0;
 }
 
 
 sub writeRScript {
-  my ($self, $dataFilesString) = @_;
+  my ($self, $dataFilesString, $mappingFile) = @_;
 
-  my $mappingFile = $self->getMappingFile();
   my $outputFile = $self->getOutputFile();
   my $outputFileBase = basename($outputFile);
   my $pathToDataFiles = $self->getMainDirectory();
