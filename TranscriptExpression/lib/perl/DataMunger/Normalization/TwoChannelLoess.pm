@@ -28,8 +28,13 @@ sub getWithinSlideNormalizationType        { $_[0]->{withinSlideNormalizationTyp
 sub getDoAcrossSlideNormalization          { $_[0]->{doAcrossSlideNormalization} }
 
 sub getMappingFileOligoColumn              { $_[0]->{mappingFileOligoColumn} }
+sub setMappingFileOligoColumn              { $_[0]->{mappingFileOligoColumn} = $_[1] }
+
 sub getMappingFileGeneColumn               { $_[0]->{mappingFileGeneColumn} }
+sub setMappingFileGeneColumn               { $_[0]->{mappingFileGeneColumn} = $_[1] }
+
 sub getMappingFileHasHeader                { $_[0]->{mappingFileHasHeader} }
+sub setMappingFileHasHeader                { $_[0]->{mappingFileHasHeader} = $_[1] }
 
 #--------------------------------------------------------------------------------
 
