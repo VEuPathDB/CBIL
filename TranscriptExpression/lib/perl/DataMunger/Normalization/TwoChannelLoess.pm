@@ -135,6 +135,7 @@ sub mappingFileForR {
   my %oligoToGene;
 
   while(<MAP>) {
+    chomp;
     my @cols = split(/\t/, $_);
 
     my $oligoString = $cols[$oligoIndex];
