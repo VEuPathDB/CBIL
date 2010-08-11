@@ -38,7 +38,7 @@ sub setMappingFileHasHeader                { $_[0]->{mappingFileHasHeader} = $_[
 
 #--------------------------------------------------------------------------------
 
-my $MAP_HAS_HEADER = 1;
+my $MAP_HAS_HEADER = 0;
 my $MAP_GENE_COL = 'first';
 my $MAP_OLIGO_COL = 'second';
 
