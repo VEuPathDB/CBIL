@@ -7,6 +7,9 @@ use File::Basename;
 
 use CBIL::TranscriptExpression::Error;
 
+use File::Temp qw/ tempfile /;
+
+
 #-------------------------------------------------------------------------------
 
 sub getSamples              { $_[0]->{samples} }
@@ -55,13 +58,12 @@ sub writeRScript {
   my $pctOutputFile = $outputFile . ".pct";
 
   my $inputFileBase = basename($inputFile);
-  my $rFile = "/tmp/$inputFileBase.R";
+
+  my ($rfh, $rFile) = tempfile();
 
   my $hasDyeSwaps = $self->getDyeSwaps() ? "TRUE" : "FALSE";
   my $hasRedGreenFiles = $self->getHasRedGreenFiles() ? "TRUE" : "FALSE";
   my $makePercentiles = $self->getMakePercentiles() ? "TRUE" : "FALSE";
-
-  open(RCODE, "> $rFile") or die "Cannot open $rFile for writing:$!";
 
   my $rString = <<RString;
 
@@ -117,9 +119,9 @@ quit("no");
 RString
 
 
-  print RCODE $rString;
+  print $rfh $rString;
 
-  close RCODE;
+  close $rfh;
 
   return $rFile;
 }

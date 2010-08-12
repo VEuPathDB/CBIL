@@ -201,9 +201,8 @@ sub writeRScript {
 
   my $doAcrossSlideScaling = $self->getDoAcrossSlideNormalization() ? "TRUE" : "FALSE";
 
-  my $rFile = "/tmp/$outputFileBase.R";
 
-  open(RCODE, "> $rFile") or die "Cannot open $rFile for writing:$!";
+  my ($rfh, $rFile) = tempfile();
 
   my $rString = <<RString;
 load.marray = library(marray, logical.return=TRUE);
@@ -262,9 +261,9 @@ write.table(allRaw, file=paste("$outputFile", ".all_raw", sep=""), quote=F, sep=
 }
 RString
 
-  print RCODE $rString;
+  print $rfh $rString;
 
-  close RCODE;
+  close $rfh;
 
   return $rFile;
 }
