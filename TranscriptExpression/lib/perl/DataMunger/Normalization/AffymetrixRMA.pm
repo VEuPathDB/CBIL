@@ -37,19 +37,20 @@ sub munge {
     CBIL::TranscriptExpression::Error->new("Error while attempting to run R\n$buildCmd")->throw();
   }
 
-  my $installCmd = "R CMD INSTALL $cleanCdfName" . "*.tar.gz";
+  my $installCmd = "R CMD INSTALL $cleanCdfName" . "*.tar.gz -l $rTempPackageDir";
   my $installRes = system($installCmd);
   unless($installRes / 256 == 0) {
     CBIL::TranscriptExpression::Error->new("Error while attempting to run R:\n$installCmd")->throw();
   }
 
-  my $rFile = $self->writeRScript($dataFilesRString, $cleanCdfName);
+  my $rFile = $self->writeRScript($dataFilesRString, $cleanCdfName, $rTempPackageDir);
 
   $self->runR($rFile);
 
   chdir $dir;
 
-  unlink($rFile, $makeCdfPackageRFile, $rTempPackageDir);
+  unlink($rFile, $makeCdfPackageRFile);
+  system("rm -rf $rTempPackageDir");
 }
 
 
@@ -88,7 +89,7 @@ RString
 }
 
 sub writeRScript {
-  my ($self, $samples, $cdfLibrary) = @_;
+  my ($self, $samples, $cdfLibrary, $rTempPackageDir) = @_;
 
   my $celFilePath = $self->getCelFilePath();
 
@@ -102,6 +103,8 @@ sub writeRScript {
   open(RCODE, "> $rFile") or die "Cannot open $rFile for writing:$!";
 
   my $rString = <<RString;
+
+.libPaths("$rTempPackageDir")
 load.affy = library(affy, logical.return=TRUE);
 load.cdf = library($cdfLibrary, logical.return=TRUE);
 
