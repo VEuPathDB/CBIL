@@ -42,7 +42,7 @@ source("$ENV{GUS_HOME}/lib/R/TranscriptExpression/profile_functions.R");
 
 dat = read.table("$dataFile", header=$header, sep="\\t", check.names=FALSE, row.names=1);
 
-pct = percentileMatrix(m=dat);
+pct = percentileMatrix(m=dat, ties="$ties");
 
 output = cbind(rownames(dat), pct);
 

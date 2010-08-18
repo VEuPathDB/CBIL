@@ -75,7 +75,7 @@ findIndex <- function (array=NULL, value=NULL) {
 
 #--------------------------------------------------------------------------------
 
-percentileMatrix <- function(m=NULL) {
+percentileMatrix <- function(m=NULL, ties="average") {
 
   if (is.null(m)) {
     stop("Matrix m must be passed to findIndex function");
@@ -84,7 +84,7 @@ percentileMatrix <- function(m=NULL) {
   my.rank = vector();
   
   for(j in 1:ncol(m)) {
-    my.rank = cbind(my.rank, rank(m[,j], na.last=F));
+    my.rank = cbind(my.rank, rank(as.numeric(as.vector(m[,j])), na.last=FALSE, ties.method=c(ties)));
   }
     
   res = (my.rank * 100) / nrow(my.rank);
