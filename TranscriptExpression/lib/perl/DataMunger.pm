@@ -85,6 +85,7 @@ sub groupListHashRef {
   foreach my $groupSample (@$paramValueString) {
     my ($group, $sample) = split(/\|/, $groupSample);
 
+    $sample = $group if (! $sample);  # if group name is not specified; can be used when group has just 1 sample
     push @{$rv{$group}}, $sample;
   }
 
