@@ -1,0 +1,130 @@
+<!-- $Id$ -->
+<HTML><HEAD>
+<CENTER><TITLE>Item</TITLE>
+</HEAD>
+<BODY></CENTER><p><hr>
+
+<H1> 
+<A NAME="Item_name_0">
+NAME</A>
+</H1>
+<CODE>csp::item</CODE> - basic dialog element item.
+<p><p><hr>
+
+<H1> 
+<A NAME="Item_description_0">
+DESCRIPTION</A>
+</H1>
+Inherits from <CODE>csp::html</CODE> so that any item can be used to create HTML 
+easily.
+<p><p><hr>
+
+<H1> 
+<A NAME="Item_attributes_0">
+ATTRIBUTES</A>
+</H1>
+
+<XMP>
+ which helps answer questions about style.
+
+</XMP>
+<p><CODE>name</CODE> which is used to refer to the item.
+<p><CODE>text</CODE> bit of text which every item can use to display itself.
+<p><CODE>depth</CODE> depth in hierarchy.  Generally used to guide indentation.  
+Defaults to 0 when an item is created, then is adjusted when it is added to 
+a topic.
+<p><CODE>help</CODE> bit of help text.
+<p><CODE>seealso</CODE> list of other items of interest.
+<p><p><hr>
+
+<H1> 
+<A NAME="Item_methods_0">
+METHODS</A>
+</H1>
+<p>
+<H2> 
+<A NAME="Item_create_0">
+Create and Utility Methods</A>
+</H2>
+<p>
+<DL COMPACT>
+<DT><STRONG>
+
+<A NAME="Item_new_0">
+new</A>
+
+</STRONG>
+<DD>
+creates a new item.
+<p>Arguments:
+<p>req <CODE>style_config</CODE>
+<p>req <CODE>name</CODE>
+<p>req <CODE>text</CODE>
+<p>req <CODE>help</CODE>
+<p>opt <CODE>seealso</CODE>
+<p>
+</DL>
+
+<H2> 
+<A NAME="Item_html_generating_0">
+HTML-Generating Methods</A>
+</H2>
+<p>
+<DL COMPACT>
+<DT><STRONG>
+
+<A NAME="Item_helptarget_0">
+helpTarget</A>
+
+</STRONG>
+<DD>
+creates the anchor tag HTML for the help section.
+<p>Arguments:
+<p><CODE>viz</CODE> the stuff that is visible in the help link.
+<p>
+<DT><STRONG>
+
+<A NAME="Item_helplink_0">
+helpLink</A>
+
+</STRONG>
+<DD>
+creates the reference tag HTML for a link to the help section of an object.
+<p>Arguments:
+<p><CODE>viz</CODE> the stuff that is visible in the help link.
+<p>
+<DT><STRONG>
+
+<A NAME="Item_formtarget_0">
+formTarget</A>
+
+</STRONG>
+<DD>
+creates the anchor tag HTML for the form section.
+<p>Arguments:
+<p><CODE>viz</CODE> the stuff that is visible in the form link.
+<p>
+<DT><STRONG>
+
+<A NAME="Item_formlink_0">
+formLink</A>
+
+</STRONG>
+<DD>
+creates the reference tag HTML for a link to the form section of an object.
+<p>Arguments:
+<p><CODE>viz</CODE> the stuff that is visible in the form link.
+<p>
+<DT><STRONG>
+
+<A NAME="Item_seealso_0">
+seeAlso</A>
+
+</STRONG>
+<DD>
+adds 'See Also's HTML for the help section.
+<p>
+</DL>
+
+</BODY>
+</HTML>
