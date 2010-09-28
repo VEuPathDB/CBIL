@@ -27,15 +27,6 @@ sub getExcludeSpotsByFlagValue             { $_[0]->{excludeSpotsByFlagValue} }
 sub getWithinSlideNormalizationType        { $_[0]->{withinSlideNormalizationType} }
 sub getDoAcrossSlideNormalization          { $_[0]->{doAcrossSlideNormalization} }
 
-sub getMappingFileOligoColumn              { $_[0]->{mappingFileOligoColumn} }
-sub setMappingFileOligoColumn              { $_[0]->{mappingFileOligoColumn} = $_[1] }
-
-sub getMappingFileGeneColumn               { $_[0]->{mappingFileGeneColumn} }
-sub setMappingFileGeneColumn               { $_[0]->{mappingFileGeneColumn} = $_[1] }
-
-sub getMappingFileHasHeader                { $_[0]->{mappingFileHasHeader} }
-sub setMappingFileHasHeader                { $_[0]->{mappingFileHasHeader} = $_[1] }
-
 #--------------------------------------------------------------------------------
 
 my $MAP_HAS_HEADER = 0;
@@ -113,70 +104,6 @@ sub munge {
   $self->runR($rFile);
 
   unlink($rFile, $tmpMappingFile);
-}
-
-sub mappingFileForR {
-  my ($self, $idArray) = @_;
-
-  my ($fh, $filename) = tempfile();
-
-  my $mappingFile = $self->getMappingFile();  
-
-  my $oligoColumn = $self->getMappingFileOligoColumn();
-
-  my $oligoIndex = $oligoColumn eq 'first' ? 0 : 1;
-  my $geneIndex = $oligoColumn eq 'first' ? 1 : 0;
-
-  open(MAP, $mappingFile) or die "Cannot open file $mappingFile for reading: $!";
-
-  # remove the first line if there is a header
-  <MAP> if($self->getMappingFileHasHeader() == 1);
-
-  my %oligoToGene;
-
-  while(<MAP>) {
-    chomp;
-    my @cols = split(/\t/, $_);
-
-    my $oligoString = $cols[$oligoIndex];
-    my $geneString = $cols[$geneIndex];
-
-    my @oligos = split(',', $oligoString);
-    my @genes =  split(',', $geneString);
-
-    foreach my $oligo (@oligos) {
-      my @seenGenes;
-      @seenGenes = @{$oligoToGene{$oligo}} if($oligoToGene{$oligo});
-
-      foreach my $gene (@genes) {
-        next if(&alreadyExists($gene, \@seenGenes));
-        push @{$oligoToGene{$oligo}}, $gene;
-      }
-    }
-  }
-
-  print $fh "ID\tGENES\n";
-  foreach my $oligo (@$idArray) {
-    my @genes;
-    @genes = @{$oligoToGene{$oligo}} if($oligoToGene{$oligo});
-    my $genesString = join(',', @genes);
-
-    print $fh "$oligo\t$genesString\n";
-  }
-
-  close $fh;
-
-  return $filename;
-}
-
-# static method
-sub alreadyExists {
-  my ($val, $ar) = @_;
-
-  foreach(@$ar) {
-    return 1 if($_ eq $val);
-  }
-  return 0;
 }
 
 

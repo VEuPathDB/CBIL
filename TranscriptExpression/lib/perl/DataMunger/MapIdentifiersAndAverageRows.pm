@@ -4,36 +4,60 @@ use base qw(CBIL::TranscriptExpression::DataMunger);
 use strict;
 
 use CBIL::TranscriptExpression::Error;
+use CBIL::TranscriptExpression::Check::ConsistentIdOrder;
+
 use File::Temp qw/ tempfile /;
 use File::Basename;
 
 #-------------------------------------------------------------------------------
 
-sub getMappingFile          { $_[0]->{mappingFile} }
-sub hasHeader               { $_[0]->{filesHaveHeaderRows} }
+sub getDataDirPath             { $_[0]->{_data_dir_path} }
+sub setDataDirPath             { $_[0]->{_data_dir_path} = $_[1] }
+
+sub getMainDirectory           { $_[0]->{mainDirectory} }
+sub setMainDirectory           { $_[0]->{mainDirectory} = $_[1] }
+
+sub getIdColumnName            { $_[0]->{idColumnName} }
+
+#--------------------------------------------------------------------------------
+
+my $MAP_HAS_HEADER = 1;
+my $MAP_GENE_COL = 'first';
+my $MAP_OLIGO_COL = 'second';
 
 #--------------------------------------------------------------------------------
 
 sub new {
   my ($class, $args) = @_;
 
-  my $requiredParams = ['mappingFile',
-                        'inputFile',
-                        'outputFile',
-                        'filesHaveHeaderRows',
-                        ];
+  my $self = $class->SUPER::new($args);
 
-  my $self = $class->SUPER::new($args, $requiredParams);
+  $self->setMappingFileHasHeader($MAP_HAS_HEADER) unless(defined $self->getMappingFileHasHeader());
+  $self->setMappingFileGeneColumn($MAP_GENE_COL) unless(defined $self->getMappingFileGeneColumn());
+  $self->setMappingFileOligoColumn($MAP_OLIGO_COL) unless(defined $self->getMappingFileOligoColumn());
 
-  my $mappingFile = $args->{mappingFile};
-  unless(-e $mappingFile) {
-    CBIL::TranscriptExpression::Error->new("mapping file $mappingFile does not exist")->throw();
+  my $oligoColumn = $self->getMappingFileOligoColumn();
+  my $geneColumn = $self->getMappingFileGeneColumn();
+  my $hasHeader = $self->getMappingFileHasHeader();
+
+  if($oligoColumn eq $geneColumn) {
+    CBIL::TranscriptExpression::Error->new("oligo column cannot be the same as gene column")->throw();
   }
 
-  my $inputFile = $args->{inputFile};
-  unless(-e $inputFile) {
-    CBIL::TranscriptExpression::Error->new("input file $inputFile does not exist")->throw();
+  unless($oligoColumn eq 'first' || $oligoColumn eq 'second') {
+    CBIL::TranscriptExpression::Error->new("oligo column must equal first or second")->throw();
   }
+
+  unless($geneColumn eq 'first' || $geneColumn eq 'second') {
+    CBIL::TranscriptExpression::Error->new("gene column must equal first or second")->throw();
+  }
+
+  my $dataFiles = $self->getDataFiles();
+  my $idColumnName = $self->getIdColumnName();  ##BB need $idColumnName ??
+  my $mainDirectory = $self->getMainDirectory();
+
+  my $checker = CBIL::TranscriptExpression::Check::ConsistentIdOrder->new($dataFiles, $mainDirectory, $idColumnName);
+  $self->setChecker($checker);
 
   return $self;
 }
@@ -43,13 +67,22 @@ sub new {
 sub munge {
   my ($self) = @_;
 
-  my $tempFileName = $self->makeOrderedMapFile();
+  my $checker = $self->getChecker();
+  my $idArray = $checker->getIdArray();
 
-  my $rFile = $self->writeRScript($tempFileName);
+  my $tmpMappingFile = $self->mappingFileForR($idArray);
 
+
+  my $dataDirPath = $self->getMainDirectory();
+  my $dataFile = $dataDirPath . ($self->getDataFiles())->[0]; # only 1 file
+
+
+  print STDOUT "\n\n*** call to writeRScript(with $dataFile, AND $tmpMappingFile)\n";
+
+  my $rFile = $self->writeRScript($dataFile, $tmpMappingFile);
   $self->runR($rFile);
 
-  unlink($rFile, $tempFileName);
+  unlink($rFile, $tmpMappingFile);
 }
 
 #--------------------------------------------------------------------------------
@@ -113,43 +146,47 @@ sub readMappingFile {
 
 #--------------------------------------------------------------------------------
 
+## input : got from reading data file (which already should have genes mapped)
+## v = as.vector(inputt[,1]);  (gene_ids column)
+## dat = dat[,2:ncol(input)]   (half-life-value matrix)
 
 sub writeRScript {
-  my ($self, $file) = @_;
+  my ($self, $dataFile,$mappingFile) = @_;
+
+  print STDOUT "\n\n*** inside writeRScript(dataFile =$dataFile, AND mappingFile=$mappingFile\n";
 
   my $outputFile = $self->getOutputFile();
-
   my $outputFileBase = basename($outputFile);
-  my $rFile = "/tmp/$outputFileBase.R";
+  my $pathToDataFiles = $self->getMainDirectory();
 
-  my $header = $self->hasHeader() ? "TRUE" : "FALSE";
-
-  open(RCODE, "> $rFile") or die "Cannot open $rFile for writing:$!";
+  my ($rfh, $rFile) = tempfile();
 
   my $rString = <<RString;
 source("$ENV{GUS_HOME}/lib/R/TranscriptExpression/normalization_functions.R");
 
-input = read.table("$file", header=$header, sep="\\t");
+# reading in the mapping file; in which the 2nd coln is the gene_list...
+idMap = read.table("$mappingFile", sep="\\t", header=TRUE);
+v = as.vector(idMap[,2]);
 
-v = as.vector(input[,1]);
-dat = input[,2:ncol(input)];
+
+dat = read.table("$dataFile", sep="\\t", header=TRUE);
+dataMatrix = dat[,2:ncol(dat)];
 
 # Avg Rows
-avg.data = averageSpottedReplicates(m=dat, nm=v, nameIsList=FALSE);
+avg.data = averageSpottedReplicates(m=dataMatrix, nm=v, nameIsList=FALSE);
 
-colnames(avg.data) = colnames(input);
+colnames(avg.data) = colnames(dat);
 
 # write data
 write.table(avg.data, file="$outputFile", quote=F, sep="\\t", row.names=FALSE);
 RString
 
-  print RCODE $rString;
+  print $rfh $rString;
 
-  close RCODE;
+  close $rfh;
 
   return $rFile;
 }
-
 
 1;
 

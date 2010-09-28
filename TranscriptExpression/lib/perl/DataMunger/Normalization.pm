@@ -11,16 +11,6 @@ use CBIL::TranscriptExpression::Error;
 
 
 sub getDataFiles            { $_[0]->{dataFiles} }
-sub inputFileIsMappingFile  { $_[0]->{inputFileIsMappingFile} }
-sub getMappingFile          { 
-  my ($self) = @_;
-
-  if($self->inputFileIsMappingFile()) {
-    return $self->{inputFile};
-  }
-
-  return $self->{mappingFile};
-}
 
 sub isMappingFileZipped     {
   my ($self) = @_;

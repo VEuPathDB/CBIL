@@ -7,6 +7,9 @@ use Tie::IxHash;
 use CBIL::TranscriptExpression::Error;
 use CBIL::TranscriptExpression::Utils;
 
+use File::Basename;
+use File::Temp qw/ tempfile /;
+
 #--------------------------------------------------------------------------------
 
 sub getOutputFile           { $_[0]->{outputFile} }
@@ -27,11 +30,28 @@ sub setChecker {
   $self->{_checker} = $checker;
 }
 
+sub getDataFiles               { $_[0]->{dataFiles} }
+sub inputFileIsMappingFile     { $_[0]->{inputFileIsMappingFile} }
+
+sub getMappingFileOligoColumn  { $_[0]->{mappingFileOligoColumn} }
+sub setMappingFileOligoColumn  { $_[0]->{mappingFileOligoColumn} = $_[1] }
+
+sub getMappingFileGeneColumn   { $_[0]->{mappingFileGeneColumn} }
+sub setMappingFileGeneColumn   { $_[0]->{mappingFileGeneColumn} = $_[1] }
+
+sub getMappingFileHasHeader    { $_[0]->{mappingFileHasHeader} }
+sub setMappingFileHasHeader    { $_[0]->{mappingFileHasHeader} = $_[1] }
+
+#--------------------------------------------------------------------------------
+
+my $MAP_HAS_HEADER = 0;
+my $MAP_GENE_COL = 'first';
+my $MAP_OLIGO_COL = 'second';
+
 #--------------------------------------------------------------------------------
 
 sub new {
   my ($class, $args, $requiredParamArrayRef) = @_;
-
 
   if(my $mainDirectory = $args->{mainDirectory}) {
     chdir $mainDirectory;
@@ -47,7 +67,13 @@ sub new {
 
   CBIL::TranscriptExpression::Utils::checkRequiredParams($requiredParamArrayRef, $args);
 
-  bless $args, $class; 
+  my $self=bless $args, $class;
+
+  $self->setMappingFileOligoColumn($MAP_OLIGO_COL) unless(defined $self->getMappingFileOligoColumn());
+  $self->setMappingFileGeneColumn($MAP_GENE_COL) unless(defined $self->getMappingFileGeneColumn());
+  $self->setMappingFileHasHeader($MAP_HAS_HEADER) unless(defined $self->getMappingFileHasHeader());
+
+  return $self;
 }
 
 #-------------------------------------------------------------------------------
@@ -93,6 +119,83 @@ sub groupListHashRef {
 }
 
 
+#-------------------------------------------------------------------------------
 
+sub mappingFileForR {
+  my ($self, $idArray) = @_;
+
+  my ($fh, $filename) = tempfile();
+
+  my $mappingFile = $self->getMappingFile();
+
+  my $oligoColumn = $self->getMappingFileOligoColumn();
+
+  my $oligoIndex = $oligoColumn eq 'first' ? 0 : 1;
+  my $geneIndex = $oligoColumn eq 'first' ? 1 : 0;
+
+  open(MAP, $mappingFile) or die "Cannot open file $mappingFile for reading: $!";
+
+  # remove the first line if there is a header
+  <MAP> if($self->getMappingFileHasHeader() == 1);
+
+  my %oligoToGene;
+
+  while(<MAP>) {
+    chomp;
+    my @cols = split(/\t/, $_);
+
+    my $oligoString = $cols[$oligoIndex];
+    my $geneString = $cols[$geneIndex];
+
+    my @oligos = split(',', $oligoString);
+    my @genes =  split(',', $geneString);
+
+    foreach my $oligo (@oligos) {
+      my @seenGenes;
+      @seenGenes = @{$oligoToGene{$oligo}} if($oligoToGene{$oligo});
+
+      foreach my $gene (@genes) {
+        next if(&alreadyExists($gene, \@seenGenes));
+        push @{$oligoToGene{$oligo}}, $gene;
+      }
+    }
+  }
+  print $fh "ID\tGENES\n";
+  foreach my $oligo (@$idArray) {
+    my @genes;
+    @genes = @{$oligoToGene{$oligo}} if($oligoToGene{$oligo});
+    my $genesString = join(',', @genes);
+
+    print $fh "$oligo\t$genesString\n";
+  }
+
+  close $fh;
+
+  return $filename;
+
+}
+
+#-------------------------------------------------------------------------------
+# static method
+sub alreadyExists {
+  my ($val, $ar) = @_;
+
+  foreach(@$ar) {
+    return 1 if($_ eq $val);
+  }
+  return 0;
+}
+
+#-------------------------------------------------------------------------------
+
+sub getMappingFile          { 
+  my ($self) = @_;
+
+  if($self->inputFileIsMappingFile()) {
+    return $self->{inputFile};
+  }
+
+  return $self->{mappingFile};
+}
 
 1;
