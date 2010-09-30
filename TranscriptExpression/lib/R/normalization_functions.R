@@ -24,6 +24,9 @@ averageSpottedReplicates <- function (m=NULL, nm=NULL, nameIsList=TRUE) {
   if (is.null(m) || is.null(nm)){
     stop("m matrix, and nm vector required;");
   }
+  if (length(nm) != nrow(m)) {
+    stop("nm vector of different length than matrix m;");
+  }
 
   if(nameIsList) {
   
@@ -45,6 +48,10 @@ averageSpottedReplicates <- function (m=NULL, nm=NULL, nameIsList=TRUE) {
   else {
     newData = m;
     newName = nm;
+  }
+
+  if (length(newName) != nrow(newData)) {
+    stop("newName vector of different length than matrix newData;");
   }
 
   return(aggregate(newData, list(newName), mean, na.rm=TRUE));
