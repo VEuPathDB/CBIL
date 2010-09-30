@@ -53,7 +53,7 @@ sub new {
   }
 
   my $dataFiles = $self->getDataFiles();
-  my $idColumnName = $self->getIdColumnName();  ##BB need $idColumnName ??
+  my $idColumnName = $self->getIdColumnName();
   my $mainDirectory = $self->getMainDirectory();
 
   my $checker = CBIL::TranscriptExpression::Check::ConsistentIdOrder->new($dataFiles, $mainDirectory, $idColumnName);
@@ -165,7 +165,7 @@ sub writeRScript {
 source("$ENV{GUS_HOME}/lib/R/TranscriptExpression/normalization_functions.R");
 
 # reading in the mapping file; in which the 2nd coln is the gene_list...
-idMap = read.table("$mappingFile", sep="\\t", header=TRUE);
+idMap = read.table("$mappingFile", sep="\\t", header=TRUE, na.strings=c(""));
 v = as.vector(idMap[,2]);
 
 
@@ -173,7 +173,7 @@ dat = read.table("$dataFile", sep="\\t", header=TRUE);
 dataMatrix = dat[,2:ncol(dat)];
 
 # Avg Rows
-avg.data = averageSpottedReplicates(m=dataMatrix, nm=v, nameIsList=FALSE);
+avg.data = averageSpottedReplicates(m=dataMatrix, nm=v, nameIsList=TRUE);
 
 colnames(avg.data) = colnames(dat);
 
