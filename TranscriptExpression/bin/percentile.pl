@@ -8,7 +8,7 @@ use Getopt::Long;
 
 use File::Temp qw/ tempfile /;
 
-use lib "$ENV{GUS_HOME}/lib/perl"
+use lib "$ENV{GUS_HOME}/lib/perl";
 
 my ($help, $dataFile, $ties, $hasHeader, $outputFile, @executableDirectory);
 
