@@ -8,6 +8,8 @@ use Getopt::Long;
 
 use File::Temp qw/ tempfile /;
 
+use lib "$ENV{GUS_HOME}/lib/perl";
+
 my ($help, $dataFile1, $dataFile2, $hasHeader, $outputFile, @executableDirectory);
 
 &GetOptions('help|h' => \$help,
@@ -67,7 +69,7 @@ sub usage {
 
   print STDERR "$m\n\n" if($m);
   print STDERR "usage:  perl profileDifference.pl --minuend_file <DATA> --subtrahend_file <DATA> --output_file <OUT> --executable_path [--hasHeader] --help\n";
-  exit;
+  exit(1);
 }
 
 
