@@ -27,6 +27,7 @@ foreach(@executableDirectory) {
 
 unless(-e $dataFile) {
   &usage("Error:  File $dataFile dies not exist");
+  die;
 }
 
 unless($ties eq "average" || $ties eq "first" || $ties eq "random" || $ties eq "max" || $ties eq "min") {
@@ -70,7 +71,7 @@ sub usage {
 
   print STDERR "$m\n\n" if($m);
   print STDERR "usage:  perl percentile.pl --input_file <DATA> --output_file <OUT> --ties=s --executable_path [--hasHeader] --help\n";
-  exit;
+  exit(1);
 }
 
 
