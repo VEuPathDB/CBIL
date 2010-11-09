@@ -9,7 +9,13 @@ has a value lt, le, eq, gt, ge, ne, <=, <, ==, !=, >, >= a specified value.
 
 =head1 Example
 
-  cat FILE | cuSelect.pl +1 seq Hello +4 gt 5.0 +8 re '\d+'
+  cat FILE | cuSelect.pl %1 seq Hello %4 gt 5.0 %8 re '\d+'
+  
+If you need to compare to a literal with a leading minus sign, e.g.,
+
+ %3 le -1,
+ 
+then put '--' before the selection expression.
 
 =cut
 
@@ -35,15 +41,26 @@ run(cla());
 # --------------------------------- cla ----------------------------------
 
 sub cla {
-   my $Rv = CBIL::Util::EasyCsp::DoItAll
+   my $Rv = CBIL::Util::EasyCsp->new
    ( [ { h => 'split input lines on this RX',
          t => CBIL::Util::EasyCsp::StringType(),
          o => 'InDelimRx',
          d => '\t',
        },
+
+       { h => 'pass this many header lines through without testing for matches',
+         t => IntType(),
+         o => 'skipN',
+         d => 0,
+       },
+       
+       { h => 'read column names from header line (after skipping skipN)',
+         t => BooleanType(),
+         o => 'header',
+       }
      ],
      ''
-   ) || exit 0;
+   );
 
    return $Rv;
 }
@@ -55,14 +72,22 @@ sub run {
 
    my @filters = @ARGV; @ARGV = ();
 
-   my $inDelim_rx = $Cla->{InDelimRx};
+   my $inDelimRx = $Cla->{InDelimRx};
+
+   my $skipN = $Cla->skipN();
+   for (my $i = 1; $i <= $skipN; $i++) {
+     my $line = <>;
+     print $line;
+   }
+
+   my $columnNamesDict = extractHeader($Cla);
 
    my $line = 0;
  FILE_SCAN:
    while ( <> ) {
       $line++;
       chomp;
-      my @cols = ($line, split /$inDelim_rx/ );
+      my @cols = ($line, split /$inDelimRx/ );
 
       for ( my $i = 0; $i < @filters; $i += 3 ) {
 
@@ -70,8 +95,8 @@ sub run {
          my $s_relop = $filters[ $i + 1 ];
 
          # get local values of filter parameters
-         my $s_left  = getValue( $filters[ $i + 0 ], @cols );
-         my $s_right = getValue( $filters[ $i + 2 ], @cols );
+         my $s_left  = getValue( $columnNamesDict, $filters[ $i + 0 ], @cols );
+         my $s_right = getValue( $columnNamesDict, $filters[ $i + 2 ], @cols );
 
          # do the comparison
          my $pass_b = 0;
@@ -82,6 +107,14 @@ sub run {
 
          elsif ( $s_relop eq 'nre' ) {
             $pass_b = $s_left =~ /$s_right/ ? 0 : 1;
+         }
+
+        elsif ( $s_relop eq 'ire' ) {
+            $pass_b = $s_left =~ /$s_right/i ? 1 : 0;
+         }
+
+         elsif ( $s_relop eq 'inre' ) {
+            $pass_b = $s_left =~ /$s_right/i ? 0 : 1;
          }
 
          elsif ( $s_relop eq 'slt' ) {
@@ -147,18 +180,72 @@ sub run {
 # --------------------------- Support Routines ---------------------------
 # ========================================================================
 
+# ---------------------------- extractHeader -----------------------------
+
+=pod
+
+=head1 Column Headings
+
+When the C<--header> option is used then the first line (follow C<--skipN>
+lines) is used as a header to give names to each column.
+
+=cut
+
+sub extractHeader {
+  my $Cla = shift;
+
+  my $Rv;
+
+  if ($Cla->header()) {
+    my $inDelimRx = $Cla->InDelimRx();
+    my $headers   = <>;
+    print $headers;
+    chomp $headers;
+    my @cols = map { $_ =~ s/^\"//; $_ =~ s/\"$//; $_ } split /$inDelimRx/, $headers;
+    for (my $i = 0; $i < @cols; $i++) {
+      $Rv->{$cols[$i]} = $i+1;
+    }
+  }
+  
+  return $Rv;
+}
+
 # ------------------------------- getValue -------------------------------
 
-sub getValue {
-	 my $Tag  = shift;
+=pod
 
-	 if ( $Tag =~ /^\%(\d+)$/ ) {
-			return $_[$1];
-	 }
-   elsif ($Tag =~ /^\%\%(\d+)$/ ) {
-      return length($_[$1]);
-   }
-	 else {
-			return $Tag
-	 }
+=head1 Indicating Values
+
+Values may be column content, length of column content, or a literal value.
+
+Columns can be addressed either by the column number (1-based) using a form
+like %n or by name using %text.
+
+The length of a column's content is indicated by a %%d or %%text.
+
+The %text or %%text methods can only be used when C<--header> is specified.
+
+Anything else is interpreted as a literal value.
+
+=cut
+
+sub getValue {
+  my $Dict = shift;
+  my $Tag  = shift;
+
+  if ( $Tag =~ /^\%(\d+)$/ ) {
+    return $_[$1];
+  }
+  elsif ($Tag =~ /^\%\%(\d+)$/ ) {
+    return length($_[$1]);
+  }
+  elsif (defined $Dict && $Tag =~ /^\%(.+)/ && defined $Dict->{$1}) {
+    return $_[$Dict->{$1}];
+  }
+  elsif (defined $Dict && $Tag =~ /^\%%(.+)/ && defined $Dict->{$1}) {
+    return length($_[$Dict->{$1}+1]);
+  }
+  else {
+    return $Tag
+  }
 }

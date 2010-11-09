@@ -20,12 +20,22 @@ declaration.
 
 use strict 'vars';
 
+use Exporter ();
+
+our $VERSION     = '1.0';
+our @ISA         = qw( Exporter );
+our @EXPORT      = qw( &StringType &IntType &FloatType &BooleanType );
+our %EXPORT_TAGS = ();
+our @EXPORT_OK   = qw( );
+
 use Carp;
 
 use FileHandle;
+use File::Basename;
 require Getopt::Long;
 
 use CBIL::Util::EasyCsp::Decl;
+
 
 # ========================================================================
 # ---------------------------- Object Methods ----------------------------
@@ -43,8 +53,10 @@ sub new {
    my $Class = shift;
    my $Desc  = shift;
    my $Usage = shift;
+   my $File  = shift || $0;
 
-   my $_dict = DoItAll($Desc, $Usage);
+   my $program = basename($0);
+   my $_dict   = DoItAll($Desc, "$program [OPTIONS] $Usage", [ $File ]);
 
    my $Rv;
 
@@ -64,6 +76,7 @@ sub AUTOLOAD {
    my $Self = shift;
 
    my $Rv;
+   my @Rv;
 
    my $type = ref ($Self) or croak "$Self is not an object";
 
@@ -71,16 +84,20 @@ sub AUTOLOAD {
    $name =~ s/.*://;
 
    if (my $_desc = $Self->{-Descriptor}->{$name}) {
-      $Rv = $Self->{$name};
+     if (ref $Self->{$name} && wantarray) {
+       return @{$Self->{$name}};
+     }
+     else {
+       return $Self->{$name};
+     }
    }
    elsif ($name eq 'ARGV') {
-      $Rv = $Self->{ARGV};
+     return wantarray ? @{$Self->{ARGV}} : $Self->{ARGV};
    }
-   else {
+   elsif ($name ne 'DESTROY') {
       croak "'$name' is not a legal command line option.";
+      return undef;
    }
-
-   return $Rv;
 }
 
 # ======================================================================
@@ -316,6 +333,22 @@ sub single_usage {
    return $Rv;
 }
 
+sub terse_usage {
+  my $O = shift;
+  my $Pod = shift;
+
+  my @Rv;
+
+  if (defined $O->getOption()) {
+    push(@Rv, '--'. $O->getOption());
+    if ($O->getType() !~ /^b/) {
+      my $type = $O->getType();
+      push(@Rv, $O->getIsList() ? 'list-of-'. $type : $type);
+    }
+  }
+
+  return join(' ', @Rv);
+}
 
 # ----------------------------------------------------------------------
 # generate whole usage message.
@@ -361,9 +394,14 @@ sub PodUsage {
                           map {single_usage($_,1)} @all_options
                          ). "\n";
 
+   #my $optionsShort = join(' ', map { terse_usage($_,1) } @all_options);
+   my $optionsShort = join("\n", ( map { ' '. terse_usage($_,1). ' \\' } @all_options ), ' ;');
+
    print $_fh "=pod\n\n";
    print $_fh "=head1 Short Description\n\n";
    print $_fh "$T\n\n";
+   print $_fh "=head1 Options\n\n";
+   print $_fh "$optionsShort\n\n";
    print $_fh "=head1 Command Line Arguments\n\n";
    print $_fh "$options_pod\n\n";
 
@@ -409,8 +447,13 @@ sub ErrorCheck {
 
       # split lists on delimiter
       if ( $_decl->getIsList() ) {
-         my $ld = $_decl->getListDelimiter();
-         $V->{$tag} = [ split( /$ld/, $V->{$tag} ) ];
+	my $ld = $_decl->getListDelimiter();
+	if (defined $V->{$tag}) {
+	  $V->{$tag} = [ split( /$ld/, $V->{$tag} ) ];
+	}
+	else {
+	  $V->{$tag} = [];
+	}
       }
 
       # check for valid list length

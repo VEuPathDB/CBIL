@@ -51,6 +51,14 @@ sub init {
    $Self->setType                 ( $Args->{Type                } || $Args->{'t'}  || CBIL::Util::EasyCsp::StringType() );
    $Self->setIsRequired           ( $Args->{IsRequired          } || $Args->{'r'}  );
 
+   if (my $isList = $Self->getIsList()) {
+     if (ref $isList eq 'HASH') {
+       my $delim  = $isList->{delim} || $Self->getListDelimiter() || ',';
+       $Self->setListDelimiter($delim);
+       $Self->setListLength($isList);
+     }
+   }
+
    return $Self;
 }
 
@@ -88,6 +96,9 @@ definitions.
 
   ListLength         ll          how long the list can be, default is any length
                                  specified as { min => , max => }
+
+                                 Can also be pushed in to 'l'
+                                 attribute which is then unpacked.
 
   Type               t           what kind of variable, use
                                  CBIL::Util::EasyCsp::*Type functions!

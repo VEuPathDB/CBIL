@@ -17,8 +17,7 @@ Utilities for accessing compressed and remote files.
 use Exporter;
 @EXPORT_OK = qw( SmartOpenForRead SmartOpenForWrite );
 
-use strict vars;
-
+use strict 'vars';
 
 use FileHandle;
 
@@ -66,6 +65,11 @@ sub SmartOpenForRead {
 
    elsif ($File =~ /\.gz$/) {
       $file = "gunzip -c $File|";
+      $Rv = FileHandle->new($file);
+   }
+
+   elsif ($File =~ /\.bz2$/) {
+      $file = "bunzip2 -c $File|";
       $Rv = FileHandle->new($file);
    }
 
@@ -124,6 +128,10 @@ sub output {
 
    elsif ($File =~ /\.gz$/) {
       $file = "| gzip -f -c $Mode $File";
+   }
+
+   elsif ($File =~ /\.bz2$/) {
+      $file = "| bzip2 -f -c $Mode $File";
    }
 
    elsif ($File =~ /:/) {

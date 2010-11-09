@@ -25,11 +25,11 @@ use CBIL::Bio::BLAT::Alignment;
 # ------------------------------------------------------------------------
 
 sub new {
-    my($class, $file) = @_;
-    my $self = {};
-    bless $self, $class;
-    $self->readFromFile($file) if (defined($file));
-    return $self;
+   my($class, $file) = @_;
+   my $self = {};
+   bless $self, $class;
+   $self->readFromFile($file) if (defined($file));
+   return $self;
 }
 
 # ------------------------------------------------------------------------
@@ -39,29 +39,31 @@ sub new {
 # Read and parse a PSL-formatted file.
 #
 sub readFromFile {
-    my($self, $file, $filters) = @_;
-    my $fh = FileHandle->new();
-    $fh->open($file, "r");
+   my($self, $file, $filters) = @_;
+   my $fh = FileHandle->new();
+   $fh->open($file, "r");
 
-    my $header = undef;
-    my $alignments = [];
+   my $header = undef;
+   my $alignments = [];
 
-    while (<$fh>) {
-	if (/^psLayout version (\d+)/) {
-	    $self->{'ps_version'} = $1;
-	    $header = $_;
+   while (<$fh>) {
+      if (/^psLayout version (\d+)/) {
+         $self->{'ps_version'} = $1;
+         $header = $_;
 
-	    while (<$fh>) {
-		last if (/^\d/);
-		$header .= $_;
-	    }
-	}
-	my $align = CBIL::Bio::BLAT::Alignment->new($_);
-	push(@$alignments, $align);
-    }
-    $fh->close();
-    $self->{'header'} = $header;
-    $self->{'alignments'} = $alignments;
+         while (<$fh>) {
+            last if (/^\d/);
+            $header .= $_;
+         }
+      }
+      my $align = CBIL::Bio::BLAT::Alignment->new($_);
+      if (!$filters || $filters->($align)) {
+         push(@$alignments, $align);
+      }
+   }
+   $fh->close();
+   $self->{'header'} = $header;
+   $self->{'alignments'} = $alignments;
 }
 
 # ------------------------------------------------------------------------
@@ -69,20 +71,28 @@ sub readFromFile {
 # ------------------------------------------------------------------------
 
 sub getHeader {
-    my($self) = @_;
-    return $self->{'header'};
+   my($self) = @_;
+   return $self->{'header'};
 }
 
 sub getNumAlignments {
-    my($self) = @_;
-    return scalar(@{$self->{'alignments'}});
+   my($self) = @_;
+   return scalar(@{$self->{'alignments'}});
 }
 
 # Retrieve alignments, optionally filtering by some criteria.
 #
 sub getAlignments {
-    my($self, $filters) = @_;
-    return $self->{'alignments'};
+   my($self, $filters) = @_;
+
+   if ($filters) {
+      my @Rv = grep { $filters->($_) } @{$self->{'alignments'}};
+      return \@Rv;
+   }
+
+   else {
+      return $self->{'alignments'};
+   }
 }
 
 # ------------------------------------------------------------------------
@@ -90,14 +100,14 @@ sub getAlignments {
 # ------------------------------------------------------------------------
 
 sub toFile {
-    my($self, $fh) = @_;
-    my $header = $self->{'header'};
-    my $alignments = $self->{'alignments'};
+   my($self, $fh) = @_;
+   my $header = $self->{'header'};
+   my $alignments = $self->{'alignments'};
 
-    print $fh $header if (defined($header));
-    foreach my $a (@$alignments) {
-	print $fh $a->toString(), "\n";
-    }
+   print $fh $header if (defined($header));
+   foreach my $a (@$alignments) {
+      print $fh $a->toString(), "\n";
+   }
 }
 
 1;

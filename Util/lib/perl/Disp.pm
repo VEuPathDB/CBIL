@@ -5,13 +5,13 @@ package CBIL::Util::Disp;
 my $displayed;
 
 sub Display {
-	my $V = shift;
-	my $P = shift || '';
-	my $S = shift || STDOUT;
-	my $D = shift || 100;
+  my $V = shift;
+  my $P = shift || '';
+  my $S = shift || STDOUT;
+  my $D = shift || 100;
 
-	init();
-	display( $V, $P, $S, $D );
+  init();
+  display( $V, $P, $S, $D );
 }
 
 sub init { $displayed = undef }
@@ -20,7 +20,7 @@ sub display {
   my $O = shift;
   my $I = shift;
   my $H = shift;
-	my $D = shift;
+  my $D = shift;
 
 	# too deep
 	return unless $D > 0;

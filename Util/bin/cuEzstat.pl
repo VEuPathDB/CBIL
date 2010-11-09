@@ -42,7 +42,7 @@ sub run {
    my @sortedKeys = sortKeys($Cla, \%data_r, \%pts_n);
 
    if ($Cla->{header} && $Cla->{statistics}) {
-      my @heads = qw( n_pts f_pts median mean std var min max span total );
+      my @heads = qw( n_pts f_pts median mean std var min max span sum all_n );
       if ($Cla->{LabelLast}) {
 	push(@heads, 'label');
       }
@@ -337,6 +337,7 @@ sub tabulateData {
 
    my $d_min  = CBIL::Util::V::min(@$Data);
    my $d_max  = CBIL::Util::V::max(@$Data);
+   my $d_sum  = CBIL::Util::V::sum(@$Data);
    my $d_span = $d_max - $d_min;
 
    # output data
@@ -347,7 +348,7 @@ sub tabulateData {
                $Pts,
                sprintf( $Cla->{format}, $Pts/$PtsN),
                ( map { sprintf( $Cla->{format}, $_ ) }
-                 $median_r, $mean_r, $std_r, $var_r, $d_min, $d_max, $d_span, $PtsN
+                 $median_r, $mean_r, $std_r, $var_r, $d_min, $d_max, $d_span, $d_sum, $PtsN
                ),
                $Cla->{LabelLast} ? ($Tag) : (),
 	       $Cla->{printData} ? join(',', @$Data) : ()

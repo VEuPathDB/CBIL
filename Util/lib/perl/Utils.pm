@@ -2,9 +2,17 @@ package CBIL::Util::Utils;
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(runCmd log timeformat mail);
+@EXPORT = qw(commafy runCmd timestampLog appendToLogFile timeformat mail);
 
 use strict;
+
+sub commafy {
+  my $Rv = shift;
+
+  1 while $Rv =~ s/^(-?\d+)(\d{3})/$1,$2/;
+
+  return $Rv;
+}
 
 sub runCmd {
     my ($cmd) = @_;
@@ -15,11 +23,27 @@ sub runCmd {
     return $output;
 }
 
-sub log {
+sub runCmdTag {
+  my $Tag = shift;
+  my $Cmd = join(' ', @_);
+
+  print STDERR join("\t", scalar(localtime), $Tag, $Cmd), "\n";
+
+  my $output = `$Cmd`;
+  my $status = $? >> 8;
+  die "Failed with status $status running '$Cmd'\nOutput was $output" if $status;
+  return $output;
+}
+
+sub appendToLogFile {
     my ($logFile, $msg) = @_;
     open(FILE, ">>$logFile") || die "couldn't open logFile $logFile";
     print FILE $msg;
     close(FILE);
+}
+
+sub timestampLog {
+  print STDERR join("\t", scalar(localtime), $$, @_), "\n";
 }
 
 # convert secs to hr:min:sec

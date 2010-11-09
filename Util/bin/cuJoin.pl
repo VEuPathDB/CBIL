@@ -10,12 +10,36 @@
 
 =head2 Purpose
 
-Implements a simple join operation between two or more files.
+The program mplements a simple join operation between two or more
+files.  The program will append columns from matching lines in FILE to
+those read from STREAM or OTHER_FILES.  A line will be printed
+multiple times if there are multiple matches.
 
-The FILE is read in and indexed using the values in column --FileCol.
-Then the STREAM or OTHER_FILES are read and are joined with rows from
-FILE if their --StreamCol value(s) matches a row in FILE.  If --Anti
-is used, then STREAM rows that do not match are output.
+=head2 Details
+
+The FILE is read in and indexed using the values in column
+C<--FileCol>.  Then the STREAM or OTHER_FILES are read and are joined
+with rows from FILE if their C<--StreamCol> value(s) matches a row in
+FILE.
+
+If C<--Anti> is used, then STREAM rows that do not match are output.
+
+If C<--caseInsensitive> is set then the keys are compared without
+regard to case, i.e., the program converts them to lower case prior to
+the comparison.
+
+Normally the colums from the STREAM are printed to the left of the
+FILE columns.  If C<--fileColumnsFirst> is set then the positions are
+reversed.
+
+If C<--Outer> is used then STREAM rows are printed even if there is no
+matching FILE row.  If C<--MissingValues> is set then that list is
+used to fill in.
+
+If not all of the colums in the FILE are of interest, then use
+C<--projectFileColumns> to list ones of interest.
+
+All column indices are 1-based.
 
 =cut
 
@@ -45,19 +69,19 @@ sub run {
 
    my $_f = shift @ARGV;
 
-   # column in file
-   my $fileCol_i = $Cla->{FileCol};
-   $fileCol_i--;
+   my $caseInsensitiveBool  = $Cla->caseInsensitive();
 
-   # column in input stream
-   my $streamCol_i = $Cla->{StreamCol};
-   $streamCol_i--;
+   my $fileColumnsFirstBool = $Cla->fileColumnsFirst();
 
    # print the things that don't join
-   my $not = $Cla->{Anti};
+   my $antiBool = $Cla->Anti();
 
    # print lines even if they don't join
-   my $outer_b = $Cla->{Outer};
+   my $outerBool   = $Cla->Outer();
+   my @missingVals = $Cla->MissingValues();
+
+   # project these colums from the file
+   my @projectFileCols = map { $_ - 1 } @{$Cla->projectFileColumns()};
 
    # ........................................
    # read the file and build a cache on key
@@ -70,8 +94,7 @@ sub run {
    while (<$_fh>) {
       chomp;
       my $cols = [ split /\t/ ];
-      #push( @{ $tbl{ $cols->[ $fileCol_i ] } }, $cols );
-      my $key  = extractJoinKey($Cla, $Cla->{FileCol}, $cols);
+      my $key  = extractJoinKey($Cla, $Cla->{FileCol}, $caseInsensitiveBool, $cols);
       push( @{$tbl{$key}}, $cols );
    }
    $_fh->close if $_fh;
@@ -86,10 +109,10 @@ sub run {
       my @cols = split /\t/;
 
       # get a key from the stream cols.
-      my $key = extractJoinKey($Cla, $Cla->{StreamCol}, \@cols);
+      my $key = extractJoinKey($Cla, $Cla->{StreamCol}, $caseInsensitiveBool, \@cols);
 
       # in NOT mode; look for novel ids
-      if ($not) {
+      if ($antiBool) {
          #print "$_\n" unless $tbl{$cols[$streamCol_i]};
          print "$_\n" unless $tbl{$key};
       }
@@ -99,11 +122,24 @@ sub run {
 
 	if (my $_matching = $tbl{$key}) {
 	  foreach my $row (@{$tbl{$key}}) {
-            print join( "\t", @cols, @$row ), "\n";
+
+	    my @row = @$row;
+	    if (@projectFileCols >= 1) {
+	      @row = map { $row[$_] } @projectFileCols;
+	    }
+
+
+
+	    if ($fileColumnsFirstBool) {
+	      print join( "\t", @row, @cols ), "\n";
+	    }
+	    else {
+	      print join( "\t", @cols, @row ), "\n";
+	    }
 	  }
 	}
-	elsif ($outer_b) {
-	  print join("\t", @cols), "\n";
+	elsif ($outerBool) {
+	  print join("\t", @cols, @missingVals), "\n";
 	}
       }
    }
@@ -112,30 +148,58 @@ sub run {
 # --------------------------------- cla ----------------------------------
 
 sub cla {
-   my $Rv = CBIL::Util::EasyCsp::DoItAll
-   ( [ { h => 'join on this column in the listed file',
-         t => CBIL::Util::EasyCsp::IntType(),
-	 l => 1,
-         o => 'FileCol',
-         d => 1,
-       },
-
-       { h => 'join on this column in the stream or secondary files',
-         t => CBIL::Util::EasyCsp::IntType(),
-	 l => 1,
-         o => 'StreamCol',
-         d => 1,
-       },
+  my $Rv = CBIL::Util::EasyCsp->new
+    ( [ { h => 'join on this column in the listed file',
+	  t => IntType(),
+	  l => 1,
+	  o => 'FileCol',
+	  d => 1,
+	},
+	
+	{ h => 'join on this column in the stream or secondary files',
+	  t => IntType(),
+	  l => 1,
+	  o => 'StreamCol',
+	  d => 1,
+	},
 
        { h => 'report stream lines that do not join',
-         t => CBIL::Util::EasyCsp::BooleanType(),
+         t => BooleanType(),
          o => 'Anti',
        },
 
        { h => 'do an outer join so that even lines with no matches are passed',
-	 t => CBIL::Util::EasyCsp::BooleanType(),
+	 t => BooleanType(),
 	 o => 'Outer',
        },
+
+	{ h => 'use these values for missing values when doing an outer join',
+	  t => StringType(),
+	  l => 1,
+	  o => 'MissingValues',
+	},
+
+       { h => 'output file columns first',
+	 t => BooleanType(),
+	 o => 'fileColumnsFirst',
+	 d => 0,
+       },
+
+	{ h => 'project these columns from file',
+	  t => IntType(),
+	  l => 1,
+	  o => 'projectFileColumns',
+	},
+
+	{ h => 'match row keys in a case-INsensitive manner',
+	  t => BooleanType(),
+	  o => 'caseInsensitive',
+	},
+
+	{ h => 'print rows in file that were not matched',
+	  t => BooleanType(),
+	  o => 'LeftOvers',
+	},
      ],
      'joins (or not) a file and a stream of tab-delimited rows'
    ) || exit 0;
@@ -150,13 +214,30 @@ sub cla {
 # ---------------------------- extractJoinKey ----------------------------
 
 sub extractJoinKey {
-   my $Cla  = shift;
-   my $Cols = shift;
-   my $Data = shift;
+   my $Cla    = shift;
+   my $Cols   = shift;
+   my $CiBool = shift;
+   my $Data   = shift;
 
-   my $Rv = join("\t", map { $Data->[$_-1] } @$Cols);
+   my $Rv = join("\t", map { defined $Data->[$_-1] ? $Data->[$_-1] : '' } @$Cols);
+
+   $Rv = lc $Rv if $CiBool;
 
    return $Rv;
 }
 
+# ========================================================================
+# ------------------------------- History --------------------------------
+# ========================================================================
 
+=pod
+
+=head1 History
+
+=head2 jschug : Thu Aug 20 07:50:41 EDT 2009
+
+Added case-insensitive matching using C<--caseInsensitive>.
+
+Cleaned up terse boolean variable names.
+
+=cut
