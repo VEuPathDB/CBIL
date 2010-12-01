@@ -57,7 +57,7 @@ sub usage {
   my $m = shift;
 
   print STDERR "$m\n\n" if($m);
-  print STDERR "usage:  perl doTranscriptExpression.pl --xml_file <XML> --help\n";
+  print STDERR "usage:  perl doTranscriptExpression.pl --xml_file <XML> --main_directory <DIR> [--input_file <FILE>] --help\n";
   exit;
 }
 
