@@ -74,7 +74,7 @@ sub munge {
 
 
   my $dataDirPath = $self->getMainDirectory();
-  my $dataFile = $dataDirPath . ($self->getDataFiles())->[0]; # only 1 file
+  my $dataFile = $dataDirPath . "/" . ($self->getDataFiles())->[0]; # only 1 file
 
 
   print STDOUT "\n\n*** call to writeRScript(with $dataFile, AND $tmpMappingFile)\n";
