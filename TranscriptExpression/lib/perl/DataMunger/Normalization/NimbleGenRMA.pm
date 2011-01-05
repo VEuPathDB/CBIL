@@ -56,8 +56,7 @@ sub writeNdfPackage {
   my ($self, $pkgPath) = @_;
 
   my $ndfFile = $self->getNdfFile();
-  my $ndfFileBasename = basename($ndfFile);
-  my $ndfFileDirname = dirname($ndfFile);
+  my $xysFilePath = $self->getXysFilePath();
 
   my ($rfh, $rFile) = tempfile();
 
@@ -67,7 +66,7 @@ sub writeNdfPackage {
 load.pdInfoBuilder = library(pdInfoBuilder, logical.return=TRUE);
 if(load.pdInfoBuilder) {
 
-  baseDir = "$ndfFileDirname";
+  baseDir = "$xysFilePath";
   ndf = "$ndfFile";
   xys = list.files(baseDir, pattern = ".xys",full.names = TRUE)[1]
 
