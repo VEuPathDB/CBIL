@@ -2,13 +2,13 @@
 
 use strict;
 
+use lib "$ENV{GUS_HOME}/lib/perl";
+
 use CBIL::TranscriptExpression::Error;
 
 use Getopt::Long;
 
 use File::Temp qw/ tempfile /;
-
-use lib "$ENV{GUS_HOME}/lib/perl";
 
 my ($help, $dataFile1, $dataFile2, $hasHeader, $outputFile, @executableDirectory);
 
