@@ -12,6 +12,8 @@ use Cwd;
 sub getNdfFile                 { $_[0]->getMappingFile }
 sub getXysFilePath             { $_[0]->getMainDirectory }
 
+sub getGeneSourceIdRegex       { $_[0]->{geneSourceIdRegex} }
+
 sub munge {
   my ($self) = @_;
 
@@ -97,6 +99,9 @@ sub writeRScript {
 
   my $outputFile = $xysFilePath . "/" . $self->getOutputFile();
 
+  my $geneSourceIdRegex = $self->getGeneSourceIdRegex();
+  my $hasGeneSourceIdRegex = $geneSourceIdRegex ? 'TRUE' : 'FALSE';
+
   my ($rfh, $rFile) = tempfile();
 
   open(RCODE, "> $rFile") or die "Cannot open $rFile for writing:$!";
@@ -117,7 +122,12 @@ if(load.ndf) {
 
   colnames(exprs(res))[1] = paste("ID\t", colnames(exprs(res))[1], sep="");
 
-  write.table(exprs(res), file="$outputFile",quote=F, sep="\\t", row.names=TRUE);
+  if($hasGeneSourceIdRegex) {
+    gene.filter = grepl("$geneSourceIdRegex", rownames(exprs(res)));
+    write.table(exprs(res)[gene.filter,], file="$outputFile",quote=F, sep="\\t", row.names=TRUE);
+  } else {
+    write.table(exprs(res), file="$outputFile",quote=F, sep="\\t", row.names=TRUE);
+  }
 
 } else {
   stop("ERROR:  could not load required library $ndfLibrary");
