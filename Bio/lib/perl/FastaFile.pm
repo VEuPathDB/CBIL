@@ -10,7 +10,7 @@ sub new {
     my $self = {};
     bless $self;
 
-    die "Fasta file '$fastaFileName' does not exist" unless -e $fastaFileName;
+    die "Fasta file '$fastaFileName' does not exist or is empty" unless -s $fastaFileName;
 
     my $fiArgs = { seq_file => $fastaFileName };
 
