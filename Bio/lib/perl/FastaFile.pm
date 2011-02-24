@@ -10,6 +10,8 @@ sub new {
     my $self = {};
     bless $self;
 
+    die "Fasta file '$fastaFileName' does not exist" unless -e $fastaFileName;
+
     my $fiArgs = { seq_file => $fastaFileName };
 
     ##want to test to see if there is already a valid index .. if so, do not recreate rather use existing
