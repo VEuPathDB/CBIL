@@ -43,7 +43,7 @@ foreach my $node (@$nodes) {
   }
 
   eval "require $class";
-
+  CBIL::TranscriptExpression::Error->new($@)->throw() if $@;
   my $dataMunger = eval {
     $class->new($args);
   };

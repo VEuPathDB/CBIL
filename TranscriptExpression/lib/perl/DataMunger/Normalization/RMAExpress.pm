@@ -3,8 +3,6 @@ use base qw(CBIL::TranscriptExpression::DataMunger::Normalization);
 
 use strict;
 
-use strict;
-
 use CBIL::TranscriptExpression::Error;
 use File::Temp qw/ tempfile /;
 use File::Basename;
@@ -17,12 +15,14 @@ sub munge {
 
   my $dataConfigFile = $self->makeDataConfigFile();
   my $optionsConfigFile = $self->makeOptionsConfigFile();
-
-  system("RMAExpressConsole $dataConfigFile $optionsConfigFile");
-
+  
+  my $systemResult = system("RMAExpressConsole $dataConfigFile $optionsConfigFile");
+    
+  unless($systemResult / 256 == 0) {
+    die"Could not run RMAExpressConsole command";
+  }
   unlink($dataConfigFile, $optionsConfigFile);
 }
-
 
 sub makeDataConfigFile {
   my ($self) = @_;
