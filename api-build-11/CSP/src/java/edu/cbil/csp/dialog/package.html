@@ -1,0 +1,258 @@
+<BODY>
+An abstract representation for user dialogs and forms in Java CSP.
+
+<BR>
+<BR>
+
+<B>INDEX</B>
+
+<UL>
+<LI><A HREF = "#overview">Overview</A></LI>
+<LI><A HREF = "#examples">Example</A></LI>
+<LI><A HREF = "#issues">Known Issues</A></LI>
+</UL>
+
+<b>Note to CBIL users</B>:<BR><BR>
+
+To use this package and {@link cbil.csp}, include the file
+<code>/usr/local/lib/java_classes/JCSP.jar</code> in your Java
+<code>CLASSPATH</code>.<BR><BR>
+
+<BR>
+<A NAME = "overview"><b>OVERVIEW</b></A><BR><BR>
+
+Also based on Perl CSP, this package builds on top of {@link cbil.csp}
+to provide a set of classes with which a programmer can describe an
+abstract form or user dialog.  In practical terms, it is currently a
+mechanism that can be used to build HTML forms and perform input
+validation on the data a user enters into those forms.  However, the
+intent of the package is to provide an HTML-independent way of
+specifying the user input required by an application.  The idea is
+that these classes will allow a programmer to give a declarative
+specification of what data is required, leaving the job of generating
+either a terminal session, an HTML form, a Javascript-enhanced form, a
+Java dialog, etc. up to the discretion of the underlying machinery.
+However, as we have already said, the only target language currently
+implemented is HTML (4.0).  And, as an unfortunate consequence, the
+classes in this package do have some HTML-specific biases.<p>
+
+The central class in this package is {@link cbil.csp.dialog.Dialog};
+it represents an abstract "information-gathering session" (current
+translation: a single HTML form.)  A {@link cbil.csp.dialog.Dialog}
+can contain things.  These things are instances of {@link
+cbil.csp.dialog.Item}.  These things can be grouped into logical
+{@link cbil.csp.dialog.ItemGroup}s.  In fact, {@link cbil.csp.dialog.Dialog} 
+is itself an {@link cbil.csp.dialog.ItemGroup}.  A {@link cbil.csp.dialog.Param}
+is a particular kind of {@link cbil.csp.dialog.Item}: one that represents a
+single piece of information that the user must enter.  A number of subclasses
+of {@link cbil.csp.dialog.Param} define the different types of data that
+can be entered and establish the ways in which parameter values can be
+restricted (e.g. "only integers between 5 and 12, inclusive.")  Finally, 
+{@link cbil.csp.dialog.Action} is another subclass of {@link cbil.csp.dialog.Item},
+representing an action that a user is allowed to perform (in HTML actions
+are represented by buttons that either submit or reset the form.)<p>
+
+So, to recap: {@link cbil.csp.dialog.Dialog} <b>is-an</b> 
+{@link cbil.csp.dialog.ItemGroup}, which in turn <b>is-an</b> 
+{@link cbil.csp.dialog.Item}.  A {@link cbil.csp.dialog.ItemGroup}
+<b>has-a</b> bunch of {@link cbil.csp.dialog.Item}s.  
+{@link cbil.csp.dialog.Param} and {@link cbil.csp.dialog.Action} are two
+special subclasses of {@link cbil.csp.dialog.Item}.  That's basically
+all there is to it, with the exception that each {@link cbil.csp.dialog.Item}
+can also have some help information associated with it.  In the current
+implementation, this help information is displayed in a separate part of
+the HTML page from the form, with links back and forth between the two.  This 
+layout was lifted right out of Perl CSP, as were Jonathan Schug's nifty icons:
+<P>
+
+<IMG SRC="http://www.cbil.upenn.edu/CSP_Resources_v1.1.1/images/toHelp.gif">
+<IMG SRC="http://www.cbil.upenn.edu/CSP_Resources_v1.1.1/images/toForm.gif">
+
+<P>
+Also, don't worry about the {@link cbil.csp.StringTemplate} arguments that
+all of these classes' constructors accept; they're used to alter the default
+HTML rendering (done using {@link cbil.csp}, of course) and you're better
+off leaving them alone unless you know what you're doing or have some time
+to burn.  If you're having trouble with the latter, you might consider opening 
+a profitable envelope-stuffing business from the comfort of your own home.  
+Just a thought.<p>
+
+<BR>
+<A NAME = "examples"><b>EXAMPLE</b></A><BR><BR>
+
+Here's the source code to an example program, 
+{@link cbil.csp.dialog.Test cbil.csp.dialog.Test}.  
+To run it or compile it for yourself you'll need to include the file 
+<code>/usr/local/lib/java_classes/JCSP.jar</code> in your Java
+<code>CLASSPATH</code>.
+
+<PRE>
+/**
+ * Copyright (C) 1999 Trustees of the University of Pennsylvania
+ *
+ * Computational Biology and Informatics Laboratory (CBIL),
+ * University of Pennsylvania Center for Bioinformatics (www.pcbi.upenn.edu)
+ */
+
+package cbil.csp.dialog;
+
+/**
+ * Test.java
+ *
+ * A test class for cbil.csp.dialog. 
+ *
+ * Created: Thu Feb  4 08:25:02 1999
+ *
+ * @author Jonathan Crabtree
+ * @version
+ */
+public class Test {
+    
+    public static void main(String args[]) {
+
+	// Create a new Dialog.  The first argument is a string describing
+	// the dialog's purpose.  The second is the URL to which the form
+	// data should be submitted.  It's currently assumed that a Java
+        // Servlet will be listening at that URL.
+        //	
+	Dialog dialog = new Dialog("Give me your hard-earned data", 
+                                   "file:///dev/null");
+
+	// Create a logical group of dialog items.  The first parameter is
+	// the name of the item.  Most if not all subclasses of 
+	// {@link cbil.csp.dialog.Item} require a name as their first parameter.
+	// This name is used for a couple of important things: first, it is used
+	// as the value of the HTML NAME attribute for those items that become
+	// input elements in a form.  Second, it is used as a unique identifier
+	// with which the {@link cbil.csp.dialog.Item} can be retrieved from its 
+	// containing  {@link cbil.csp.dialog.ItemGroup}.  The second parameter
+	// is a description of the item group that will appear on the HTML form
+	// generated.  The third parameter is a help string that will be displayed
+	// in the separate help section.  The last two parameters are 
+	// {@link cbil.csp.StringTemplate}s that can be used to customize the
+	// HTML generated by the item group.
+        //
+	ItemGroup ig1 = new ItemGroup("igroup1", 
+		                      "Enter your first name and age", 
+	                              "Sorry, you're on your own here.", 
+                                      null, null);
+
+	// Add the item group to the dialog.  We could do this later, if we
+	// wanted, after we've populated the item group itself with items.
+	//
+	dialog.addItem(ig1);
+
+	// Create and add two parameters to the item group.  Remember that each 
+	// instance of {@link cbil.csp.dialog.Param} represents some piece of
+	// data you'd like the user to enter.
+
+	// {@link cbil.csp.dialog.Param} is not only the superclass of all 
+	// parameters, but it can be used on its own to request an unconstrained
+	// string from the user, as we're doing here.
+	//
+	// The first argument is again the name of the item, and also the key 
+	// we'll need to retrieve the information from the form after the user
+	// submits it.  The second argument is a description of the item that
+	// will appear in the help section.  The third argument is the help 
+	// string again, and the next two are {@link cbil.csp.StringTemplate}s.
+	// The next argument is a new one, the prompt that will be displayed
+	// to the user in the form.  Finally, the last argument is an optional
+	// array of "sample values" that will appear in the help section.
+        //	
+	ig1.addItem(new Param("name", 
+			      "First name", 
+  		              "Enter your first name or nickname in the space provided.", 
+                              null, null, 
+                              "First name: ",    // prompt
+                              false));
+
+	// {@link cbil.csp.dialog.IntParam} expects the user to enter an integer
+	// value.  The first six arguments (up to and including the "prompt") are 
+	// the same as for {@link cbil.csp.dialog.Param}.  The rest are described
+	// below:
+	//
+	ig1.addItem(new IntParam("age", 
+                                 "Age", 
+				 "Enter your age (in human years, wise guy.)", 
+		                 null, null, 
+		                 "Age: ",            // prompt 
+				 new Integer(0),     // minimum
+				 new Integer(150),   // maximum
+				 null,               // initial value
+				 false,              // optional parameter?
+                                 null));             // array of sample values
+
+	// Create a second item group.  This one will simply hold the
+	// "Submit" and "Reset" buttons for the form.
+	//
+	ItemGroup ig2 = new ItemGroup("ig2", 
+                                      "Submit data", 
+                                      "Click on the submit button to enter your information.", 
+				      null, null);
+	dialog.addItem(ig2);
+
+	// Add the {@link cbil.csp.dialog.Action}s for the two buttons.
+	//
+	ig2.addItem(new Action("reset",             // name
+		 	       "Reset the form.",   // description
+			       null,                // (unhelpful) help string
+			       null, null,          // StringTemplates
+			       "reset",             // must be either "reset" or "submit"
+			       "Clear Form"));      // button label
+	
+	ig2.addItem(new Action("go",                // name
+		               "Submit the form.",  // description
+			       null,                // (unhelpful) help string
+			       null, null,          // StringTemplates
+			       "submit",            // must be either "reset" or "submit"
+			       "Submit data"));     // button label
+
+	// Call the method that turns the dialog into HTML.  The argument
+	// gives the URL at which the help information will be located, in
+	// order that links can be created.  If the help information will
+	// be on the same page as the form, this argument should be the
+	// empty string, as in this case.
+        //
+	System.out.println(dialog.makeHTML(""));
+
+	// The separate call required to generate the dialog's help section.
+	// This one takes the URL of the page where the form is located, 
+	// again so that links can be created correctly.
+	//
+	System.out.println(dialog.makeHTMLHelp(""));
+    }
+    
+} // Test
+
+</PRE>
+
+<BR>
+<A NAME = "issues"><b>KNOWN ISSUES</b></A><BR><BR>
+
+<OL>
+<LI>The classes in this package have some HTML-specific parameters (primarily URLs, but
+also the "submit" or "reset" parameter expected by {@link cbil.csp.dialog.Action})
+that should be factored out in a future version.</LI>
+<LI>The user is currently responsible for ensuring that his/her {@link cbil.csp.dialog.Dialog} 
+will submit its form data to a back-end program that knows how to invoke the 
+<code>Dialog</code>'s input validation routines and that will display an error page
+if the provided input is invalid.</LI>
+<LI>The validated data should be obtained directly from the {@link cbil.csp.dialog.Param}
+objects, but currently the user is responsible for parsing it out of the servlet 
+request object.</LI>
+<LI>Only a limited number of parameter types are supported.  Please send requests
+for those that are missing and needed.</LI>
+<LI>Most or all of the parameters have only a single constructor, with lots of arguments,
+some of which are optional.  More constructors should be added to make it easier to
+create dialogs.</LI>
+<LI>Parameters currently don't distinguish between initial values and default values;
+only the former are supported.</LI>
+</OL>
+
+<BR>
+<i>March 18, 1999&nbsp;Jonathan Crabtree</i><BR>
+
+<!-- hhmts start -->
+Last modified: Fri Mar 19 17:32:08 EST 1999
+<!-- hhmts end -->
+</BODY>

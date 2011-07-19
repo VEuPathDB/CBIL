@@ -1,0 +1,39 @@
+SUMMARY
+--------------
+
+CBIL/ObjectMapper
+
+This is a generic package for translating between object spaces. It follows 
+a simple declarative rule structure, in which a set of inputs are mapped 
+to a set of outputs. The main classes are RuleSet, which defines the 
+structure of the rules and the RuleSetEngine, which actually applies the
+rules on the inputs to produce the outputs.
+
+The rules are serialized as XML.
+
+DEPENDENCIES
+-----------------
+
+1) The GUS system (www.gusdb.org)
+
+The build and installation of the ObjectMapper package is dependent on the 
+GUS build/install framework (see http://www.gusdb.org) but it does not 
+depend on any other part of GUS. It is on the TODO list  to make a separate 
+install procedure for this package, but currently there is not. 
+
+2) CPAN.org modules
+
+ObjectMapper relies on the following CPAN modules to be installed:
+
+  Tie::IxHash
+  XML::Simple
+
+
+USAGE
+-------------
+
+The Perl packages my be used as any other Perl module can. See the 
+MR_T project (http://www.cbil.upenn.edu/downloads/RAD ) for example binaries
+and subclassing. 
+
+
