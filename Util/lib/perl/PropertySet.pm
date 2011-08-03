@@ -44,7 +44,7 @@ sub new {
         chomp;
         s/\s+$//;
         next if (!$_ || /^\s*#/);
-	if (! /(\S+?)\s*=\s*(.+)/) {
+	if (! /(\S+?)\s*=\s*(.*)\s*/) {
 	  print STDERR "In property file '$propsFile', the following line is malformed: '$_'\n";
 	  $fatalError = 1;
 	}
