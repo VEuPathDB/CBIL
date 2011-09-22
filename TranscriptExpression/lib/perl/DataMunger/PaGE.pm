@@ -12,6 +12,9 @@ use File::Basename;
 
 my $MISSING_VALUE = 'NA';
 my $USE_LOGGED_DATA = 1;
+my $protocolName = 'PaGE';
+my $protocolType = 'unknown_protocol_type';
+
 
 #-------------------------------------------------------------------------------
 
@@ -77,9 +80,13 @@ sub munge {
 
   $self->runPage($pageInputFile);
 
+  $self->createConfigFile();
+
   my $baseX = $self->getBaseX();
 
   $self->translatePageOutput($baseX, $pageGeneConfFile);
+
+  
 }
 
 sub translatePageOutput {
@@ -192,7 +199,36 @@ sub makePageInput {
   return($pageInputFile, $pageGeneConfFile);
 }
 
+sub clone {
+  my $self = shift;
+  my $copy = { %$self };
+  bless $copy, ref $self;
+} 
 
+sub createConfigFile {
+  my ($self) = @_;
+  my $analysisName = $self->getAnalysisName;
+  my $profileElementName= $self->createProfileElementName;
+  my $mainDir = $self->getMainDirectory();
+  my $dataFile = $analysisName;
+  $dataFile =~ s/ /_/g;
+  my $configFileName = $dataFile.".analysis_result_config.tmp";
+  $dataFile = $dataFile.".txt";
+  my $configFileLocation = $mainDir.$configFileName;
+  my @configLineColumns = ($dataFile,$analysisName,$protocolName,$protocolType,$profileElementName);
+  my $configLine = join("\t",@configLineColumns);
+  open(CFH, "> $configFileLocation") or die "Cannot open file $configFileLocation for writing: $!";
+  print CFH $configLine;
+  close CFH;
+}
+
+sub createProfileElementName {
+  my ($self) = @_;
+  my $conditionsHashRef = $self->groupListHashRef($self->getConditions());
+  my @groupNames = keys %$conditionsHashRef;
+  my $profileElementName = join(';',@groupNames);
+  return $profileElementName;
+}
 sub printHeader {
   my ($conditions, $outFh) = @_;
 
