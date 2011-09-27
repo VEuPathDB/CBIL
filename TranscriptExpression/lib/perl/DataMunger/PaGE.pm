@@ -14,6 +14,8 @@ my $MISSING_VALUE = 'NA';
 my $USE_LOGGED_DATA = 1;
 my $protocolName = 'PaGE';
 my $protocolType = 'unknown_protocol_type';
+my $configFile = 'analysis_result_config.test';
+
 
 
 #-------------------------------------------------------------------------------
@@ -212,13 +214,20 @@ sub createConfigFile {
   my $mainDir = $self->getMainDirectory();
   my $dataFile = $analysisName;
   $dataFile =~ s/ /_/g;
-  my $configFileName = $dataFile.".analysis_result_config.tmp";
   $dataFile = $dataFile.".txt";
-  my $configFileLocation = $mainDir.$configFileName;
+  my $configFileLocation = $mainDir.$configFile;
   my @configLineColumns = ($dataFile,$analysisName,$protocolName,$protocolType,$profileElementName);
   my $configLine = join("\t",@configLineColumns);
-  open(CFH, "> $configFileLocation") or die "Cannot open file $configFileLocation for writing: $!";
-  print CFH $configLine;
+  if (-e $configFileLocation){
+    open(CFH, ">> $configFileLocation") or die "Cannot open file $configFileLocation for writing: $!";  
+  }
+  else {
+    open(CFH, "> $configFileLocation") or die "Cannot open file $configFileLocation for writing: $!";
+    my $analysisHeader = "dataFile\tanalysisName\tprotocolName\tprotocolType\tprofileelementname\n";
+    print CFH $analysisHeader;
+  }
+
+  print CFH $configLine."\n";
   close CFH;
 }
 
@@ -226,7 +235,7 @@ sub createProfileElementName {
   my ($self) = @_;
   my $conditionsHashRef = $self->groupListHashRef($self->getConditions());
   my @groupNames = keys %$conditionsHashRef;
-  my $profileElementName = join(';',@groupNames);
+  my $profileElementName = $groupNames[1].';'.$groupNames[0];
   return $profileElementName;
 }
 sub printHeader {

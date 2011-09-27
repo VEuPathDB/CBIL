@@ -9,27 +9,54 @@ use CBIL::TranscriptExpression::Error;
 
 use File::Temp qw/ tempfile /;
 
+my $loadData = 1;
+my $dataFileBase = 'profiles';
+my $skipSecondRow = 0;
+my $loadProfileElement = 1;
+my $PROFILE_CONFIG_FILE_NAME = "insertExpressionProfiles.config";
 
 #-------------------------------------------------------------------------------
 
-sub getSamples              { $_[0]->{samples} }
-sub getDyeSwaps             { $_[0]->{dyeSwaps} }
-sub getHasRedGreenFiles     { $_[0]->{hasRedGreenFiles} }
-sub getMakePercentiles      { $_[0]->{makePercentiles} }
+ sub getSamples              { $_[0]->{samples} }
+ sub getDyeSwaps             { $_[0]->{dyeSwaps} }
 
+ sub getHasRedGreenFiles     { $_[0]->{hasRedGreenFiles} }
+ sub getMakePercentiles      { $_[0]->{makePercentiles} }
+ sub getMakeStandardError    { $_[0]->{makeStandardError} }
+ sub getDoNotLoad            { $_[0]->{doNotLoad} }
+
+ sub getProfileSetName          { $_[0]->{profileSetName} }
+ sub getProfileSetDescription   { $_[0]->{profileSetDescription} }
+
+ sub getSourceIdType            { $_[0]->{sourceIdType} }
+ sub setSourceIdType            { $_[0]->{sourceIdType} = $_[1]}
+
+ sub getLoadProfileElement      { $_[0]->{loadProfileElement} }
 #-------------------------------------------------------------------------------
 
 sub new {
   my ($class, $args) = @_;
-
+  my $sourceIdTypeDefault = 'gene';
   my $requiredParams = ['inputFile',
                         'outputFile',
                         'samples',
                         ];
-
+  unless($args->{doNotLoad}) {
+    push @$requiredParams, 'profileSetName';
+    unless ($args->{sourceIdType}) {
+      $args->{sourceIdType} = $sourceIdTypeDefault;
+    }
+    my $sourceIdType = $args->{sourceIdType};
+    my $profileSetName = $args->{profileSetName};
+    my $loadProfileElement = ($args->{loadProfileElement}=1) ? '' :' - Skip ApiDB.ProfileElement';
+    unless($args->{profileSetDescription}) {
+      $args->{profileSetDescription} = "$profileSetName - $sourceIdType $loadProfileElement";
+    }
+  }
   my $self = $class->SUPER::new($args, $requiredParams);
 
   my $inputFile = $args->{inputFile};
+
   unless(-e $inputFile) {
     CBIL::TranscriptExpression::Error->new("input file $inputFile does not exist")->throw();
   }
@@ -48,6 +75,11 @@ sub munge {
   $self->runR($rFile);
 
   system("rm $rFile");
+  my $doNotLoad = $self->getDoNotLoad(); 
+
+#  unless($doNotLoad){
+    $self->createConfigFile();
+#  }
 }
 
 sub writeRScript {
@@ -150,5 +182,51 @@ sub makeSamplesRString {
   return $rv;
 }
 
+sub createConfigFile{
+  my ($self) = @_;
+  my $profileString = '';
+  my $percentileString = '';
+  my $standardErrorString = '';
+  my $redPercentileString = '';
+  my $greenPercentileString = '';
+  my $profileSetName = $self->getProfileSetName;
+  my $profileSetDescription= $self->getProfileSetDescription;
+  my $profileDataFile = $dataFileBase.".txt";
+  my $sourceIdType = $self->getSourceIdType;
+  my @profileCols = ($profileDataFile,$profileSetName,$profileSetDescription,$sourceIdType,$skipSecondRow,$loadProfileElement);
+  my $mainDir = $self->getMainDirectory();
+  my $PROFILE_CONFIG_FILE_LOCATION = $mainDir.$PROFILE_CONFIG_FILE_NAME;
+  open(PCFH, "> $PROFILE_CONFIG_FILE_LOCATION") or die "Cannot open file $PROFILE_CONFIG_FILE_NAME for writing: $!";
+  $profileString = join("\t",@profileCols);
+  print PCFH "$profileString\n";
+  if ($self->getMakePercentiles()) {
+    my $percentileDataFile = $profileDataFile.".pct";
+    my @percentileCols = @profileCols;
+    $percentileCols[0] = $percentileDataFile;
+    $percentileString = join("\t",@percentileCols);
+    print PCFH "$percentileString\n";
+  }
+  if ($self->getMakeStandardError()) {
+    my $standardErrorDataFile = $profileDataFile.".stderr";
+    my @standardErrorCols = @profileCols;
+    $standardErrorCols[0] = $standardErrorDataFile;
+    $standardErrorString = join("\t",@standardErrorCols);
+    print PCFH "$standardErrorString\n";
+  }
+  if ($self->getHasRedGreenFiles()) {
+    my $greenDataFile = $profileDataFile.".greenPct";
+    my @greenCols = @profileCols;
+    $greenCols[0] = $greenDataFile;
+    $greenPercentileString = join("\t",@greenCols);
+    print PCFH "$greenPercentileString\n";
+    my $redDataFile = $profileDataFile.".redPct";
+    my @redCols = @profileCols;
+    $redCols[0] = $redDataFile;
+    $redPercentileString = join("\t",@redCols);
+    print PCFH "$redPercentileString\n";
+  close PCFH;
+  }
 
+  
+}
 1;
