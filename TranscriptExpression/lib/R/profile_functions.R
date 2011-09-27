@@ -19,20 +19,25 @@ reorderAndAverageColumns <- function (pl=NULL, df=NULL, isFirstColNames=TRUE) {
 
     colAverage = averageSamples(v=samples, df=df);
 
+    colStdErr = stdErrSamples(v=samples, df=df);
+
     res$data = cbind(res$data, colAverage);
+
+    res$stdErr = cbind(res$stdErr, colStdErr);
   }
 
   groupNames[1] = paste("ID\t", groupNames[1], sep="");
   colnames(res$data) = groupNames;
+  colnames(res$stdErr) = groupNames;
   
   return(res);
 }
 
 #--------------------------------------------------------------------------------
 
-averageSamples <- function(v=NULL, df=NULL) {
+makeGroupMatrix <- function (v=NULL, df=NULL) {
 
-  if (is.null(v) || is.null(df)) {
+  if(is.null(v) || is.null(df)) {
     stop("DataFrame df and vector must be passed to this function");
   }
 
@@ -47,14 +52,28 @@ averageSamples <- function(v=NULL, df=NULL) {
 
     groupMatrix = cbind(groupMatrix, df[,index]);
   }
+return(groupMatrix);
 
+}
+
+#--------------------------------------------------------------------------------
+averageSamples <- function(v=NULL, df=NULL) {
+  groupMatrix = makeGroupMatrix(v,df); 
   return(rowMeans(groupMatrix, na.rm=T));
 }
 
-
-
 #--------------------------------------------------------------------------------
 
+stdErrSamples <- function(v=NULL, df=NULL) {
+  groupMatrix = makeGroupMatrix(v,df); 
+  return(apply(groupMatrix,1,stdErr));
+}
+
+#--------------------------------------------------------------------------------
+stdErr <- function(x=NULL) {
+       sqrt(var(x,NULL,na.rm=T)/sum(!is.na(x))) 
+ }
+#--------------------------------------------------------------------------------
 findIndex <- function (array=NULL, value=NULL) {
   if (is.null(array) || is.null(value)) {
     stop("Array and value must be passed to findIndex function");
