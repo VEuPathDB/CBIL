@@ -88,6 +88,7 @@ sub writeRScript {
   my $inputFile = $self->getInputFile();
   my $outputFile = $self->getOutputFile();
   my $pctOutputFile = $outputFile . ".pct";
+  my $stdErrOutputFile = $outputFile . ".stderr";
 
   my $inputFileBase = basename($inputFile);
 
@@ -96,6 +97,7 @@ sub writeRScript {
   my $hasDyeSwaps = $self->getDyeSwaps() ? "TRUE" : "FALSE";
   my $hasRedGreenFiles = $self->getHasRedGreenFiles() ? "TRUE" : "FALSE";
   my $makePercentiles = $self->getMakePercentiles() ? "TRUE" : "FALSE";
+  my $makeStandardError = $self->getMakeStandardError() ? "TRUE" : "FALSE";
 
   my $rString = <<RString;
 
@@ -115,6 +117,9 @@ if($hasDyeSwaps) {
 reorderedSamples = reorderAndAverageColumns(pl=dat.samples, df=dat);
 write.table(reorderedSamples\$data, file="$outputFile",quote=F,sep="\\t",row.names=reorderedSamples\$id);
 
+if($makeStandardError) {
+  write.table(reorderedSamples\$stdErr, file="$stdErrOutputFile",quote=F,sep="\\t",row.names=reorderedSamples\$id);
+   }
 if($hasRedGreenFiles) {
   redDat = read.table(paste("$inputFile", ".red", sep=""), header=T, sep="\\t", check.names=FALSE);
   greenDat = read.table(paste("$inputFile", ".green", sep=""), header=T, sep="\\t", check.names=FALSE);
