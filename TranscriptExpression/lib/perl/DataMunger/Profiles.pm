@@ -13,7 +13,7 @@ my $loadData = 1;
 my $dataFileBase = 'profiles';
 my $skipSecondRow = 0;
 my $loadProfileElement = 1;
-my $PROFILE_CONFIG_FILE_NAME = "insertExpressionProfiles.config";
+my $PROFILE_CONFIG_FILE_NAME = "expression_profile_config.txt";
 
 #-------------------------------------------------------------------------------
 
