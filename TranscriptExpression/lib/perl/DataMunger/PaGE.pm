@@ -14,7 +14,7 @@ my $MISSING_VALUE = 'NA';
 my $USE_LOGGED_DATA = 1;
 my $protocolName = 'PaGE';
 my $protocolType = 'unknown_protocol_type';
-my $configFile = 'analysis_result_config.test';
+my $configFile = 'analysis_result_config.txt';
 
 
 
