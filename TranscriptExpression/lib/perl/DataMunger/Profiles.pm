@@ -194,14 +194,22 @@ sub createConfigFile{
   my $standardErrorString = '';
   my $redPercentileString = '';
   my $greenPercentileString = '';
-  my $profileSetName = $self->getProfileSetName;
-  my $profileSetDescription= $self->getProfileSetDescription;
+  my $profileSetName = $self->getProfileSetName();
+  my $profileSetDescription= $self->getProfileSetDescription();
   my $profileDataFile = $dataFileBase.".txt";
+  if ($self->getOutputFile()){
+     $profileDataFile = $self->getOutputFile();
+     }  
   my $sourceIdType = $self->getSourceIdType;
   my @profileCols = ($profileDataFile,$profileSetName,$profileSetDescription,$sourceIdType,$skipSecondRow,$loadProfileElement);
   my $mainDir = $self->getMainDirectory();
   my $PROFILE_CONFIG_FILE_LOCATION = $mainDir.$PROFILE_CONFIG_FILE_NAME;
-  open(PCFH, "> $PROFILE_CONFIG_FILE_LOCATION") or die "Cannot open file $PROFILE_CONFIG_FILE_NAME for writing: $!";
+  unless(-e $PROFILE_CONFIG_FILE_LOCATION){
+   open(PCFH, "> $PROFILE_CONFIG_FILE_LOCATION") or die "Cannot open file $PROFILE_CONFIG_FILE_NAME for writing: $!"; 
+  }
+  else {
+   open(PCFH, ">> $PROFILE_CONFIG_FILE_LOCATION") or die "Cannot open file $PROFILE_CONFIG_FILE_NAME for writing: $!";
+   }
   $profileString = join("\t",@profileCols);
   print PCFH "$profileString\n";
   if ($self->getMakePercentiles()) {
