@@ -7,6 +7,8 @@ use File::Basename;
 
 use CBIL::TranscriptExpression::Error;
 
+use Data::Dumper;
+
 use File::Temp qw/ tempfile /;
 
 my $loadData = 1;
@@ -17,13 +19,16 @@ my $PROFILE_CONFIG_FILE_NAME = "expression_profile_config.txt";
 
 #-------------------------------------------------------------------------------
 
- sub getSamples              { $_[0]->{samples} }
- sub getDyeSwaps             { $_[0]->{dyeSwaps} }
+ sub getSamples                 { $_[0]->{samples} }
+ sub getDyeSwaps                { $_[0]->{dyeSwaps} }
 
- sub getHasRedGreenFiles     { $_[0]->{hasRedGreenFiles} }
- sub getMakePercentiles      { $_[0]->{makePercentiles} }
- sub getMakeStandardError    { $_[0]->{makeStandardError} }
- sub getDoNotLoad            { $_[0]->{doNotLoad} }
+ sub getHasRedGreenFiles        { $_[0]->{hasRedGreenFiles} }
+ sub getMakePercentiles         { $_[0]->{makePercentiles} }
+ 
+ sub getMakeStandardError       { $_[0]->{makeStandardError} }
+ sub setMakeStandardError       { $_[0]->{makeStandardError} = $_[1] }
+ 
+ sub getDoNotLoad               { $_[0]->{doNotLoad} }
 
  sub getProfileSetName          { $_[0]->{profileSetName} }
  sub getProfileSetDescription   { $_[0]->{profileSetDescription} }
@@ -70,6 +75,8 @@ sub munge {
 
   my $samplesRString = $self->makeSamplesRString();
 
+  $self->checkMakeStandardError();
+
   my $rFile = $self->writeRScript($samplesRString);
 
   $self->runR($rFile);
@@ -77,11 +84,24 @@ sub munge {
   system("rm $rFile");
   my $doNotLoad = $self->getDoNotLoad(); 
 
-#  unless($doNotLoad){
+  unless($doNotLoad){
     $self->createConfigFile();
-#  }
+  }
 }
 
+sub checkMakeStandardError {
+  my ($self) = @_;
+  my $samplesHash = $self->groupListHashRef($self->getSamples());
+  $self->setMakeStandardError(0);
+
+  foreach my $group (keys %$samplesHash) {
+    my $samples = $samplesHash->{$group};
+    if(scalar @$samples > 1){
+      $self->setMakeStandardError(1);
+      last;
+    }
+  }
+}
 sub writeRScript {
   my ($self, $samples) = @_;
 
@@ -196,12 +216,11 @@ sub createConfigFile{
   my $greenPercentileString = '';
   my $profileSetName = $self->getProfileSetName();
   my $profileSetDescription= $self->getProfileSetDescription();
-  my $profileDataFile = $dataFileBase.".txt";
-  if ($self->getOutputFile()){
-     $profileDataFile = $self->getOutputFile();
-     }  
+  my $profileDataFile = $self->getOutputFile();
+  my $expression_profileSetName= "expression profiles of ".$profileSetName;
+  my $expression_profileSetDescription = "expression profiles of ".$profileSetDescription;
   my $sourceIdType = $self->getSourceIdType;
-  my @profileCols = ($profileDataFile,$profileSetName,$profileSetDescription,$sourceIdType,$skipSecondRow,$loadProfileElement);
+  my @profileCols = ($profileDataFile,$expression_profileSetName,$expression_profileSetDescription,$sourceIdType,$skipSecondRow,$loadProfileElement);
   my $mainDir = $self->getMainDirectory();
   my $PROFILE_CONFIG_FILE_LOCATION = $mainDir.$PROFILE_CONFIG_FILE_NAME;
   unless(-e $PROFILE_CONFIG_FILE_LOCATION){
@@ -214,27 +233,35 @@ sub createConfigFile{
   print PCFH "$profileString\n";
   if ($self->getMakePercentiles()) {
     my $percentileDataFile = $profileDataFile.".pct";
+    my $percentile_profileSetName= "expression profile percentiles of ".$profileSetName;
+    my $percentile_profileSetDescription = "expression profile percentiles of ".$profileSetDescription;
     my @percentileCols = @profileCols;
-    $percentileCols[0] = $percentileDataFile;
+    splice(@percentileCols,0,3,$percentileDataFile,$percentile_profileSetName,$percentile_profileSetDescription);
     $percentileString = join("\t",@percentileCols);
     print PCFH "$percentileString\n";
   }
   if ($self->getMakeStandardError()) {
     my $standardErrorDataFile = $profileDataFile.".stderr";
+    my $standardError_profileSetName= "expression profile standard errors of ".$profileSetName;
+    my $standardError_profileSetDescription = "expression profile standard errors of ".$profileSetDescription;
     my @standardErrorCols = @profileCols;
-    $standardErrorCols[0] = $standardErrorDataFile;
+    splice(@standardErrorCols,0,3,$standardErrorDataFile,$standardError_profileSetName,$standardError_profileSetDescription);
     $standardErrorString = join("\t",@standardErrorCols);
     print PCFH "$standardErrorString\n";
   }
   if ($self->getHasRedGreenFiles()) {
     my $greenDataFile = $profileDataFile.".greenPct";
+    my $greenPercentile_profileSetName = "expression profile green percentiles of ".$profileSetName;
+    my $greenPercentile_profileSetDescription = "expression profile green percentiles of ".$profileSetDescription;
     my @greenCols = @profileCols;
-    $greenCols[0] = $greenDataFile;
+    splice(@greenCols,0,3,$greenDataFile,$greenPercentile_profileSetName,$greenPercentile_profileSetDescription);
     $greenPercentileString = join("\t",@greenCols);
     print PCFH "$greenPercentileString\n";
     my $redDataFile = $profileDataFile.".redPct";
+    my $redPercentile_profileSetName = "expression profile red percentiles of ".$profileSetName;
+    my $redPercentile_profileSetDescription = "expression profile red percentiles of ".$profileSetDescription;
     my @redCols = @profileCols;
-    $redCols[0] = $redDataFile;
+    splice(@redCols,0,3,$redDataFile,$redPercentile_profileSetName,$redPercentile_profileSetDescription);
     $redPercentileString = join("\t",@redCols);
     print PCFH "$redPercentileString\n";
   close PCFH;
