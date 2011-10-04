@@ -31,6 +31,14 @@ sub parse {
   my $xml = XMLin($xmlFile,  'ForceArray' => 1);
 
   my $defaults = $xml->{globalDefaultArguments}->[0]->{property};
+
+  # Hash for things which can be referenced
+  my $globalReferencable = $xml->{globalReferencable}->[0]->{property};
+  foreach my $ref (keys %$globalReferencable) {
+    my $value = $globalReferencable->{$ref}->{value};
+    $globalReferencable->{$ref} = $value;
+  }
+
   my $steps = $xml->{step};
 
   foreach my $step (@$steps) {
@@ -52,12 +60,20 @@ sub parse {
 
     foreach my $property (keys %$properties) {
       my $value = $properties->{$property}->{value};
+      my $isReference = $properties->{$property}->{isReference};
 
       if(ref($value) eq 'ARRAY') {
         push(@{$args->{$property}}, @$value);
       }
+      elsif($isReference) {
+        eval "\$args->{$property} = $value;";
+
+        if($@) {
+          CBIL::TranscriptExpression::Error->new("ERROR:  isReference specified but value could not be evaluated:  $@")->throw();
+        }
+      }
       else {
-        $args->{$property} = $value;
+          $args->{$property} = $value;
       }
     }
 
