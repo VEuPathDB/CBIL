@@ -31,6 +31,7 @@ sub getDesign               { $_[0]->{design} }
 sub getMinPrescence         { $_[0]->{minPrescence} }
 sub getLevelConfidence      { $_[0]->{levelConfidence} }
 sub getStatistic            { $_[0]->{statistic} }
+sub getProfileSetName       { $_[0]->{profileSetName} }
 
 sub getBaseX                { $_[0]->{baseX} }
 
@@ -48,6 +49,7 @@ sub new {
                         'levelConfidence',
                         'minPrescence',
                         'statistic',
+                        'profileSetName'
                        ];
 
   my $self = $class->SUPER::new($args, $requiredParams);
@@ -216,14 +218,17 @@ sub createConfigFile {
   $dataFile =~ s/ /_/g;
   $dataFile = $dataFile.".txt";
   my $configFileLocation = $mainDir.$configFile;
-  my @configLineColumns = ($dataFile,$analysisName,$protocolName,$protocolType,$profileElementName);
+  my $expressionProfileConfigLocation = $mainDir."/expression_profile_config.txt";
+  my $expressionProfileConfigLocation =~ s/\/+/\//;
+  my $profileSetName = $self->getProfileSetName;
+  my @configLineColumns = ($dataFile,$analysisName,$protocolName,$protocolType,$profileSetName,$profileElementName);
   my $configLine = join("\t",@configLineColumns);
   if (-e $configFileLocation){
     open(CFH, ">> $configFileLocation") or die "Cannot open file $configFileLocation for writing: $!";  
   }
   else {
     open(CFH, "> $configFileLocation") or die "Cannot open file $configFileLocation for writing: $!";
-    my $analysisHeader = "dataFile\tanalysisName\tprotocolName\tprotocolType\tprofileelementname\n";
+    my $analysisHeader = "dataFile\tanalysisName\tprotocolName\tprotocolType\tprofilesetname\tprofileelementname\n";
     print CFH $analysisHeader;
   }
 
@@ -256,14 +261,9 @@ sub printHeader {
   print  $outFh "id\t" . join("\t", @a) . "\n";  
 }
 
+sub getProfileSetName {
 
 
-
-
-
-
-
-
-
+}
 1;
 
