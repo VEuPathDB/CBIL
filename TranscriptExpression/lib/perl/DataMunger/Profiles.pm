@@ -83,7 +83,6 @@ sub munge {
 
   system("rm $rFile");
   my $doNotLoad = $self->getDoNotLoad(); 
-  print "doNotLoad = $doNotLoad";
   unless($doNotLoad){
     $self->createConfigFile();
   }
