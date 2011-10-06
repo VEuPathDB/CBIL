@@ -1,4 +1,4 @@
-reorderAndAverageColumns <- function (pl=NULL, df=NULL, isFirstColNames=TRUE) {
+reorderAndGetColCentralVal <- function (pl=NULL, df=NULL, isFirstColNames=TRUE, computeMedian=FALSE) {
 
   if (is.null(pl) || is.null(df)){
     stop("DataFrame df and pairlist pl must be passed to this function");
@@ -17,11 +17,15 @@ reorderAndAverageColumns <- function (pl=NULL, df=NULL, isFirstColNames=TRUE) {
 
     samples = as.vector(pl[[sampleGroupName]]);
 
-    colAverage = averageSamples(v=samples, df=df);
+    if(computeMedian) {
+      colCentralVal = medianSamples(v=samples, df=df);
+    } else {
+      colCentralVal = meanSamples(v=samples, df=df); 
+    }
 
     colStdErr = stdErrSamples(v=samples, df=df);
 
-    res$data = cbind(res$data, colAverage);
+    res$data = cbind(res$data, colCentralVal);
 
     res$stdErr = cbind(res$stdErr, colStdErr);
   }
@@ -57,9 +61,16 @@ return(groupMatrix);
 }
 
 #--------------------------------------------------------------------------------
-averageSamples <- function(v=NULL, df=NULL) {
+meanSamples <- function(v=NULL, df=NULL) {
   groupMatrix = makeGroupMatrix(v,df); 
   return(rowMeans(groupMatrix, na.rm=T));
+}
+
+#--------------------------------------------------------------------------------
+
+medianSamples <- function(v=NULL, df=NULL) {
+  groupMatrix = makeGroupMatrix(v,df); 
+  return(apply(groupMatrix,1,median));
 }
 
 #--------------------------------------------------------------------------------

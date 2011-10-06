@@ -21,6 +21,8 @@ my $PROFILE_CONFIG_FILE_NAME = "expression_profile_config.txt";
 
  sub getSamples                 { $_[0]->{samples} }
  sub getDyeSwaps                { $_[0]->{dyeSwaps} }
+ sub getFindMedian              { $_[0]->{findMedian} }
+
 
  sub getHasRedGreenFiles        { $_[0]->{hasRedGreenFiles} }
  sub getMakePercentiles         { $_[0]->{makePercentiles} }
@@ -117,6 +119,7 @@ sub writeRScript {
   my $hasRedGreenFiles = $self->getHasRedGreenFiles() ? "TRUE" : "FALSE";
   my $makePercentiles = $self->getMakePercentiles() ? "TRUE" : "FALSE";
   my $makeStandardError = $self->getMakeStandardError() ? "TRUE" : "FALSE";
+  my $findMedian = $self->getFindMedian() ? "TRUE" : "FALSE";
 
   my $rString = <<RString;
 
@@ -133,7 +136,12 @@ if($hasDyeSwaps) {
   dat = mOrInverse(df=dat, ds=dye.swaps);
 }
 
-reorderedSamples = reorderAndAverageColumns(pl=dat.samples, df=dat);
+if($findMedian) {
+  reorderedSamples = reorderAndGetColCentralVal(pl=dat.samples, df=dat, computeMedian=TRUE);
+} else {
+  reorderedSamples = reorderAndGetColCentralVal(pl=dat.samples, df=dat);
+}
+
 write.table(reorderedSamples\$data, file="$outputFile",quote=F,sep="\\t",row.names=reorderedSamples\$id);
 
 if($makeStandardError) {
@@ -151,8 +159,8 @@ if($hasRedGreenFiles) {
     newGreenDat = greenDat;
   }
 
-  reorderedRedSamples = reorderAndAverageColumns(pl=dat.samples, df=newRedDat);
-  reorderedGreenSamples = reorderAndAverageColumns(pl=dat.samples, df=newGreenDat);
+  reorderedRedSamples = reorderAndGetColCentralVal(pl=dat.samples, df=newRedDat);
+  reorderedGreenSamples = reorderAndGetColCentralVal(pl=dat.samples, df=newGreenDat);
 
   write.table(reorderedRedSamples\$data, file=paste("$outputFile", ".red", sep=""), quote=F,sep="\\t",row.names=reorderedRedSamples\$id);
   write.table(reorderedGreenSamples\$data, file=paste("$outputFile", ".green", sep=""), quote=F,sep="\\t",row.names=reorderedGreenSamples\$id);
