@@ -4,6 +4,8 @@ use strict;
 
 use XML::Simple;
 
+use Data::Dumper;
+
 use CBIL::TranscriptExpression::Error;
 
 sub getXmlFile { $_[0]->{xml_file} }

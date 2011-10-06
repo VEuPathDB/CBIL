@@ -83,7 +83,7 @@ sub munge {
 
   system("rm $rFile");
   my $doNotLoad = $self->getDoNotLoad(); 
-
+  print "doNotLoad = $doNotLoad";
   unless($doNotLoad){
     $self->createConfigFile();
   }
@@ -230,7 +230,7 @@ sub createConfigFile{
    open(PCFH, ">> $PROFILE_CONFIG_FILE_LOCATION") or die "Cannot open file $PROFILE_CONFIG_FILE_NAME for writing: $!";
    }
   $profileString = join("\t",@profileCols);
-  print PCFH "$profileString\n";
+  print PCFH "$profileString\n" ;
   if ($self->getMakePercentiles()) {
     my $percentileDataFile = $profileDataFile.".pct";
     my $percentile_profileSetName= "expression profile percentiles of ".$profileSetName;

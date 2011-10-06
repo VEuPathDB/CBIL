@@ -261,9 +261,5 @@ sub printHeader {
   print  $outFh "id\t" . join("\t", @a) . "\n";  
 }
 
-sub getProfileSetName {
-
-
-}
 1;
 
