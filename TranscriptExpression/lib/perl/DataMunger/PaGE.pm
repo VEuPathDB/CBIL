@@ -226,7 +226,7 @@ sub createConfigFile {
   }
   else {
     open(CFH, "> $configFileLocation") or die "Cannot open file $configFileLocation for writing: $!";
-    my $analysisHeader = "dataFile\tanalysisName\tprotocolName\tprotocolType\tprofilesetname\tprofileelementname\n";
+    my $analysisHeader = "dataFile\tanalysisName\tprotocolName\tprotocolType\tprofilesetname\tprofileelementnames\n";
     print CFH $analysisHeader;
   }
 
