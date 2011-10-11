@@ -214,9 +214,7 @@ sub createConfigFile {
   my $analysisName = $self->getAnalysisName;
   my $profileElementName= $self->createProfileElementName;
   my $mainDir = $self->getMainDirectory();
-  my $dataFile = $analysisName;
-  $dataFile =~ s/ /_/g;
-  $dataFile = $dataFile.".txt";
+  my $dataFile = $self->getOutputFile() ;
   my $configFileLocation = $mainDir.$configFile;
   my $expressionProfileConfigLocation = $mainDir."/expression_profile_config.txt";
   my $expressionProfileConfigLocation =~ s/\/+/\//;
