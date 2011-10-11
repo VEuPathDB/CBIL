@@ -219,6 +219,7 @@ sub createConfigFile {
   my $expressionProfileConfigLocation = $mainDir."/expression_profile_config.txt";
   my $expressionProfileConfigLocation =~ s/\/+/\//;
   my $profileSetName = $self->getProfileSetName;
+  $profileSetName ="expression profiles of ".$profileSetName;
   my @configLineColumns = ($dataFile,$analysisName,$protocolName,$protocolType,$profileSetName,$profileElementName);
   my $configLine = join("\t",@configLineColumns);
   if (-e $configFileLocation){
