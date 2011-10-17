@@ -70,7 +70,7 @@ meanSamples <- function(v=NULL, df=NULL) {
 
 medianSamples <- function(v=NULL, df=NULL) {
   groupMatrix = makeGroupMatrix(v,df); 
-  return(apply(groupMatrix,1,median));
+  return(apply(groupMatrix,1,median,na.rm=T));
 }
 
 #--------------------------------------------------------------------------------
