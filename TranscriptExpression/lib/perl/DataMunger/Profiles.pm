@@ -25,10 +25,7 @@ my $PROFILE_CONFIG_FILE_NAME = "expression_profile_config.txt";
 
  sub getHasRedGreenFiles        { $_[0]->{hasRedGreenFiles} }
  sub getMakePercentiles         { $_[0]->{makePercentiles} }
- 
- sub getMakeStandardError       { $_[0]->{makeStandardError} }
- sub setMakeStandardError       { $_[0]->{makeStandardError} = $_[1] }
- 
+
  sub getDoNotLoad               { $_[0]->{doNotLoad} }
 
  sub getProfileSetName          { $_[0]->{profileSetName} }
@@ -39,6 +36,11 @@ my $PROFILE_CONFIG_FILE_NAME = "expression_profile_config.txt";
 
  sub getLoadProfileElement      { $_[0]->{loadProfileElement} }
 #-------------------------------------------------------------------------------
+
+ # Standard Error is Set internally
+ sub getMakeStandardError       { $_[0]->{_makeStandardError} }
+ sub setMakeStandardError       { $_[0]->{_makeStandardError} = $_[1] }
+
 
 sub new {
   my ($class, $args) = @_;
@@ -135,11 +137,8 @@ if($hasDyeSwaps) {
   dat = mOrInverse(df=dat, ds=dye.swaps);
 }
 
-if($findMedian) {
-  reorderedSamples = reorderAndGetColCentralVal(pl=dat.samples, df=dat, computeMedian=TRUE);
-} else {
-  reorderedSamples = reorderAndGetColCentralVal(pl=dat.samples, df=dat);
-}
+reorderedSamples = reorderAndGetColCentralVal(pl=dat.samples, df=dat, computeMedian=$findMedian);
+
 
 write.table(reorderedSamples\$data, file="$outputFile",quote=F,sep="\\t",row.names=reorderedSamples\$id);
 
@@ -228,7 +227,7 @@ sub createConfigFile{
   my $sourceIdType = $self->getSourceIdType;
   my @profileCols = ($profileDataFile,$expression_profileSetName,$expression_profileSetDescription,$sourceIdType,$skipSecondRow,$loadProfileElement);
   my $mainDir = $self->getMainDirectory();
-  my $PROFILE_CONFIG_FILE_LOCATION = $mainDir.$PROFILE_CONFIG_FILE_NAME;
+  my $PROFILE_CONFIG_FILE_LOCATION = $mainDir. "/" . $PROFILE_CONFIG_FILE_NAME;
   unless(-e $PROFILE_CONFIG_FILE_LOCATION){
    open(PCFH, "> $PROFILE_CONFIG_FILE_LOCATION") or die "Cannot open file $PROFILE_CONFIG_FILE_NAME for writing: $!"; 
   }
