@@ -1,25 +1,24 @@
-package CBIL::TranscriptExpression::DataMunger::MergeSeparateFiles;
-use base qw(CBIL::TranscriptExpression::DataMunger);
+package CBIL::TranscriptExpression::DataMunger::ProfileFromSeparateFiles;
+use base qw(CBIL::TranscriptExpression::DataMunger::Profiles);
 
 use strict;
+
+use File::Temp qw/ tempfile /;
 
 use CBIL::TranscriptExpression::Error;
 
 # Each File contains 2 columns tab delim (U_ID \t VALUE)
 # Each value in the analysis config can specify a display name
 #   which will be used in the header of the output file ( "Display Name|file")
-sub getFiles         {$_[0]->{files}}
-
 sub getHasHeader     {$_[0]->{hasHeader}}
 sub setHasHeader     {$_[0]->{hasHeader} = $_[1]}
 
 sub new {
   my ($class, $args) = @_;
-  my $requiredParams = ['files',
-                        'outputFile'
-                       ];
 
-  my $self = $class->SUPER::new($args, $requiredParams);
+  $args->{inputFile} = '.';
+
+  my $self = $class->SUPER::new($args);
 
   if(defined $args->{hasHeader}) {
     $self->setHeader($args->{hasHeader});
@@ -32,13 +31,19 @@ sub munge {
   my ($self) = @_;
 
   $self->readDataHash();
-  $self->writeDataHash();
+  my $inputFile = $self->writeDataHash();
+
+  $self->setInputFile($inputFile);
+
+  $self->SUPER::munge();
+
+  unlink($inputFile);
 }
 
 sub readDataHash {
   my ($self) = @_;
 
-  my $files = $self->getFiles();
+  my $files = $self->getSamples();
 
   my $hasHeader = $self->getHasHeader();
 
@@ -47,11 +52,8 @@ sub readDataHash {
     my @ar = split(/\|/, $file);
 
     my $fn = pop @ar;
-    my $display = pop @ar;
 
-    $display = defined $display ? $display : $fn;
-
-    push @headers, $display;
+    push @headers, $fn;
 
     open(FILE, $fn) or CBIL::TranscriptExpression::Error->new("Cannot open File $fn for reading: $!")->throw();
 
@@ -63,11 +65,11 @@ sub readDataHash {
       chomp $line;
       my ($uId, $value) = split(/\t/, $line);
 
-      if($self->{dataHash}->{$uId}->{$display}) {
-        CBIL::TranscriptExpression::Error->new("ID $uId is not unique for $display")->throw();
+      if($self->{dataHash}->{$uId}->{$fn}) {
+        CBIL::TranscriptExpression::Error->new("ID $uId is not unique for $fn")->throw();
       }
 
-      $self->{dataHash}->{$uId}->{$display} = $value;
+      $self->{dataHash}->{$uId}->{$fn} = $value;
     }
     close FILE;
   }
@@ -81,18 +83,15 @@ sub writeDataHash {
   my $dataHash = $self->{dataHash};
   my $headers = $self->{headers};
 
-  my $outputFile = $self->getOutputFile();
+  my ($fh, $file) = tempfile();
 
-  open(OUT, "> $outputFile") or CBIL::TranscriptExpression::Error->new("Cannot open File $outputFile for writing: $!")->throw();
-
-  print OUT "U_ID\t" . join("\t", @$headers) . "\n";
+  print $fh "U_ID\t" . join("\t", @$headers) . "\n";
 
   foreach my $uid (keys %$dataHash) {
     my @values = map {$dataHash->{$uid}->{$_} || 'NA'} @$headers;
-    print OUT "$uid\t" . join("\t", @values) . "\n";
+    print $fh "$uid\t" . join("\t", @values) . "\n";
   }
-
-  close OUT;
+  return $file;
 }
 
 1;
