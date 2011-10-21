@@ -184,13 +184,23 @@ standardizeProfiles <- function (df=NULL, refColName=NULL) {
     stop("data.frame df is required for standardization.");
   }
 
+  res = list(id=NULL, data=NULL);
+  stdData = NULL;
+
+  res$id = as.vector(df[,1]);
+
   if (is.null(refColName)) {
     divCol = apply(df[,2:length(df)],1,max,na.rm=T);
-    return (df[,2:length(df)]/divCol);    
+    stdData = df[,2:length(df)]/divCol;    
   } else {
     divColIndex = findIndex(colnames(df),refColName);
-    return (df[,2:length(df)]/df[,divColIndex]);
+    stdData = df[,2:length(df)]/df[,divColIndex];
   }
+
+  stdData = round(stdData, digits = 4);
+  res$data = stdData;
+
+  return(res);
 
 }
 
