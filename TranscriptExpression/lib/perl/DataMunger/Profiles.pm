@@ -1,5 +1,5 @@
 package CBIL::TranscriptExpression::DataMunger::Profiles;
-use base qw(CBIL::TranscriptExpression::DataMunger);
+use base qw(CBIL::TranscriptExpression::DataMunger::Loadable);
 
 use strict;
 
@@ -22,11 +22,8 @@ my $PROFILE_CONFIG_FILE_NAME = "expression_profile_config.txt";
  sub getDyeSwaps                { $_[0]->{dyeSwaps} }
  sub getFindMedian              { $_[0]->{findMedian} }
 
-
  sub getHasRedGreenFiles        { $_[0]->{hasRedGreenFiles} }
  sub getMakePercentiles         { $_[0]->{makePercentiles} }
-
- sub getDoNotLoad               { $_[0]->{doNotLoad} }
 
  sub getProfileSetName          { $_[0]->{profileSetName} }
  sub getProfileSetDescription   { $_[0]->{profileSetDescription} }
