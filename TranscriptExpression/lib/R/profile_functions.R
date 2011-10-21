@@ -177,3 +177,21 @@ swapColumns <- function (t1=NULL, t2=NULL, ds=NULL) {
 }
 
 #--------------------------------------------------------------------------------
+
+standardizeProfiles <- function (df=NULL, refColName=NULL) {
+  
+  if (is.null(df)) {
+    stop("data.frame df is required for standardization.");
+  }
+
+  if (is.null(refColName)) {
+    divCol = apply(df[,2:length(df)],1,max,na.rm=T);
+    return (df[,2:length(df)]/divCol);    
+  } else {
+    divColIndex = findIndex(colnames(df),refColName);
+    return (df[,2:length(df)]/df[,divColIndex]);
+  }
+
+}
+
+#--------------------------------------------------------------------------------
