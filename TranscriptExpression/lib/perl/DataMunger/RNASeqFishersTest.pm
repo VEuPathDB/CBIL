@@ -1,5 +1,5 @@
 package CBIL::TranscriptExpression::DataMunger::RNASeqFishersTest;
-use base qw(CBIL::TranscriptExpression::DataMunger);
+use base qw(CBIL::TranscriptExpression::DataMunger::RadAnalysis);
 
 use strict;
 
@@ -10,10 +10,19 @@ use File::Temp qw/ tempfile /;
 my $MIN_DEPTH = 0;
 my $MIN_MAX = 'min';
 
+my $PROTOCOL_NAME = 'Fishers Test - RUM Output';
+my $PROTOCOL_TYPE = 'unknown_protocol_type';
+my $CONFIG_FILE = 'analysis_result_config.txt';
+
+
+#-------------------------------------------------------------------------------
+
 sub getMappingStatsFile1       { $_[0]->{mappingStatsFile1} }
 sub getMappingStatsFile2       { $_[0]->{mappingStatsFile2} }
 sub getCountsFile1             { $_[0]->{countsFile1} }
 sub getCountsFile2             { $_[0]->{countsFile2} }
+sub getSampleName1             { $_[0]->{sampleName1} }
+sub getSampleName2             { $_[0]->{sampleName2} }
 sub getIsPairedEnd             { $_[0]->{isPairedEnd} }
 
 sub getMinDepth                { $_[0]->{minDepth} }
@@ -21,7 +30,6 @@ sub setMinDepth                { $_[0]->{minDepth} = $_[1] }
 
 sub getMinMax                  { $_[0]->{minMax} }
 sub setMinMax                  { $_[0]->{minMax} = $_[1] }
-
 
 sub new {
   my ($class, $args) = @_;
@@ -33,6 +41,12 @@ sub new {
                         'countsFile2',
                         'isPairedEnd',
                        ];
+
+  unless($args->{doNotLoad}) {
+    push @$requiredParams, 'sampleName1';
+    push @$requiredParams, 'sampleName2';
+    push @$requiredParams, 'profileSetName';
+  }
 
   my $self = $class->SUPER::new($args, $requiredParams);
 
@@ -47,6 +61,19 @@ sub new {
   my $isPairedEnd = $self->getIsPairedEnd();
   unless($isPairedEnd eq 'yes' || $isPairedEnd eq 'no') {
     CBIL::TranscriptExpression::Error->new("isPairedEnd param must equal [yes] or [no]")->throw();
+  }
+
+  unless($self->getDoNotLoad()) {
+    $self->setProtocolName($PROTOCOL_NAME);
+    $self->setProtocolType($PROTOCOL_TYPE);
+    $self->setConfigFile($CONFIG_FILE);
+
+    my $s1 = $self->getSampleName1();
+    my $s2 = $self->getSampleName2();
+
+    $self->{analysisName} = "$s1 vs $s2";
+    my $profileElementsString = $s1 . ";" . $s2;
+    $self->setProfileElementsAsString($profileElementsString);
   }
 
   return $self;
@@ -158,8 +185,8 @@ sub munge {
   my $numMappers1 = $self->findNumMappersFromMappingStatsFile($mappingStatsFile1);
   my $numMappers2 = $self->findNumMappersFromMappingStatsFile($mappingStatsFile2);
 
-  STDOUT->print("n1=$numMappers1\n");
-  STDOUT->print("n2=$numMappers2\n");
+#  STDOUT->print("n1=$numMappers1\n");
+#  STDOUT->print("n2=$numMappers2\n");
 
   my $countsFile1 = $self->getCountsFile1();
   my $countsFile2 = $self->getCountsFile2();
@@ -208,8 +235,9 @@ sub munge {
   }
   $wfh1->close();
 
+  $self->createConfigFile();
+
   unlink($rFile, $countsTmpFn, $tmpOutFile);
 }
-
 
 1;
