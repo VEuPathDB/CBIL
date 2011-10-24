@@ -13,6 +13,8 @@ use CBIL::TranscriptExpression::Error;
 sub getHasHeader     {$_[0]->{hasHeader}}
 sub setHasHeader     {$_[0]->{hasHeader} = $_[1]}
 
+sub setSamples       {$_[0]->{samples} = $_[1]}
+
 sub new {
   my ($class, $args) = @_;
 
@@ -44,16 +46,19 @@ sub readDataHash {
   my ($self) = @_;
 
   my $files = $self->getSamples();
+  my $fileSuffix = $self->getFileSuffix();
 
   my $hasHeader = $self->getHasHeader();
 
   my @headers;
   foreach my $file (@$files) {
-    my @ar = split(/\|/, $file);
+    my ($display, $fn) = split(/\|/, $file);
 
-    my $fn = pop @ar;
+    $fn = $display if (! $fn); # if only one value in $file.. it must be the file name
 
-    push @headers, $fn;
+    $fn = $fn . "." . $fileSuffix if($fileSuffix);
+
+    push @headers, $display;
 
     open(FILE, $fn) or CBIL::TranscriptExpression::Error->new("Cannot open File $fn for reading: $!")->throw();
 
@@ -65,30 +70,30 @@ sub readDataHash {
       chomp $line;
       my ($uId, $value) = split(/\t/, $line);
 
-      if($self->{dataHash}->{$uId}->{$fn}) {
-        CBIL::TranscriptExpression::Error->new("ID $uId is not unique for $fn")->throw();
+      if($self->{dataHash}->{$uId}->{$display}) {
+        CBIL::TranscriptExpression::Error->new("ID $uId is not unique for $display")->throw();
       }
 
-      $self->{dataHash}->{$uId}->{$fn} = $value;
+      $self->{dataHash}->{$uId}->{$display} = $value;
     }
     close FILE;
   }
 
-  $self->{headers} = \@headers;
+  $self->setSamples(\@headers);
 }
 
 sub writeDataHash {
   my ($self) =  @_;
 
   my $dataHash = $self->{dataHash};
-  my $headers = $self->{headers};
+  my $headers = $self->getSamples();
 
   my ($fh, $file) = tempfile();
 
   print $fh "U_ID\t" . join("\t", @$headers) . "\n";
 
-  foreach my $uid (keys %$dataHash) {
-    my @values = map {$dataHash->{$uid}->{$_} || 'NA'} @$headers;
+  foreach my $uid (sort keys %$dataHash) {
+    my @values = map {defined($dataHash->{$uid}->{$_}) ? $dataHash->{$uid}->{$_} : 'NA'} @$headers;
     print $fh "$uid\t" . join("\t", @values) . "\n";
   }
   return $file;
