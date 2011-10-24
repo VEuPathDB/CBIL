@@ -208,12 +208,6 @@ sub makePageInput {
   return($pageInputFile, $pageGeneConfFile);
 }
 
-sub clone {
-  my $self = shift;
-  my $copy = { %$self };
-  bless $copy, ref $self;
-} 
-
 
 sub printHeader {
   my ($conditions, $outFh) = @_;
