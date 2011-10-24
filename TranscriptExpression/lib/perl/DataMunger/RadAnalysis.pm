@@ -8,6 +8,8 @@ use strict;
 #-------------------------------------------------------------------------------
 
 sub getAnalysisName         { $_[0]->{analysisName} }
+sub setAnalysisName         { $_[0]->{analysisName} = $_[1] }
+
 sub getProfileSetName       { $_[0]->{profileSetName} }
 
 #-------------------------------------------------------------------------------
@@ -57,6 +59,33 @@ sub createConfigFile {
   print CFH $configLine."\n";
   close CFH;
 }
+
+
+sub generateOutputFile {
+   my ($self, $conditionAName, $conditionBName, $suffix) = @_;
+
+   my $outputFile = $conditionAName . " vs " . $conditionBName;
+   $outputFile = $outputFile . "." . $suffix if($suffix);
+   $outputFile =~ s/ /_/g;
+
+   return $outputFile;
+ }
+
+ sub filterConditions {
+   my ($self, $conditionName) = @_;
+
+   my $conditions =$self->getConditions();
+   my @rv;
+
+   foreach my $condition (@$conditions){
+     my ($name, $value) = split(/\|/, $condition);
+     if ( $name eq $conditionName){
+       push @rv, $condition;
+     }
+   }
+   return \@rv;
+ }
+
 
 
 1;

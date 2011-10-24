@@ -18,11 +18,23 @@ my $CONFIG_FILE = 'analysis_result_config.txt';
 #-------------------------------------------------------------------------------
 
 sub getMappingStatsFile1       { $_[0]->{mappingStatsFile1} }
+sub setMappingStatsFile1       { $_[0]->{mappingStatsFile1} = $_[1]}
+
 sub getMappingStatsFile2       { $_[0]->{mappingStatsFile2} }
+sub setMappingStatsFile2       { $_[0]->{mappingStatsFile2} = $_[1]}
+
 sub getCountsFile1             { $_[0]->{countsFile1} }
+sub setCountsFile1             { $_[0]->{countsFile1} = $_[1] }
+
 sub getCountsFile2             { $_[0]->{countsFile2} }
+sub setCountsFile2             { $_[0]->{countsFile2} = $_[1] }
+
 sub getSampleName1             { $_[0]->{sampleName1} }
+sub setSampleName1             { $_[0]->{sampleName1} = $_[1] }
+
 sub getSampleName2             { $_[0]->{sampleName2} }
+sub setSampleName2             { $_[0]->{sampleName2} = $_[1] }
+
 sub getIsPairedEnd             { $_[0]->{isPairedEnd} }
 
 sub getMinDepth                { $_[0]->{minDepth} }
@@ -71,7 +83,7 @@ sub new {
     my $s1 = $self->getSampleName1();
     my $s2 = $self->getSampleName2();
 
-    $self->{analysisName} = "$s1 vs $s2";
+    $self->setAnalysisName("$s1 vs $s2");
     my $profileElementsString = $s1 . ";" . $s2;
     $self->setProfileElementsAsString($profileElementsString);
   }

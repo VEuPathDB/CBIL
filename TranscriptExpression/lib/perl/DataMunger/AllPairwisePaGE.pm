@@ -3,19 +3,8 @@ use base qw(CBIL::TranscriptExpression::DataMunger::PaGE);
 
 use strict;
 
-use CBIL::TranscriptExpression::Error;
-use CBIL::TranscriptExpression::Utils;
-
-use GUS::Community::FileTranslator;
-
-use File::Basename;
-
-my $MISSING_VALUE = 'NA';
-my $USE_LOGGED_DATA = 1;
-
 #-------------------------------------------------------------------------------
 
-sub setAnalysisName          { $_[0]->{analysisName} = $_[1] }
 sub setConditions            { $_[0]->{conditions} = $_[1] }
 
 #-------------------------------------------------------------------------------
@@ -60,24 +49,4 @@ sub new {
    return $conditionAName." vs ".$conditionBName;
  }
 
- sub generateOutputFile {
-   my ($self,$conditionAName,$conditionBName) = @_;
-   my $outputFile = $conditionAName." vs ".$conditionBName;
-   $outputFile =~ s/ /_/g;
-   return $outputFile;
- }
-
- sub filterConditions {
-   my ($self,$conditionName) = @_;
-   my $conditions =$self->getConditions();
-   my @rv;
-   foreach my $condition (@$conditions){
-     my ($name,$value) = split(/\|/,$condition);
-     if ( $name eq $conditionName){
-       push @rv,$condition;
-     }
-   }
-   return \@rv;
-     
- }
 1;
