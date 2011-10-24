@@ -18,6 +18,9 @@ sub setOutputFile           { $_[0]->{outputFile} = $_[1] }
 sub getInputFile            { $_[0]->{inputFile} }
 sub setInputFile            { $_[0]->{inputFile} = $_[1] }
 
+sub getFileSuffix           { $_[0]->{fileSuffix} }
+sub setFileSuffix           { $_[0]->{fileSuffix} = $_[1] }
+
 sub getMainDirectory        { $_[0]->{mainDirectory} }
 sub setMainDirectory        { $_[0]->{mainDirectory} = $_[1] }
 
