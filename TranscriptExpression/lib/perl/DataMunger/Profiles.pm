@@ -1,5 +1,5 @@
 package CBIL::TranscriptExpression::DataMunger::Profiles;
-use base qw(CBIL::TranscriptExpression::DataMunger::Loadable);
+use base qw(CBIL::TranscriptExpression::DataMunger);
 
 use strict;
 
@@ -22,8 +22,11 @@ my $PROFILE_CONFIG_FILE_NAME = "expression_profile_config.txt";
  sub getDyeSwaps                { $_[0]->{dyeSwaps} }
  sub getFindMedian              { $_[0]->{findMedian} }
 
+
  sub getHasRedGreenFiles        { $_[0]->{hasRedGreenFiles} }
  sub getMakePercentiles         { $_[0]->{makePercentiles} }
+
+ sub getDoNotLoad               { $_[0]->{doNotLoad} }
 
  sub getProfileSetName          { $_[0]->{profileSetName} }
  sub getProfileSetDescription   { $_[0]->{profileSetDescription} }
@@ -32,6 +35,8 @@ my $PROFILE_CONFIG_FILE_NAME = "expression_profile_config.txt";
  sub setSourceIdType            { $_[0]->{sourceIdType} = $_[1]}
 
  sub getLoadProfileElement      { $_[0]->{loadProfileElement} }
+ 
+ sub getIgnoreStdError          { $_[0]->{ignoreStdErrorEstimation} }
 #-------------------------------------------------------------------------------
 
  # Standard Error is Set internally
@@ -75,7 +80,11 @@ sub munge {
 
   my $samplesRString = $self->makeSamplesRString();
 
-  $self->checkMakeStandardError();
+  my $ignoreStdError = $self->getIgnoreStdError();
+
+  if ($ignoreStdError == 0) {
+    $self->checkMakeStandardError();
+  }
 
   my $rFile = $self->writeRScript($samplesRString);
 
@@ -91,7 +100,8 @@ sub munge {
 sub checkMakeStandardError {
   my ($self) = @_;
   my $samplesHash = $self->groupListHashRef($self->getSamples());
-  $self->setMakeStandardError(0);
+  
+   $self->setMakeStandardError(0);
 
   foreach my $group (keys %$samplesHash) {
     my $samples = $samplesHash->{$group};
@@ -101,6 +111,7 @@ sub checkMakeStandardError {
     }
   }
 }
+
 sub writeRScript {
   my ($self, $samples) = @_;
 
