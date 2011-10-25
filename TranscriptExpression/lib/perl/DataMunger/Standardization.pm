@@ -8,7 +8,7 @@ use CBIL::TranscriptExpression::Error;
 
 #-------------------------------------------------------------------------------
 
-sub getRefColName            { $_[0]->{refColName} }
+sub getRefColName              { $_[0]->{refColName} }
 
 #-------------------------------------------------------------------------------
 
@@ -16,9 +16,6 @@ sub new {
   my ($class, $args) = @_;
 
   my $self = $class->SUPER::new($args);
-
-  $self->hasRedGreenFiles(0);
-  $self->makePercentiles(0);
 
   return $self;
 }
@@ -29,6 +26,7 @@ sub munge {
   $self->SUPER::munge();
 
   my $rFile = $self->writeStdRScript();
+
   $self->runR($rFile);
 
   system("rm $rFile");
