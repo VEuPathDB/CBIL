@@ -11,8 +11,14 @@ use CBIL::TranscriptExpression::Error;
 sub getXmlFile { $_[0]->{xml_file} }
 sub setXmlFile { $_[0]->{xml_file} = $_[1] }
 
+sub getGlobalDefaults { $_[0]->{_global_defaults} }
+sub setGlobalDefaults { $_[0]->{_global_defaults} = $_[1] }
+
+sub getGlobalReferencable { $_[0]->{_global_referencable} }
+sub setGlobalReferencable { $_[0]->{_global_referencable} = $_[1] }
+
 sub new {
-  my ($class, $xmlFile) = @_;
+  my ($class, $xmlFile, $globalDefaults, $globalReferencable) = @_;
 
   unless(-e $xmlFile) {
     CBIL::TranscriptExpression::Error->new("XML File $xmlFile doesn't exist.")->throw();
@@ -20,6 +26,8 @@ sub new {
 
   my $self = bless {}, $class;
   $self->setXmlFile($xmlFile);
+  $self->setGlobalDefaults($globalDefaults);
+  $self->setGlobalReferencable($globalReferencable);
 
   return $self;
 }
@@ -32,13 +40,35 @@ sub parse {
 
   my $xml = XMLin($xmlFile,  'ForceArray' => 1);
 
-  my $defaults = $xml->{globalDefaultArguments}->[0]->{property};
+  my $defaults = $self->getGlobalDefaults();
+  unless($defaults) {
+    $defaults = $xml->{globalDefaultArguments}->[0]->{property};
+  }
 
-  # Hash for things which can be referenced
-  my $globalReferencable = $xml->{globalReferencable}->[0]->{property};
-  foreach my $ref (keys %$globalReferencable) {
-    my $value = $globalReferencable->{$ref}->{value};
-    $globalReferencable->{$ref} = $value;
+  my $globalReferencable = $self->getGlobalReferencable();
+  unless($globalReferencable) {
+    $globalReferencable = $xml->{globalReferencable}->[0]->{property};
+    foreach my $ref (keys %$globalReferencable) {
+      my $value = $globalReferencable->{$ref}->{value};
+      $globalReferencable->{$ref} = $value;
+    }
+  }
+
+  my $all_steps = [];
+
+  my $imports = $xml->{import};
+  foreach my $importFile (map {$_->{file}} @$imports) {
+    my $importFileEval;
+
+    eval "\$importFileEval = \"$importFile\";";
+    if($@) {
+      CBIL::TranscriptExpression::Error->new("ERROR: import file specified but could not be evaluated:  $@")->throw();
+    }
+
+    # TODO: Defaults and referenceble things could potentially be provided from the imported file
+    my $importedParser = CBIL::TranscriptExpression::XmlParser->new($importFileEval, $defaults, $globalReferencable);
+    my $importedSteps = $importedParser->parse();
+    push @$all_steps, @$importedSteps;
   }
 
   my $steps = $xml->{step};
@@ -82,7 +112,9 @@ sub parse {
     $step->{arguments} = $args;
   }
 
-  return $steps;
+  push @$all_steps, @$steps;
+
+  return $all_steps;
 }
 
 1;
