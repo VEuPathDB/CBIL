@@ -15,15 +15,11 @@ sub getRefColName            { $_[0]->{refColName} }
 sub new {
   my ($class, $args) = @_;
 
-  my $requiredParams = ['inputFile'];
+  my $self = $class->SUPER::new($args);
 
-  my $self = $class->SUPER::new($args,$requiredParams);
+  $self->hasRedGreenFiles(0);
+  $self->makePercentiles(0);
 
-  my $inputFile = $args->{inputFile};
-
-  unless(-e $inputFile) {
-    CBIL::TranscriptExpression::Error->new("input file $inputFile does not exist")->throw();
-  }
   return $self;
 }
 
