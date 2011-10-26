@@ -186,8 +186,11 @@ standardizeProfiles <- function (df=NULL, refColName=NULL) {
 
   res = list(id=NULL, data=NULL);
   stdData = NULL;
+  colNames = NULL;
 
   res$id = as.vector(df[,1]);
+  colNames = colnames(df[,2:length(df)]);
+  colNames[1] = paste("ID\t", colNames[1], sep="");
 
   if (is.null(refColName)) {
     divCol = apply(df[,2:length(df)],1,max,na.rm=T);
@@ -199,6 +202,7 @@ standardizeProfiles <- function (df=NULL, refColName=NULL) {
 
   stdData = round(stdData, digits = 4);
   res$data = stdData;
+  colnames(res$data) = colNames;
 
   return(res);
 
