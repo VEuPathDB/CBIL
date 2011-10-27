@@ -286,6 +286,8 @@ sub createConfigLine {
   my @customCols = ($dataFile, $profileSetName,  $profileSetDescription);
   my @cols = push(@customCols, @$baseCols);
   my $configString = join("\t",@cols);
+  print STDERR $configString;
+  return $configString;
 }
   
 1;
