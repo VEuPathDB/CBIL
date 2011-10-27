@@ -285,10 +285,10 @@ sub createConfigLine {
   my $dataFile = $dataFileBase . $type;
   my $profileSetName = $prefix . $profileSetName;
   my $profileSetDescription = $prefix . $profileSetDescription;
-  my @customCols = [$dataFile, $profileSetName,  $profileSetDescription];
+  my @customCols = ($dataFile, $profileSetName,  $profileSetDescription);
   my @cols = push(@customCols, @base);
-  my $configString = join("\t",@cols);
-  print STDERR $configString;
+  my $configString = join("\t", @cols);
+  print STDERR $configString." had better not be a number\n ";
   return $configString;
 }
   
