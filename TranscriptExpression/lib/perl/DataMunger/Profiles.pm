@@ -233,7 +233,9 @@ sub createConfigFile{
   my $expression_profileSetName= $profileSetName;
   my $expression_profileSetDescription = $profileSetDescription;
   my $sourceIdType = $self->getSourceIdType;
-  my @profileCols = ($profileDataFile,$expression_profileSetName,$expression_profileSetDescription,$sourceIdType,$skipSecondRow,$loadProfileElement);
+  my @baseCols = ($sourceIdType,$skipSecondRow,$loadProfileElement,);
+  my @profileCols = ($profileDataFile,$expression_profileSetName,$expression_profileSetDescription,);
+   
   my $mainDir = $self->getMainDirectory();
   my $PROFILE_CONFIG_FILE_LOCATION = $mainDir. "/" . $PROFILE_CONFIG_FILE_NAME;
   unless(-e $PROFILE_CONFIG_FILE_LOCATION){
@@ -242,44 +244,48 @@ sub createConfigFile{
   else {
    open(PCFH, ">> $PROFILE_CONFIG_FILE_LOCATION") or die "Cannot open file $PROFILE_CONFIG_FILE_NAME for writing: $!";
    }
-  $profileString = join("\t",@profileCols);
+  $profileString = createConfigLine('profile',\@baseCols );
   print PCFH "$profileString\n" ;
   if ($self->getMakePercentiles()) {
-    my $percentileDataFile = $profileDataFile.".pct";
-    my $percentile_profileSetName= "percentile - ".$profileSetName;
-    my $percentile_profileSetDescription = "percentile -  ".$profileSetDescription;
-    my @percentileCols = @profileCols;
-    splice(@percentileCols,0,3,$percentileDataFile,$percentile_profileSetName,$percentile_profileSetDescription);
-    $percentileString = join("\t",@percentileCols);
+    $percentileString = createConfigLine('pct',\@baseCols );
     print PCFH "$percentileString\n";
   }
   if ($self->getMakeStandardError()) {
-    my $standardErrorDataFile = $profileDataFile.".stderr";
-    my $standardError_profileSetName= "standard error - ".$profileSetName;
-    my $standardError_profileSetDescription = "standard errors - ".$profileSetDescription;
-    my @standardErrorCols = @profileCols;
-    splice(@standardErrorCols,0,3,$standardErrorDataFile,$standardError_profileSetName,$standardError_profileSetDescription);
-    $standardErrorString = join("\t",@standardErrorCols);
+    $standardErrorString = createConfigLine('stderr',\@baseCols );
     print PCFH "$standardErrorString\n";
   }
   if ($self->getHasRedGreenFiles()) {
-    my $greenDataFile = $profileDataFile.".greenPct";
-    my $greenPercentile_profileSetName = "green percentile - ".$profileSetName;
-    my $greenPercentile_profileSetDescription = "green percentile - ".$profileSetDescription;
-    my @greenCols = @profileCols;
-    splice(@greenCols,0,3,$greenDataFile,$greenPercentile_profileSetName,$greenPercentile_profileSetDescription);
-    $greenPercentileString = join("\t",@greenCols);
-    print PCFH "$greenPercentileString\n";
-    my $redDataFile = $profileDataFile.".redPct";
-    my $redPercentile_profileSetName = "red percentile - ".$profileSetName;
-    my $redPercentile_profileSetDescription = "red percentile - ".$profileSetDescription;
-    my @redCols = @profileCols;
-    splice(@redCols,0,3,$redDataFile,$redPercentile_profileSetName,$redPercentile_profileSetDescription);
-    $redPercentileString = join("\t",@redCols);
-    print PCFH "$redPercentileString\n";
+    $greenPercentileString = createConfigLine('greenPct',\@baseCols );
+    $redPercentileString = createConfigLine('redPct',\@baseCols );
+    print PCFH "$greenPercentileString\n$redPercentileString\n";
   close PCFH;
   }
-
-  
 }
+
+sub createConfigLine {
+  my ($self,$type,$baseCols) = @_;
+  my $dataFileBase = $self->getOutputFile();
+  my $profileSetName = $self->getProfileSetName();
+  my $profileSetDescription = $self->getProfileSetDescription();
+  my $prefix = '';
+  if ($type eq 'pct') {
+    $prefix = 'percentile - ';}
+  elsif ($type eq 'stderr') {
+    $prefix = 'standard error - ';}
+  elsif ($type eq 'greenPct') {
+    $prefix = 'green percentile - ';}
+  elsif ($type eq 'redPct') {
+    $prefix = 'red percentile - ';}
+  else { $prefix = '';}
+  if ($prefix) {
+    $type = '.' . $type;
+  }
+  my $dataFile = $dataFileBase . $type;
+  my $profileSetName = $prefix . $profileSetName;
+  my $profileSetDescription = $prefix . $profileSetDescription;
+  my $customCols = ($dataFile, $profileSetName,  $profileSetDescription);
+  my $cols = push @$customCols, @$baseCols;
+  my $configString = join("\t",@$cols);
+}
+  
 1;
