@@ -283,8 +283,8 @@ sub createConfigLine {
   my $dataFile = $dataFileBase . $type;
   my $profileSetName = $prefix . $profileSetName;
   my $profileSetDescription = $prefix . $profileSetDescription;
-  my $customCols = [$dataFile, $profileSetName,  $profileSetDescription];
-  my @cols = push @$customCols, @$baseCols;
+  my @customCols = ($dataFile, $profileSetName,  $profileSetDescription);
+  my @cols = push(@customCols, @$baseCols);
   my $configString = join("\t",@cols);
 }
   
