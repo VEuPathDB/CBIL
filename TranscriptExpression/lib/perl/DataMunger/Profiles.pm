@@ -267,6 +267,7 @@ sub createConfigLine {
   my $dataFileBase = $self->getOutputFile();
   my $profileSetName = $self->getProfileSetName();
   my $profileSetDescription = $self->getProfileSetDescription();
+  my @base = @$baseCols;
   my $prefix = '';
   if ($type eq 'pct') {
     $prefix = 'percentile - ';}
@@ -284,7 +285,7 @@ sub createConfigLine {
   my $profileSetName = $prefix . $profileSetName;
   my $profileSetDescription = $prefix . $profileSetDescription;
   my @customCols = ($dataFile, $profileSetName,  $profileSetDescription);
-  my @cols = push(@customCols, @$baseCols);
+  my @cols = push(@customCols, @base);
   my $configString = join("\t",@cols);
   print STDERR $configString;
   return $configString;
