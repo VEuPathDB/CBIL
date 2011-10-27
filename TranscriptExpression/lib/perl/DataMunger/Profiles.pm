@@ -233,7 +233,7 @@ sub createConfigFile{
   my $expression_profileSetName= $profileSetName;
   my $expression_profileSetDescription = $profileSetDescription;
   my $sourceIdType = $self->getSourceIdType;
-  my @baseCols = ($sourceIdType,$skipSecondRow,$loadProfileElement,);
+  my $baseCols = [$sourceIdType,$skipSecondRow,$loadProfileElement,];
   my @profileCols = ($profileDataFile,$expression_profileSetName,$expression_profileSetDescription,);
    
   my $mainDir = $self->getMainDirectory();
@@ -244,19 +244,19 @@ sub createConfigFile{
   else {
    open(PCFH, ">> $PROFILE_CONFIG_FILE_LOCATION") or die "Cannot open file $PROFILE_CONFIG_FILE_NAME for writing: $!";
    }
-  $profileString = $self->createConfigLine('profile',\@baseCols );
+  $profileString = $self->createConfigLine('profile',$baseCols );
   print PCFH "$profileString\n" ;
   if ($self->getMakePercentiles()) {
-    $percentileString = $self->createConfigLine('pct',\@baseCols );
+    $percentileString = $self->createConfigLine('pct',$baseCols );
     print PCFH "$percentileString\n";
   }
   if ($self->getMakeStandardError()) {
-    $standardErrorString = $self->createConfigLine('stderr',\@baseCols );
+    $standardErrorString = $self->createConfigLine('stderr',$baseCols );
     print PCFH "$standardErrorString\n";
   }
   if ($self->getHasRedGreenFiles()) {
-    $greenPercentileString = $self->createConfigLine('greenPct',\@baseCols );
-    $redPercentileString = $self->createConfigLine('redPct',\@baseCols );
+    $greenPercentileString = $self->createConfigLine('greenPct',$baseCols );
+    $redPercentileString = $self->createConfigLine('redPct',$baseCols );
     print PCFH "$greenPercentileString\n$redPercentileString\n";
   close PCFH;
   }
@@ -264,6 +264,7 @@ sub createConfigFile{
 
 sub createConfigLine {
   my ($self,$type,$baseCols) = @_;
+  print STDERR "$baseCols had better be in hex\n";
   my $dataFileBase = $self->getOutputFile();
   my $profileSetName = $self->getProfileSetName();
   my $profileSetDescription = $self->getProfileSetDescription();
@@ -284,7 +285,7 @@ sub createConfigLine {
   my $dataFile = $dataFileBase . $type;
   my $profileSetName = $prefix . $profileSetName;
   my $profileSetDescription = $prefix . $profileSetDescription;
-  my @customCols = ($dataFile, $profileSetName,  $profileSetDescription);
+  my @customCols = [$dataFile, $profileSetName,  $profileSetDescription];
   my @cols = push(@customCols, @base);
   my $configString = join("\t",@cols);
   print STDERR $configString;
