@@ -244,19 +244,19 @@ sub createConfigFile{
   else {
    open(PCFH, ">> $PROFILE_CONFIG_FILE_LOCATION") or die "Cannot open file $PROFILE_CONFIG_FILE_NAME for writing: $!";
    }
-  $profileString = createConfigLine('profile',\@baseCols );
+  $profileString = $self->createConfigLine('profile',\@baseCols );
   print PCFH "$profileString\n" ;
   if ($self->getMakePercentiles()) {
-    $percentileString = createConfigLine('pct',\@baseCols );
+    $percentileString = $self->createConfigLine('pct',\@baseCols );
     print PCFH "$percentileString\n";
   }
   if ($self->getMakeStandardError()) {
-    $standardErrorString = createConfigLine('stderr',\@baseCols );
+    $standardErrorString = $self->createConfigLine('stderr',\@baseCols );
     print PCFH "$standardErrorString\n";
   }
   if ($self->getHasRedGreenFiles()) {
-    $greenPercentileString = createConfigLine('greenPct',\@baseCols );
-    $redPercentileString = createConfigLine('redPct',\@baseCols );
+    $greenPercentileString = $self->createConfigLine('greenPct',\@baseCols );
+    $redPercentileString = $self->createConfigLine('redPct',\@baseCols );
     print PCFH "$greenPercentileString\n$redPercentileString\n";
   close PCFH;
   }
