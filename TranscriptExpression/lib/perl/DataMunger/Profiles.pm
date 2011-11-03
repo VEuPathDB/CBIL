@@ -269,7 +269,6 @@ sub createConfigLine {
   my $profileSetDescription = $self->getProfileSetDescription();
   my @base = @$baseCols;
   my $prefix = '';
-  my $suffix = '';
   if ($type eq 'pct') {
     $prefix = 'percentile - ';}
   elsif ($type eq 'stderr') {
@@ -280,15 +279,17 @@ sub createConfigLine {
     $prefix = 'red percentile - ';}
   else { $prefix = '';}
   if ($prefix) {
-    $suffix = '.' . $type;
+    $type = '.' . $type;
   }
-  my $dataFile = $dataFileBase . $suffix;
+  my $dataFile = $dataFileBase . $type;
   my $profileSetName = $prefix . $profileSetName;
   my $profileSetDescription = $prefix . $profileSetDescription;
-  my @cols = ($dataFile, $profileSetName,  $profileSetDescription);
-  push (@cols, @base);
+  my @customCols = ("$dataFile", "$profileSetName",  "$profileSetDescription",);
+  print Dumper \@customCols;
+  my @cols = push(\@customCols, \@base);
+  print Dumper \@cols;
   my $configString = join("\t", @cols);
-  print STDERR $configString;
+  
   return $configString;
 }
   
