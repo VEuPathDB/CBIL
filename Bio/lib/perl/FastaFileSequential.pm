@@ -1,4 +1,4 @@
-package CBIL::Bio::FastaFile;
+package CBIL::Bio::FastaFileSequential;
 
 use CBIL::Bio::FastaIndex;
 use CBIL::Util::TO;
@@ -21,7 +21,7 @@ sub new {
 sub getCount {
     my ($self) = @_;
     $self->{count}=0;
-    open(IN, $self->{fastaFileName})  || die "Can't open fasta file '$fastaFileName'\n";
+    open(IN, "$self->{fastaFileName"})  || die "Can't open fasta file '$fastaFileName'\n";
     while (<IN>) {
 	$self->{count}++ if /^>/;
     }
@@ -50,14 +50,11 @@ sub writeSeqsToFile {
     print OUT "$self->{cursorDefLine}\n";
     while (<$fh>) {
 	chomp;
-	next if /^\s*$/;  # skip empty lines
-	die "Error in fasta file '$self->{fastaFileName}' on line ${.}.  Expected sequence but found a line starting with >" if /^>/;
+#	next if /^\s*$/;  # skip empty lines
 	if (/^>/) {
 	    $self->{cursor}++;
 	    $self->{cursorDefLine} = $_;
 	    last if  $self->{cursor} > $end;
-	    last if  $self->{cursor} > $self->{count};
-	} else {
 	    print OUT "$_\n";
     	}
     }
