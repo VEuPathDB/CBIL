@@ -1,4 +1,4 @@
-package CBIL::Bio::FastaFileSequential;
+perpackage CBIL::Bio::FastaFileSequential;
 
 use CBIL::Bio::FastaIndex;
 use CBIL::Util::TO;
@@ -13,7 +13,7 @@ sub new {
     die "Fasta file '$fastaFileName' does not exist or is empty" unless -s $fastaFileName;
     $self->{fastaFileName} = $fastaFileName;
     $self->{cursor} = 0;
-    my $fh = open($fastaFileName) || die "Can't open fasta file '$fastaFileName'\n";
+    open(FA, $fastaFileName) || die "Can't open fasta file '$fastaFileName'\n";
     $self->initCursor();
 
 }
@@ -21,7 +21,7 @@ sub new {
 sub getCount {
     my ($self) = @_;
     $self->{count}=0;
-    open(IN, "$self->{fastaFileName"})  || die "Can't open fasta file '$fastaFileName'\n";
+    open(IN, $self->{fastaFileName})  || die "Can't open fasta file '$self->{fastaFileName}'\n";
     while (<IN>) {
 	$self->{count}++ if /^>/;
     }
@@ -31,7 +31,7 @@ sub getCount {
 # advance into file to the first defline, and remember the defline
 sub initCursor {
     my ($self) = @_;
-    while (<$fh>) {
+    while (<FA>) {
 	chomp;
 	next if /^\s*$/;  # skip empty lines
 	die "Error in fasta file '' on line ${.}.  Expected a line starting with >" unless /^>/;
@@ -40,15 +40,15 @@ sub initCursor {
 }
 
 sub writeSeqsToFile {
-    ($self, $start, $end, $outputFile) = @_;
+    my ($self, $start, $end, $outputFile) = @_;
 
-    die "Error accessing fasta file '$self->{fastaFileName}'.  Not in sequential order.  Cursor=$cursor.  Requested start=$start\n" unless $start == $cursor;
+    die "Error accessing fasta file '$self->{fastaFileName}'.  Not in sequential order.  Cursor=$self->{cursor}.  Requested start=$start\n" unless $start == $self->{cursor};
 
     die "Error accessing fasta file '$self->{fastaFileName}'.  Requested start ($start) is > requested end ($end)\n" unless $start <= $end;
 
     open(OUT, ">$outputFile") || die "Can't open subtask output fasta file '$outputFile'";
     print OUT "$self->{cursorDefLine}\n";
-    while (<$fh>) {
+    while (<FA>) {
 	chomp;
 #	next if /^\s*$/;  # skip empty lines
 	if (/^>/) {
