@@ -52,14 +52,15 @@ sub writeSeqsToFile {
     die "Error accessing fasta file '$self->{fastaFileName}'.  Requested start ($start) is > requested end ($end)\n" unless $start <= $end;
 
     open(OUT, ">$outputFile") || die "Can't open subtask output fasta file '$outputFile'";
-    do {
+    if($self->{cursor} < $start){
       while (<FA>) {
 	if (/^>/) {
           $self->{cursor}++;
           $self->{cursorDefLine} = $_;
+          last if $self->{cursor} == $start;
         }
       }
-    } until $self->{cursor} == $start;
+    }
 
     print OUT "$self->{cursorDefLine}\n";
     while (<FA>) {
