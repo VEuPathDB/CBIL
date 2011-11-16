@@ -3,7 +3,7 @@
 use strict;
 
 use Getopt::Long;
-
+use lib "$ENV{GUS_HOME}/lib/perl";
 use CBIL::TranscriptExpression::XmlParser;
 use CBIL::TranscriptExpression::Error;
 
