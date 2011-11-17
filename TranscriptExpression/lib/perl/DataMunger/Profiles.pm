@@ -244,7 +244,7 @@ sub createConfigFile{
   else {
    open(PCFH, ">> $PROFILE_CONFIG_FILE_LOCATION") or die "Cannot open file $PROFILE_CONFIG_FILE_NAME for writing: $!";
    }
-  $profileString = $self->createConfigLine('profile',$baseCols );
+  $profileString = $self->createConfigLine('',$baseCols );
   print PCFH "$profileString\n" ;
   if ($self->getMakePercentiles()) {
     $percentileString = $self->createConfigLine('pct',$baseCols );
@@ -284,10 +284,8 @@ sub createConfigLine {
   my $dataFile = $dataFileBase . $type;
   my $profileSetName = $prefix . $profileSetName;
   my $profileSetDescription = $prefix . $profileSetDescription;
-  my @customCols = ("$dataFile", "$profileSetName",  "$profileSetDescription",);
-  print Dumper \@customCols;
-  my @cols = push(\@customCols, \@base);
-  print Dumper \@cols;
+  my @cols = ("$dataFile", "$profileSetName",  "$profileSetDescription",);
+  push(@cols, @base);
   my $configString = join("\t", @cols);
   
   return $configString;
