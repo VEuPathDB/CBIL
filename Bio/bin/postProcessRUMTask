@@ -8,12 +8,11 @@ use Getopt::Long;
 
 
 
-my($inputDir, $mainResultDir, $numSubtasks,$haveTranscripts,$genomeFastaFile, $geneAnnotationFile,$strandSpecific,$createJunctions) = @_;
+my($inputDir, $mainResultDir, $haveTranscripts,$genomeFastaFile, $geneAnnotationFile,$strandSpecific,$createJunctions) = @_;
 
 my $perlScriptsDir = "$ENV{GUS_HOME}/bin";
 
 &GetOptions("mainResultDir=s" => \$mainResultDir,
-            "numSubtasks=i" => \$numSubtasks, 
             "genomeFastaFile=s" => \$genomeFastaFile, 
             "geneAnnotationFile=s" => \$geneAnnotationFile, 
             "perlScriptsDir=i" => \$perlScriptsDir, 
@@ -32,19 +31,25 @@ chdir("$mainResultDir") || die "$!";
 my $date;
 $date = `date`; chomp $date;
 print STDERR "[$date] Concatenating RUM_Unique files\n";
-my $numchunks = $numSubtasks;
+my $numchunks = 0;
+if(!$numchunks){ ## ie have not passed in the number of subtasks
+  my @tmp = &sortResultFiles("RUM_Unique.sorted.*");
+  if($tmp[-1] =~ /sorted\.(\d+)/){
+    $numchunks = $1;
+  }
+}
+print STDERR "number of chunks = 0\n" unless $numchunks;
 if (!-e "$mainResultDir/RUM_Unique") {
   unlink("$mainResultDir/RUM_Unique.tmp");
   my @unique = &sortResultFiles('RUM_Unique.* | grep -v sorted');
   my $cnt_x = 0;
-  if (scalar(@unique) != $numSubtasks && $cnt_x < 20) {
+  if (scalar(@unique) != $numchunks && $cnt_x < 20) {
     sleep(5);
     @unique = &sortResultFiles('RUM_Unique.* | grep -v sorted');
     $cnt_x++;
   }    
-  if (scalar(@unique) != $numSubtasks) {
-    print STDERR "Not concatenating files: number of subtasks ($numSubtasks) differs from number of files (".scalar(@unique).") ($cnt_x)\n";
-    return 1;
+  if (scalar(@unique) != $numchunks) {
+    die "Not concatenating files: number of subtasks ($numchunks) differs from number of files (".scalar(@unique).") ($cnt_x)\n";
   }
   foreach my $f (@unique) {
     print STDERR "  Adding $f\n";
@@ -76,9 +81,10 @@ if (!-e "$mainResultDir/RUM_NU") {
   print STDERR "  DONE\n";
 }
 
+my $NumSeqs;
 $date = `date`; chomp $date;
 print STDERR "[$date] Concatenating RUM.sam files\n";
-if (-e "$mainResultDir/RUM_sam.1") { #input file still exists so need to run.
+if (!-e "$mainResultDir/RUM.bam") { 
   unlink("$mainResultDir/RUM.sam_tmp");
   my %samheader;
   my @samheaders = &sortResultFiles('sam_header.*');
@@ -105,24 +111,23 @@ if (-e "$mainResultDir/RUM_sam.1") { #input file still exists so need to run.
   foreach my $f (&sortResultFiles('RUM_sam.*')) {
     unlink($f);
   }
-}
-# I did the following because sometimes the file RUM.sam isn't written
-# by the time it reaches this, because of occasional turgid file system on the cluster.
-my $flag_x = 0;
-my $cnt_x = 0;
-my $NumSeqs;
-while ($flag_x == 0) {
-  $cnt_x++;
-  if ($cnt_x > 100) {
-    $flag_x = 1;
-  }
-  my $X = `tail -1 $mainResultDir/RUM.sam`;
-  $X =~ /^seq.(\d+)/;
-  $NumSeqs = $1;
-  if ($NumSeqs =~ /^\d+$/) {
-    $flag_x = 1;
-  } else {
-    sleep(5);
+  # I did the following because sometimes the file RUM.sam isn't written
+  # by the time it reaches this, because of occasional turgid file system on the cluster.
+  my $flag_x = 0;
+  my $cnt_x = 0;
+  while ($flag_x == 0) {
+    $cnt_x++;
+    if ($cnt_x > 100) {
+      $flag_x = 1;
+    }
+    my $X = `tail -1 $mainResultDir/RUM.sam`;
+    $X =~ /^seq.(\d+)/;
+    $NumSeqs = $1;
+    if ($NumSeqs =~ /^\d+$/) {
+      $flag_x = 1;
+    } else {
+      sleep(5);
+    }
   }
 }
 $date = `date`; chomp $date;
@@ -147,6 +152,10 @@ $date = `date`; chomp $date;
 print STDERR "[$date] Counting mapped reads\n";
 if (!-e "$mainResultDir/mapping_stats.txt") {
   unlink("$mainResultDir/mapping_stats.txt.tmp");
+  if(!$NumSeqs){
+    $NumSeqs = 2000000;  ##normally have this value .. if not setting arbritrarily large ... don't know why needed. 
+    print STDERR "WARNING: mapping_stats.txt will not have accurate percentages as setting arbritrary value for number of reads\n";
+  }
   &runCmd("perl $perlScriptsDir/count_reads_mapped.pl $mainResultDir/RUM_Unique $mainResultDir/RUM_NU -minseq 1 -maxseq $NumSeqs > $mainResultDir/mapping_stats.txt.tmp 2>> $mainResultDir/PostProcessing-errorlog");
   &runCmd("/bin/mv $mainResultDir/mapping_stats.txt.tmp $mainResultDir/mapping_stats.txt");
 }
@@ -358,10 +367,6 @@ if ($strandSpecific) {
 $date = `date`; chomp $date;
 print STDERR "[$date] Cleaning up temp files\n";
 
-#`rm RUM_Unique`;
-#`rm RUM_NU`;
-#`rm RUM_Unique.sorted`;
-#`rm RUM_NU.sorted`;
 if ($strandSpecific) {
   `rm RUM_Unique.sorted.plus`;
   `rm RUM_Unique.sorted.minus`;
@@ -372,22 +377,22 @@ for (my $j=1; $j<$numchunks+1; $j++) {
   `rm RUM_Unique.sorted.$j`;
   `rm RUM_NU.sorted.$j`;
 }    
+if ($haveTranscripts) {
+  `rm quant*`;
+  if ($strandSpecific) {
+    `rm feature_quantifications.ps`;
+    `rm feature_quantifications.ms`;
+    `rm feature_quantifications.pa`;
+    `rm feature_quantifications.ma`;
+    `rm feature_quantifications_normalized.ps`;
+    `rm feature_quantifications_normalized.ms`;
+    `rm feature_quantifications_normalized.pa`;
+    `rm feature_quantifications_normalized.ma`;
+  }
+}
 `rm RUM.sam*`;
 `rm chr_counts*`;
 `rm sam_header*`;
-if ($haveTranscripts) {
-  `rm quant*`;
-}
-if ($haveTranscripts && $strandSpecific) {
-  `rm feature_quantifications.ps`;
-  `rm feature_quantifications.ms`;
-  `rm feature_quantifications.pa`;
-  `rm feature_quantifications.ma`;
-  `rm feature_quantifications_normalized.ps`;
-  `rm feature_quantifications_normalized.ms`;
-  `rm feature_quantifications_normalized.pa`;
-  `rm feature_quantifications_normalized.ma`;
-}
 
 $date = `date`; chomp $date;
 print STDERR "[$date] Post processing steps complete\n";
