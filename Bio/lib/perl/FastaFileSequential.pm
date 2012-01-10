@@ -38,7 +38,7 @@ sub initCursor {
 	next if /^\s*$/;  # skip empty lines
 	die "Error in fasta file '' on line ${.}.  Expected a line starting with >" unless /^>/;
 	$self->{cursorDefLine} = $_;
-#        $self->{cursor} = 1;  ## if indexed from  one
+        $self->{cursor} = 0;  
         last;
     }
 }
