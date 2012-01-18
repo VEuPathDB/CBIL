@@ -15,6 +15,7 @@ my $loadData = 1;
 my $skipSecondRow = 0;
 my $loadProfileElement = 1;
 my $PROFILE_CONFIG_FILE_NAME = "expression_profile_config.txt";
+my $TIME_SERIES_CONFIG_FILE_NAME = "time_series_stats_config.txt";
 
 #-------------------------------------------------------------------------------
 
@@ -27,6 +28,11 @@ my $PROFILE_CONFIG_FILE_NAME = "expression_profile_config.txt";
  sub getMakePercentiles         { $_[0]->{makePercentiles} }
 
  sub getDoNotLoad               { $_[0]->{doNotLoad} }
+ 
+ sub getIsTimeSeries            { $_[0]->{isTimeSeries} }
+ sub getMappingFile             { $_[0]->{mappingFile} }
+
+ sub setPercentileSetPrefix      { $_[0]->{percentileSetPrefix} = $_[1]}
 
  sub getProfileSetName          { $_[0]->{profileSetName} }
  sub getProfileSetDescription   { $_[0]->{profileSetDescription} }
@@ -94,6 +100,11 @@ sub munge {
   my $doNotLoad = $self->getDoNotLoad(); 
   unless($doNotLoad){
     $self->createConfigFile();
+  }
+  my $isTimeSeries = $self->getIsTimeSeries();
+  if($isTimeSeries) {
+    my $mappingFile = $self->getMappingFile();
+    $self->createTimeSeriesConfigFile($mappingFile);
   }
 }
 
@@ -270,7 +281,8 @@ sub createConfigLine {
   my @base = @$baseCols;
   my $prefix = '';
   if ($type eq 'pct') {
-    $prefix = 'percentile - ';}
+    $prefix = 'percentile - ';
+    $self->setPercentileSetPrefix($prefix);}
   elsif ($type eq 'stderr') {
     $prefix = 'standard error - ';}
   elsif ($type eq 'greenPct') {
@@ -290,5 +302,28 @@ sub createConfigLine {
   
   return $configString;
 }
-  
+
+sub createTimeSeriesConfigFile {
+  my($self,$mappingFile) = @_;
+  my $profileSetName = $self->getProfileSetName();
+  my $percentileSetName = $self->{percentileSetPrefix}.$profileSetName;
+  my $profileSetSpec = $profileSetName.'|'.$percentileSetName;
+  my $mainDir = $self->getMainDirectory();
+  my $TIME_SERIES_CONFIG_FILE_LOCATION = $mainDir. "/" . $TIME_SERIES_CONFIG_FILE_NAME;
+  unless(-e $TIME_SERIES_CONFIG_FILE_LOCATION){
+   open(TSFH, "> $TIME_SERIES_CONFIG_FILE_LOCATION") or die "Cannot open file $TIME_SERIES_CONFIG_FILE_NAME for writing: $!"; 
+  }
+  else {
+   open(TSFH, ">> $TIME_SERIES_CONFIG_FILE_LOCATION") or die "Cannot open file $TIME_SERIES_CONFIG_FILE_NAME for writing: $!";
+   }
+  if($mappingFile) {
+     print TSFH "$profileSetSpec\t$mappingFile\n" ;
+   }
+  else {
+     print TSFH "$profileSetSpec\n" ;
+     }
+  close TSFH;
+}
+
+
 1;
