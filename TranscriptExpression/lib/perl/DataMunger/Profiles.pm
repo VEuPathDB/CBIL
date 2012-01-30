@@ -23,12 +23,17 @@ my $TIME_SERIES_CONFIG_FILE_NAME = "time_series_stats_config.txt";
  sub getDyeSwaps                { $_[0]->{dyeSwaps} }
  sub getFindMedian              { $_[0]->{findMedian} }
 
+ sub getIsLogged                { $_[0]->{isLogged} }
+ sub setIsLogged                { $_[0]->{isLogged} = $_[1]}
+
+ sub getBase                    { $_[0]->{Base} }
+ sub setBase                    { $_[0]->{Base} = $_[1]}
 
  sub getHasRedGreenFiles        { $_[0]->{hasRedGreenFiles} }
  sub getMakePercentiles         { $_[0]->{makePercentiles} }
 
  sub getDoNotLoad               { $_[0]->{doNotLoad} }
- 
+
  sub getIsTimeSeries            { $_[0]->{isTimeSeries} }
  sub getMappingFile             { $_[0]->{mappingFile} }
 
@@ -101,11 +106,8 @@ sub munge {
   unless($doNotLoad){
     $self->createConfigFile();
   }
-  my $isTimeSeries = $self->getIsTimeSeries();
-  if($isTimeSeries) {
-    my $mappingFile = $self->getMappingFile();
-    $self->createTimeSeriesConfigFile($mappingFile);
-  }
+  $self->createTimeSeriesConfigFile();
+  
 }
 
 sub checkMakeStandardError {
@@ -238,13 +240,29 @@ sub createConfigFile{
   my $standardErrorString = '';
   my $redPercentileString = '';
   my $greenPercentileString = '';
+  my $isLogged = '';
+  my $base = '';
+  if (defined $self->getIsLogged()){
+    $isLogged = $self->getIsLogged();
+  }
+  else {
+    $isLogged = 1;
+  }
+  if ($isLogged) {
+    if (defined $self->getBase()) {
+      $base= $self->getBase();
+    }
+    else {
+      $base = 2;
+    }
+  }
   my $profileSetName = $self->getProfileSetName();
   my $profileSetDescription= $self->getProfileSetDescription();
   my $profileDataFile = $self->getOutputFile();
   my $expression_profileSetName= $profileSetName;
   my $expression_profileSetDescription = $profileSetDescription;
   my $sourceIdType = $self->getSourceIdType;
-  my $baseCols = [$sourceIdType,$skipSecondRow,$loadProfileElement,];
+  my $baseCols = [$sourceIdType,$skipSecondRow,$loadProfileElement,$isLogged,$base,];
   my @profileCols = ($profileDataFile,$expression_profileSetName,$expression_profileSetDescription,);
    
   my $mainDir = $self->getMainDirectory();
@@ -304,25 +322,36 @@ sub createConfigLine {
 }
 
 sub createTimeSeriesConfigFile {
-  my($self,$mappingFile) = @_;
+  my($self) = @_;
+  my $mappingFile = $self->getMappingFile();
+  my $isTimeSeries = $self->getIsTimeSeries();
   my $profileSetName = $self->getProfileSetName();
   my $percentileSetName = $self->{percentileSetPrefix}.$profileSetName;
   my $profileSetSpec = $profileSetName.'|'.$percentileSetName;
   my $mainDir = $self->getMainDirectory();
   my $TIME_SERIES_CONFIG_FILE_LOCATION = $mainDir. "/" . $TIME_SERIES_CONFIG_FILE_NAME;
   unless(-e $TIME_SERIES_CONFIG_FILE_LOCATION){
-   open(TSFH, "> $TIME_SERIES_CONFIG_FILE_LOCATION") or die "Cannot open file $TIME_SERIES_CONFIG_FILE_NAME for writing: $!"; 
+    open(TSFH, "> $TIME_SERIES_CONFIG_FILE_LOCATION") or die "Cannot open file $TIME_SERIES_CONFIG_FILE_NAME for writing: $!";
+    unless($isTimeSeries) {
+      print TSFH "NOT_A_TIME_SERIES";
+    }
+    else {
+      if(!$mappingFile) {
+        print TSFH "$mappingFile\n$profileSetSpec";
+      }
+      else {
+        print TSFH "NO_MAPPING_FILE\n$profileSetSpec";
+      }
+    }
+    close TSFH;
   }
   else {
-   open(TSFH, ">> $TIME_SERIES_CONFIG_FILE_LOCATION") or die "Cannot open file $TIME_SERIES_CONFIG_FILE_NAME for writing: $!";
-   }
-  if($mappingFile) {
-     print TSFH "$profileSetSpec\t$mappingFile\n" ;
-   }
-  else {
-     print TSFH "$profileSetSpec\n" ;
-     }
-  close TSFH;
+    if($isTimeSeries){
+      open(TSFH, ">> $TIME_SERIES_CONFIG_FILE_LOCATION") or die "Cannot open file $TIME_SERIES_CONFIG_FILE_NAME for writing: $!";
+      print TSFH ",$profileSetSpec";
+    close TSFH;
+    }
+  }
 }
 
 
