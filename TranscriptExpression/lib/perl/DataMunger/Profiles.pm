@@ -22,6 +22,7 @@ my $TIME_SERIES_CONFIG_FILE_NAME = "time_series_stats_config.txt";
  sub getSamples                 { $_[0]->{samples} }
  sub getDyeSwaps                { $_[0]->{dyeSwaps} }
  sub getFindMedian              { $_[0]->{findMedian} }
+ sub getPercentileChannel       { $_[0]->{percentileChannel} }
 
  sub getIsLogged                { $_[0]->{isLogged} }
  sub setIsLogged                { $_[0]->{isLogged} = $_[1]}
@@ -74,6 +75,9 @@ sub new {
       $args->{profileSetDescription} = "$profileSetName - $sourceIdType $loadProfileElement";
     }
   }
+  if ($args->{isTimeSeries} && $args->{hasRedGreenFiles} && !$args->{percentileChannel}) {
+    CBIL::TranscriptExpression::Error->new("Must specify percentileChannel for two channel time series experiments")->throw();
+  }
   my $self = $class->SUPER::new($args, $requiredParams);
 
   my $inputFile = $args->{inputFile};
@@ -105,9 +109,10 @@ sub munge {
   my $doNotLoad = $self->getDoNotLoad(); 
   unless($doNotLoad){
     $self->createConfigFile();
+    if($self->getIsTimeSeries() ){
+      $self->createTimeSeriesConfigFile();
+    }
   }
-  $self->createTimeSeriesConfigFile();
-  
 }
 
 sub checkMakeStandardError {
@@ -300,13 +305,24 @@ sub createConfigLine {
   my $prefix = '';
   if ($type eq 'pct') {
     $prefix = 'percentile - ';
-    $self->setPercentileSetPrefix($prefix);}
+    if (!$self->getHasRedGreenFiles()) {
+      $self->setPercentileSetPrefix($prefix);
+    }
+  }
   elsif ($type eq 'stderr') {
     $prefix = 'standard error - ';}
   elsif ($type eq 'greenPct') {
-    $prefix = 'green percentile - ';}
+    $prefix = 'green percentile - ';
+    if ($self->getPercentileChannel() =='green') {
+      $self->setPercentileSetPrefix($prefix);
+    }
+  }
   elsif ($type eq 'redPct') {
-    $prefix = 'red percentile - ';}
+    $prefix = 'red percentile - ';
+      if ($self->getPercentileChannel()=='red') {
+      $self->setPercentileSetPrefix($prefix);
+    }
+  }
   else { $prefix = '';}
   if ($prefix) {
     $type = '.' . $type;
@@ -332,16 +348,11 @@ sub createTimeSeriesConfigFile {
   my $TIME_SERIES_CONFIG_FILE_LOCATION = $mainDir. "/" . $TIME_SERIES_CONFIG_FILE_NAME;
   unless(-e $TIME_SERIES_CONFIG_FILE_LOCATION){
     open(TSFH, "> $TIME_SERIES_CONFIG_FILE_LOCATION") or die "Cannot open file $TIME_SERIES_CONFIG_FILE_NAME for writing: $!";
-    unless($isTimeSeries) {
-      print TSFH "NOT_A_TIME_SERIES";
+    if($mappingFile) {
+      print TSFH "$mappingFile\n$profileSetSpec";
     }
     else {
-      if(!$mappingFile) {
-        print TSFH "$mappingFile\n$profileSetSpec";
-      }
-      else {
-        print TSFH "NO_MAPPING_FILE\n$profileSetSpec";
-      }
+      print TSFH "NO_MAPPING_FILE\n$profileSetSpec";
     }
     close TSFH;
   }
