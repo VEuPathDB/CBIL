@@ -245,31 +245,20 @@ sub createConfigFile{
   my $standardErrorString = '';
   my $redPercentileString = '';
   my $greenPercentileString = '';
-  my $isLogged = '';
-  my $base = '';
+  my $isLogged = 1;
+  my $base = 2;
   if (defined $self->getIsLogged()){
     $isLogged = $self->getIsLogged();
   }
-  else {
-    $isLogged = 1;
-  }
-  if ($isLogged) {
-    if (defined $self->getBase()) {
+  if ($isLogged && defined $self->getBase() ) {
       $base= $self->getBase();
     }
-    else {
-      $base = 2;
-    }
+  if (!$isLogged) {
+    $base = undef;
   }
-  my $profileSetName = $self->getProfileSetName();
-  my $profileSetDescription= $self->getProfileSetDescription();
-  my $profileDataFile = $self->getOutputFile();
-  my $expression_profileSetName= $profileSetName;
-  my $expression_profileSetDescription = $profileSetDescription;
+
   my $sourceIdType = $self->getSourceIdType;
-  my $baseCols = [$sourceIdType,$skipSecondRow,$loadProfileElement,$isLogged,$base,];
-  my @profileCols = ($profileDataFile,$expression_profileSetName,$expression_profileSetDescription,);
-   
+  my $baseCols = [$sourceIdType,$skipSecondRow,$loadProfileElement];
   my $mainDir = $self->getMainDirectory();
   my $PROFILE_CONFIG_FILE_LOCATION = $mainDir. "/" . $PROFILE_CONFIG_FILE_NAME;
   unless(-e $PROFILE_CONFIG_FILE_LOCATION){
@@ -278,30 +267,30 @@ sub createConfigFile{
   else {
    open(PCFH, ">> $PROFILE_CONFIG_FILE_LOCATION") or die "Cannot open file $PROFILE_CONFIG_FILE_NAME for writing: $!";
    }
-  $profileString = $self->createConfigLine('',$baseCols );
+  $profileString = $self->createConfigLine('',$baseCols, $isLogged, $base );
   print PCFH "$profileString\n" ;
   if ($self->getMakePercentiles()) {
-    $percentileString = $self->createConfigLine('pct',$baseCols );
+    $percentileString = $self->createConfigLine('pct',$baseCols, 0, undef );
     print PCFH "$percentileString\n";
   }
   if ($self->getMakeStandardError()) {
-    $standardErrorString = $self->createConfigLine('stderr',$baseCols );
+    $standardErrorString = $self->createConfigLine('stderr',$baseCols, 0, undef );
     print PCFH "$standardErrorString\n";
   }
   if ($self->getHasRedGreenFiles()) {
-    $greenPercentileString = $self->createConfigLine('greenPct',$baseCols );
-    $redPercentileString = $self->createConfigLine('redPct',$baseCols );
+    $greenPercentileString = $self->createConfigLine('greenPct',$baseCols, 0, undef );
+    $redPercentileString = $self->createConfigLine('redPct',$baseCols, 0, undef );
     print PCFH "$greenPercentileString\n$redPercentileString\n";
   close PCFH;
   }
 }
 
 sub createConfigLine {
-  my ($self,$type,$baseCols) = @_;
+  my ($self,$type,$baseCols, $logged, $baseX) = @_;
   my $dataFileBase = $self->getOutputFile();
   my $profileSetName = $self->getProfileSetName();
   my $profileSetDescription = $self->getProfileSetDescription();
-  my @base = @$baseCols;
+  my @base = (@$baseCols, $logged, $baseX);
   my $prefix = '';
   if ($type eq 'pct') {
     $prefix = 'percentile - ';
@@ -327,7 +316,7 @@ sub createConfigLine {
   if ($prefix) {
     $type = '.' . $type;
   }
-  my $dataFile = $dataFileBase . $type;
+  my $dataFile = $dataFileBase . $type; 
   my $profileSetName = $prefix . $profileSetName;
   my $profileSetDescription = $prefix . $profileSetDescription;
   my @cols = ("$dataFile", "$profileSetName",  "$profileSetDescription",);
