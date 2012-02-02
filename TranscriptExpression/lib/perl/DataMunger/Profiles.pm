@@ -11,9 +11,8 @@ use Data::Dumper;
 
 use File::Temp qw/ tempfile /;
 
-my $loadData = 1;
-my $skipSecondRow = 0;
-my $loadProfileElement = 1;
+my $SKIP_SECOND_ROW = 0;
+my $LOAD_PROFILE_ELEMENT = 1;
 my $PROFILE_CONFIG_FILE_NAME = "expression_profile_config.txt";
 my $TIME_SERIES_CONFIG_FILE_NAME = "time_series_stats_config.txt";
 
@@ -70,7 +69,10 @@ sub new {
     }
     my $sourceIdType = $args->{sourceIdType};
     my $profileSetName = $args->{profileSetName};
-    my $loadProfileElement = ($args->{loadProfileElement}=1) ? '' :' - Skip ApiDB.ProfileElement';
+    if (!defined $args->{loadProfileElement}) {
+      $args->{loadProfileElement} = $LOAD_PROFILE_ELEMENT;
+    }
+    my $loadProfileElement = $args->{loadProfileElement}==0 ? '- Skip ApiDB.ProfileElement' :'';
     unless($args->{profileSetDescription}) {
       $args->{profileSetDescription} = "$profileSetName - $sourceIdType $loadProfileElement";
     }
@@ -258,7 +260,7 @@ sub createConfigFile{
   }
 
   my $sourceIdType = $self->getSourceIdType;
-  my $baseCols = [$sourceIdType,$skipSecondRow,$loadProfileElement];
+  my $baseCols = [$sourceIdType,$SKIP_SECOND_ROW,$loadProfileElement];
   my $mainDir = $self->getMainDirectory();
   my $PROFILE_CONFIG_FILE_LOCATION = $mainDir. "/" . $PROFILE_CONFIG_FILE_NAME;
   unless(-e $PROFILE_CONFIG_FILE_LOCATION){
@@ -329,7 +331,6 @@ sub createConfigLine {
 sub createTimeSeriesConfigFile {
   my($self) = @_;
   my $mappingFile = $self->getMappingFile();
-  my $isTimeSeries = $self->getIsTimeSeries();
   my $profileSetName = $self->getProfileSetName();
   my $percentileSetName = $self->{percentileSetPrefix}.$profileSetName;
   my $profileSetSpec = $profileSetName.'|'.$percentileSetName;
@@ -346,11 +347,9 @@ sub createTimeSeriesConfigFile {
     close TSFH;
   }
   else {
-    if($isTimeSeries){
       open(TSFH, ">> $TIME_SERIES_CONFIG_FILE_LOCATION") or die "Cannot open file $TIME_SERIES_CONFIG_FILE_NAME for writing: $!";
       print TSFH ",$profileSetSpec";
     close TSFH;
-    }
   }
 }
 
