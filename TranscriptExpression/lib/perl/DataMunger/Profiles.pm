@@ -19,6 +19,8 @@ my $TIME_SERIES_CONFIG_FILE_NAME = "time_series_stats_config.txt";
 #-------------------------------------------------------------------------------
 
  sub getSamples                 { $_[0]->{samples} }
+ sub setSamples                 { $_[0]->{samples} = $_[1] }
+
  sub getDyeSwaps                { $_[0]->{dyeSwaps} }
  sub getFindMedian              { $_[0]->{findMedian} }
  sub getPercentileChannel       { $_[0]->{percentileChannel} }
@@ -280,7 +282,7 @@ sub createConfigFile{
     $standardErrorString = $self->createConfigLine('stderr',$baseCols, 0, undef );
     print PCFH "$standardErrorString\n";
   }
-  if ($self->getHasRedGreenFiles()) {
+  if ($self->getMakePercentiles() && $self->getHasRedGreenFiles()) {
     $greenPercentileString = $self->createConfigLine('greenPct',$baseCols, 0, undef );
     $redPercentileString = $self->createConfigLine('redPct',$baseCols, 0, undef );
     print PCFH "$greenPercentileString\n$redPercentileString\n";
