@@ -258,8 +258,9 @@ sub createConfigFile{
   if (!$isLogged) {
     $base = undef;
   }
-
+  
   my $sourceIdType = $self->getSourceIdType;
+  my $loadProfileElement = $self->getLoadProfileElement();
   my $baseCols = [$sourceIdType,$SKIP_SECOND_ROW,$loadProfileElement];
   my $mainDir = $self->getMainDirectory();
   my $PROFILE_CONFIG_FILE_LOCATION = $mainDir. "/" . $PROFILE_CONFIG_FILE_NAME;
