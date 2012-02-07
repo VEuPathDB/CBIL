@@ -1,54 +1,80 @@
 package CBIL::TranscriptExpression::DataMunger::Smoother;
-use base qw(CBIL::TranscriptExpression::DataMunger);
+use base qw(CBIL::TranscriptExpression::DataMunger::Profiles);
 
 use strict;
 
+use File::Temp qw/ tempfile /;
+
 use CBIL::TranscriptExpression::Error;
 
-#-------------------------------------------------------------------------------
-
-sub getHasHeader { $_[0]->{hasHeader} }
-sub setHasHeader { $_[0]->{hasHeader} = $_[1] }
+use Data::Dumper;
 
 #-------------------------------------------------------------------------------
+
 
 sub new {
   my ($class, $args) = @_;
 
-  my $requiredParams = ['inputFile',
-                        'outputFile',
-                        ];
+  $args->{samples} = 'PLACEHOLDER';
 
-  my $self = $class->SUPER::new($args, $requiredParams);
+  my $self = $class->SUPER::new($args);
 
-  my $inputFile = $args->{inputFile};
-  unless(-e $inputFile) {
-    CBIL::TranscriptExpression::Error->new("input file $inputFile does not exist")->throw();
-  }
-
-  my $hasHeader = $args->{hasHeader};
-
-  if(lc($hasHeader) eq 'true') {
-    $self->setHasHeader(1);
-  }
-  elsif(lc($hasHeader) eq 'false') { }
-  else {
-    CBIL::TranscriptExpression::Error->new("hasHeader arg must be specified as 'true' or 'false'")->throw();
-  }
+  my $samples = $self->readInputFileHeaderAsSamples();
+  $self->setSamples($samples);
 
   return $self;
 }
+
+sub readInputFileHeaderAsSamples {
+  my ($self) = @_;
+
+  my $fn = $self->getInputFile();
+
+  open(FILE, $fn) or die "Cannot open file $fn for reading: $!";
+
+  my $header = <FILE>;
+  chomp $header;
+  close FILE;
+
+  my @vals = split(/\t/, $header);
+  
+  # remove the row header column;
+  shift @vals;
+
+  return \@vals;
+}
+
 
 
 sub munge {
   my ($self) = @_;
 
-  my $header = defined($self->getHasHeader()) ? '-header' : '';
+  my $header = '-header';
 
   my $inputFile = $self->getInputFile();
   my $outputFile = $self->getOutputFile();
 
-  system("smoother.pl $inputFile $outputFile $header");
+  my ($tempFh, $tempFile) = tempfile();
+
+
+  my $red = $inputFile . ".red";
+  my $green = $inputFile . ".green";
+  my $tempRed = $tempFile . ".red";
+  my $tempGreen = $tempFile . ".green";
+
+  if($self->getHasRedGreenFiles()) {
+    system("cp $red $tempRed");
+    system("cp $green $tempGreen");
+  }
+
+
+  system("smoother.pl $inputFile $tempFile $header");
+
+  $self->setInputFile($tempFile);
+  $self->SUPER::munge();
+
+  unlink($tempFile, $tempRed, $tempGreen);
+
 }
 
 1;
