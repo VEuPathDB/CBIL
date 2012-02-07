@@ -200,6 +200,10 @@ sub munge {
 #  STDOUT->print("n1=$numMappers1\n");
 #  STDOUT->print("n2=$numMappers2\n");
 
+  if($numMappers1 == 0 || $numMappers2 == 0) {
+    CBIL::TranscriptExpression::Error->new("Error reading the mappingStats file to find the numMappers. (perhaps isPairedEnd is set incorrectly??)")->throw();    
+  }
+
   my $countsFile1 = $self->getCountsFile1();
   my $countsFile2 = $self->getCountsFile2();
 
