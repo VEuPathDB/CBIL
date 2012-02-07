@@ -272,7 +272,7 @@ sub createConfigFile{
    }
   $profileString = $self->createConfigLine('',$baseCols, $isLogged, $base );
   print PCFH "$profileString\n" ;
-  if ($self->getMakePercentiles()) {
+  if ($self->getMakePercentiles() && !$self->getHasRedGreenFiles()) {
     $percentileString = $self->createConfigLine('pct',$baseCols, 0, undef );
     print PCFH "$percentileString\n";
   }
