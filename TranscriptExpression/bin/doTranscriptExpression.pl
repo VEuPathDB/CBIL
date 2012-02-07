@@ -7,8 +7,6 @@ use lib "$ENV{GUS_HOME}/lib/perl";
 use CBIL::TranscriptExpression::XmlParser;
 use CBIL::TranscriptExpression::Error;
 
-use Data::Dumper;
-
 my ($help, $xmlFile, $mainDirectory, $inputFile, @executableDirectory);
 
 &GetOptions('help|h' => \$help,
@@ -33,7 +31,6 @@ unless(-d $mainDirectory) {
 
 my $xmlParser = CBIL::TranscriptExpression::XmlParser->new($xmlFile);
 my $nodes = $xmlParser->parse();
-print STDERR Dumper($nodes);
 
 foreach my $node (@$nodes) {
   my $args = $node->{arguments};
