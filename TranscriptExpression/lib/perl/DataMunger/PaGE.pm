@@ -84,7 +84,10 @@ sub createProfileElementName {
   my $conditionsHashRef = $self->groupListHashRef($self->getConditions());
   my @groupNames = keys %$conditionsHashRef;
 
-  return $groupNames[1] . ';' . $groupNames[0];
+  if($groupNames[1]) {
+    return $groupNames[1] . ';' . $groupNames[0];
+  }
+  return $groupNames[0];
 }
 
 
