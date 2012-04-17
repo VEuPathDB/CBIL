@@ -60,7 +60,7 @@ if(nrow(dat2) != 1) {
 }
 
 if(sum(colnames(dat1) == colnames(dat2)) != ncol(dat1)) {
-  stop("Column Headers are in a different order in input files");
+  stop("Column Headers do not match input files");
 }
 
 
