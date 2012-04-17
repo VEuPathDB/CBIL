@@ -8,22 +8,26 @@ use CBIL::TranscriptExpression::Error;
 use File::Temp qw/ tempfile /;
 
 sub getScalingFactorsFile         { $_[0]->{scalingFactorsFile} }
+sub getProfileFile                { $_[0]->{profileFile} }
 
 sub new {
   my ($class, $args) = @_;
 
   my $requiredParams = ['outputFile',
-                        'inputFile',
-                        'scalingFactorsFile',
-                        'profileSetName'
+                        'profileSetName',
+                        'profileFile'
                        ];
 
   $args->{samples} = 'PLACEHOLDER';
 
+  if(!$args->{scalingFactorsFile}) {
+    $args->{scalingFactorsFile} = $args->{inputFile};
+  }
+
   my $self = $class->SUPER::new($args, $requiredParams);
 
-  unless(-e $self->getInputFile() && -e $self->getScalingFactorsFile()) {
-    CBIL::TranscriptExpression::Error->("BOTH input file (profile) and scaling factor file are required.")->throw();
+  unless(-e $self->getProfileFile() && -e $self->getScalingFactorsFile()) {
+    CBIL::TranscriptExpression::Error->("BOTH profileFile and scaling factor file are required.")->throw();
   }
 
   $self->{profileSetDescription} = $self->getProfileSetName();
@@ -35,7 +39,7 @@ sub new {
 sub munge {
   my ($self) = @_;
 
-  my $profileFile = $self->getInputFile();
+  my $profileFile = $self->getProfileFile();
   my $scalingFactorsFile = $self->getScalingFactorsFile();
 
   my $outputFile = $self->getOutputFile();
