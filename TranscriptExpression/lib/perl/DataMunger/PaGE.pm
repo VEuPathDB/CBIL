@@ -150,7 +150,9 @@ sub runPage {
 
   my $useLoggedData = $USE_LOGGED_DATA ? '--use_logged_data' : '--use_unlogged_data';
 
-  my $pageCommand = "PaGE_5.1.7.pl --infile $pageIn --output_gene_confidence_list --output_text --num_channels $channels $isLoggedArg $isPairedArg --level_confidence $levelConfidence $useLoggedData $statistic --min_presence $minPrescence --missing_value $MISSING_VALUE $design";
+#  my $pageCommand = "PaGE_5.1.7.pl --infile $pageIn --output_gene_confidence_list --output_text --num_channels $channels $isLoggedArg $isPairedArg --level_confidence $levelConfidence $useLoggedData $statistic --min_presence $minPrescence --missing_value $MISSING_VALUE $design";
+
+  my $pageCommand = "PaGE_5.1.6.1_modifiedConfOutput.pl --infile $pageIn --output_gene_confidence_list --output_text --num_channels $channels $isLoggedArg $isPairedArg --level_confidence $levelConfidence $useLoggedData $statistic --min_presence $minPrescence --missing_value $MISSING_VALUE $design";
 
   my $systemResult = system($pageCommand);
 
