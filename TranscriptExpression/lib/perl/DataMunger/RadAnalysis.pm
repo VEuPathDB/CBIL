@@ -26,8 +26,9 @@ sub setConfigFile           { $_[0]->{_config_file} = $_[1] }
 sub getProfileElementsAsString { $_[0]->{_profile_elements_as_string} }
 sub setProfileElementsAsString { $_[0]->{_profile_elements_as_string} = $_[1] }
 
+
 sub createConfigFile {
-  my ($self) = @_;
+  my ($self, $skipRow) = @_;
 
   return if($self->getDoNotLoad());
 
@@ -45,18 +46,19 @@ sub createConfigFile {
   my $configFileLocation = $mainDir . "/" . $configFile;
 
   my @configLineColumns = ($dataFile, $analysisName, $protocolName, $protocolType, $profileSetName, $profileElementName);
-  my $configLine = join("\t", @configLineColumns);
+  my $configLine = join("\t", @configLineColumns) . "\n";
+
+  my $analysisHeader = "dataFile\tanalysisName\tprotocolName\tprotocolType\tprofilesetname\tprofileelementnames\n";
 
   if (-e $configFileLocation){
     open(CFH, ">> $configFileLocation") or die "Cannot open file $configFileLocation for writing: $!";  
   }
   else {
     open(CFH, "> $configFileLocation") or die "Cannot open file $configFileLocation for writing: $!";
-    my $analysisHeader = "dataFile\tanalysisName\tprotocolName\tprotocolType\tprofilesetname\tprofileelementnames\n";
     print CFH $analysisHeader;
   }
 
-  print CFH $configLine."\n";
+  print CFH $configLine unless($skipRow);
   close CFH;
 }
 
