@@ -20,26 +20,36 @@ sub getFastqForSampleIds {
   my @out;
   my $readCount = 0;
   my $fid = $rids[0]->[0];
+  my $numEnds = 0;
   foreach my $a (@rids){
     push(@out,"$a->[0]:$a->[1]:".($a->[1] ? $a->[2] / $a->[1] : 'undef'));
     $readCount += $a->[1];
     my $id = $a->[0];
-    &getFastqForSraRunId($id) unless $dontdownload;
+    next if $dontdownload;
+    &getFastqForSraRunId($id);
     ##if single end will have single fastq file labeled _1.fastq .. otherwise two labeled _1 and _2.fastq
+    my $tmpEnds = 0;
     my $foundFile = 0;
     if(-e "$id\_1.fastq"){
+      $tmpEnds = 1;
+      $foundFile++;
       if($fid ne $id){
         system("cat $id\_1.fastq >> $fid\_1.fastq");
         unlink("$id\_1.fastq");
-        $foundFile++;
       }
     }
     if(-e "$id\_2.fastq"){
+      $foundFile++;
+      $tmpEnds = 2;
       if($fid ne $id){
         system("cat $id\_2.fastq >> $fid\_2.fastq");
         unlink("$id\_2.fastq");
-        $foundFile++;
       }
+    }
+    if($numEnds){
+      die "ERROR: runIds have mix of single and paired ends\n" if $numEnds != $tmpEnds;
+    }else{
+      $numEnds = $tmpEnds;
     }
   }
          print "SampleIds: (",join(", ",@{$sids}),") ", scalar(@rids) , " runs, $readCount spots: " , (scalar(@rids) == 0 ? "ERROR: unable to retrieve runIds\n" : "(",join(", ",@out),")\n");
