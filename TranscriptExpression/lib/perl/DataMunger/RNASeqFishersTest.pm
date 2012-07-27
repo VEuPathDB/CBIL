@@ -15,9 +15,8 @@ my $MIN_MAX = 'min';
 my $PROTOCOL_NAME = 'Fishers Test - RUM Output';
 my $PROTOCOL_TYPE = 'unknown_protocol_type';
 
-our @EXPORT = qw ( $CONFIG_FILE );
 our $CONFIG_FILE = 'analysis_result_config.txt';
-
+our @EXPORT = qw ( $CONFIG_FILE );
 
 #-------------------------------------------------------------------------------
 
