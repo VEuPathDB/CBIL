@@ -81,6 +81,9 @@ sub new {
     }
     my $sourceIdType = $args->{sourceIdType};
     my $profileSetName = $args->{profileSetName};
+    if ($profileSetName=~m/,/) {
+      CBIL::TranscriptExpression::Error->new("The Profile Set Name  - $profileSetName - Contains the invalid character (,).\n Please replace the invalid character.")->throw();
+    }
     if (!defined $args->{loadProfileElement}) {
       $args->{loadProfileElement} = $LOAD_PROFILE_ELEMENT;
     }
