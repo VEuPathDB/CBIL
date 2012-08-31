@@ -75,9 +75,6 @@ sub new {
   }
 
   my $isPairedEnd = $self->getIsPairedEnd();
-  unless($isPairedEnd eq 'yes' || $isPairedEnd eq 'no') {
-    CBIL::TranscriptExpression::Error->new("isPairedEnd param must equal [yes] or [no]")->throw();
-  }
 
   unless($self->getDoNotLoad()) {
     $self->setProtocolName($PROTOCOL_NAME);
@@ -106,9 +103,9 @@ sub findNumMappersFromMappingStatsFile {
   my $value = 0;
 
   while (my $line=<$fh>) {
-    if (($line =~ /^TOTAL/) && $isPairedEnd eq 'yes'){ 
+    if (($line =~ /^TOTAL/) && $isPairedEnd ){ 
       $startRead = 1;
-    } elsif (($line =~ /^TOTAL:\s+(\S+)\s+\(/) && ($isPairedEnd eq 'no')){
+    } elsif (($line =~ /^TOTAL:\s+(\S+)\s+\(/) && (!$isPairedEnd)){
       $value = $1;
       last;
     }
@@ -209,6 +206,7 @@ sub munge {
   }
 
   my $countsFile1 = $self->getCountsFile1();
+
   my $countsFile2 = $self->getCountsFile2();
 
   my $data1 = $self->readCountsFile($countsFile1);
