@@ -21,10 +21,12 @@ sub getFastqForSampleIds {
   my $readCount = 0;
   my $fid = $rids[0]->[0];
   my $numEnds = 0;
+  my %tsid;
   foreach my $a (@rids){
-    push(@out,"$a->[0]:$a->[1]:".($a->[1] ? $a->[2] / $a->[1] : 'undef'));
-    $readCount += $a->[1];
-    my $id = $a->[0];
+    $tsid{$a->[0]} = 1;
+    push(@out,"$a->[0]:$a->[1]:$a->[2]:".($a->[2] ? $a->[3] / $a->[2] : 'undef'));
+    $readCount += $a->[2];
+    my $id = $a->[1];
     next if $dontdownload;
     &getFastqForSraRunId($id);
     ##if single end will have single fastq file labeled _1.fastq .. otherwise two labeled _1 and _2.fastq
@@ -52,7 +54,7 @@ sub getFastqForSampleIds {
       $numEnds = $tmpEnds;
     }
   }
-         print "SampleIds: (",join(", ",@{$sids}),") ", scalar(@rids) , " runs, $readCount spots: " , (scalar(@rids) == 0 ? "ERROR: unable to retrieve runIds\n" : "(",join(", ",@out),")\n");
+         print "input: (",join(", ",@{$sids}),") ", scalar(keys%tsid), " samples, ", scalar(@rids) , " runs, $readCount spots: " , (scalar(@rids) == 0 ? "ERROR: unable to retrieve runIds\n" : "(",join(", ",@out),")\n");
   ##now mv the files to a final filename ...
 #  rename("$fid.fastq","reads.fastq") if (-e "$fid.fastq");
   rename("$fid\_1.fastq","$fileoutone") if (-e "$fid\_1.fastq");
@@ -101,6 +103,14 @@ m|<Count>(\d+)</Count>.*<QueryKey>(\d+)</QueryKey>.*<WebEnv>(\S+)</WebEnv>|s;
    push(@expPa,$ep);
  }
  foreach my $e (@expPa){
+   my %sids;
+   if(ref($e->{SAMPLE}) eq 'ARRAY'){
+     foreach my $a (@{$e->{SAMPLE}}){
+       $sids{$a->{accession}}++;
+     }
+   }else{
+     $sids{$e->{SAMPLE}->{accession}}++;
+   }
    my @runsets;
    if(ref($e->{RUN_SET}) eq 'ARRAY'){
      foreach my $a (@{$e->{RUN_SET}}){
@@ -110,13 +120,12 @@ m|<Count>(\d+)</Count>.*<QueryKey>(\d+)</QueryKey>.*<WebEnv>(\S+)</WebEnv>|s;
      push(@runsets,$e->{RUN_SET});
    }
    foreach my $rs (@runsets){
-     my $rs = $e->{RUN_SET};
      if(ref($rs->{RUN}) eq 'ARRAY'){
        foreach my $r (@{$rs->{RUN}}){
-         push(@ids, [$r->{accession},$r->{total_spots},$r->{total_bases}]);
+         push(@ids, [join(",",keys%sids),$r->{accession},$r->{total_spots},$r->{total_bases}]);
        }
      }else{
-       push(@ids, [$rs->{RUN}->{accession},$rs->{RUN}->{total_spots},$rs->{RUN}->{total_bases}]);
+       push(@ids, [join(",",keys%sids),$rs->{RUN}->{accession},$rs->{RUN}->{total_spots},$rs->{RUN}->{total_bases}]);
      }
    }
  }
