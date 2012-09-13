@@ -46,6 +46,9 @@ sub munge {
     $self->setSamples($interpSamples);
     $self->setInputFile($interpFile);
 
+    my $profileSetName = $self->getProfileSetName() . " - Interpolated";
+    $self->setProfileSetName($profileSetName);
+
     my $outputFile = $self->getOutputFile() . "_" . $interpN;
     $self->setOutputFile($outputFile);
 

@@ -42,6 +42,7 @@ my $TIME_SERIES_CONFIG_FILE_NAME = "time_series_stats_config.txt";
  sub setPercentileSetPrefix      { $_[0]->{percentileSetPrefix} = $_[1]}
 
  sub getProfileSetName          { $_[0]->{profileSetName} }
+ sub setProfileSetName          { $_[0]->{profileSetName} = $_[1]}
  sub getProfileSetDescription   { $_[0]->{profileSetDescription} }
 
  sub getSourceIdType            { $_[0]->{sourceIdType} }
