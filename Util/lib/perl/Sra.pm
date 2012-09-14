@@ -155,6 +155,7 @@ m|<Count>(\d+)</Count>.*<QueryKey>(\d+)</QueryKey>.*<WebEnv>(\S+)</WebEnv>|s;
 sub getFastqForSraRunId {
   my($runId,$pe) = @_;
   my $file = "$runId.sra";
+  unlink("$runId.sra") if -e "$runId.sra";
   my $cmd = "wget http://ftp-private.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/".substr($runId,0,3)."/".substr($runId,0,6)."/$runId/$file";
   print STDERR "retrieving $runId with $cmd\n";
   system($cmd);
