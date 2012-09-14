@@ -23,11 +23,17 @@ sub getFastqForSampleIds {
   my $singleEnd = 0;
   my $doubleEnd = 0;
   my %tsid;
+  my %done;
   foreach my $a (@rids){
     $tsid{$a->[0]} = 1;
+    if($done{$a->[1]}){
+      print STDERR "ERROR: already retrieved '$a->[1]' .. skipping\n";
+      next;
+    }
     push(@out,"$a->[0]:$a->[1]:$a->[2]:".($a->[2] ? $a->[3] / $a->[2] : 'undef'));
     $readCount += $a->[2];
     my $id = $a->[1];
+    $done{$id} = 1;
     next if $dontdownload;
     &getFastqForSraRunId($id);
     ##if single end will have single fastq file labeled _1.fastq .. otherwise two labeled _1 and _2.fastq
@@ -67,8 +73,8 @@ sub getFastqForSampleIds {
       $singleEnd = 1;
       die "ERROR: this sample '$a->[0]' contains both single and double end reads\n" if $singleEnd && $doubleEnd;
     }
-  }
-         print "input: (",join(", ",@{$sids}),") ", scalar(keys%tsid), " samples, ", scalar(@rids) , " runs, $readCount spots: " , (scalar(@rids) == 0 ? "ERROR: unable to retrieve runIds\n" : "(",join(", ",@out),")\n");
+  } 
+  print "input: (",join(", ",@{$sids}),") ", scalar(keys%tsid), " samples, ", scalar(@rids) , " runs, $readCount spots: " , (scalar(@rids) == 0 ? "ERROR: unable to retrieve runIds\n" : "(",join(", ",@out),")\n");
   ##now mv the files to a final filename ...
 #  rename("$fid.fastq","reads.fastq") if (-e "$fid.fastq");
   rename("tmpReads_1.fastq","$fileoutone") if (-e "tmpReads_1.fastq");
