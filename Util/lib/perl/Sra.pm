@@ -20,7 +20,8 @@ sub getFastqForSampleIds {
   my @out;
   my $readCount = 0;
   my $fid = $rids[0]->[0];
-  my $numEnds = 0;
+  my $singleEnd = 0;
+  my $doubleEnd = 0;
   my %tsid;
   foreach my $a (@rids){
     $tsid{$a->[0]} = 1;
@@ -30,35 +31,48 @@ sub getFastqForSampleIds {
     next if $dontdownload;
     &getFastqForSraRunId($id);
     ##if single end will have single fastq file labeled _1.fastq .. otherwise two labeled _1 and _2.fastq
-    my $tmpEnds = 0;
     my $foundFile = 0;
     if(-e "$id\_1.fastq"){
-      $tmpEnds = 1;
       $foundFile++;
       if($fid ne $id){
-        system("cat $id\_1.fastq >> $fid\_1.fastq");
+        system("cat $id\_1.fastq >> tmpReads_1.fastq");
         unlink("$id\_1.fastq");
+      }else{
+        rename("$id\_1.fastq","tmpReads_1.fastq");
       }
     }
-    if(-e "$id\_2.fastq"){
+    if(-e "$id\_3.fastq"){
+      $doubleEnd = 1;
+      die "ERROR: this sample '$a->[0]' contains both single and double end reads\n" if $singleEnd && $doubleEnd;
       $foundFile++;
-      $tmpEnds = 2;
       if($fid ne $id){
-        system("cat $id\_2.fastq >> $fid\_2.fastq");
-        unlink("$id\_2.fastq");
+        system("cat $id\_3.fastq >> tmpReads_2.fastq");
+        unlink("$id\_3.fastq");
+      }else{
+        rename("$id\_3.fastq","tmpReads_2.fastq");
       }
-    }
-    if($numEnds){
-      die "ERROR: runIds have mix of single and paired ends\n" if $numEnds != $tmpEnds;
+      unlink("$id\_2.fastq");  ##this one is the barcode
+    }elsif(-e "$id\_2.fastq"){
+      $doubleEnd = 1;
+      die "ERROR: this sample '$a->[0]' contains both single and double end reads\n" if $singleEnd && $doubleEnd;
+      $foundFile++;
+      if($fid ne $id){
+        system("cat $id\_2.fastq >> tmpReads_2.fastq");
+        unlink("$id\_2.fastq");
+      }else{
+        rename("$id\_2.fastq","tmpReads_2.fastq");
+      }
     }else{
-      $numEnds = $tmpEnds;
+      ##is single end only
+      $singleEnd = 1;
+      die "ERROR: this sample '$a->[0]' contains both single and double end reads\n" if $singleEnd && $doubleEnd;
     }
   }
          print "input: (",join(", ",@{$sids}),") ", scalar(keys%tsid), " samples, ", scalar(@rids) , " runs, $readCount spots: " , (scalar(@rids) == 0 ? "ERROR: unable to retrieve runIds\n" : "(",join(", ",@out),")\n");
   ##now mv the files to a final filename ...
 #  rename("$fid.fastq","reads.fastq") if (-e "$fid.fastq");
-  rename("$fid\_1.fastq","$fileoutone") if (-e "$fid\_1.fastq");
-  rename("$fid\_2.fastq","$fileouttwo") if (-e "$fid\_2.fastq");
+  rename("tmpReads_1.fastq","$fileoutone") if (-e "tmpReads_1.fastq");
+  rename("tmpReads_2.fastq","$fileouttwo") if (-e "tmpReads_2.fastq");
 }
 
 sub getRunIdsFromSraSampleId { 
@@ -149,7 +163,7 @@ sub getFastqForSraRunId {
     return;
   }
   print STDERR "extracting fastq file(s)...";
-  system("fastq-dump --split-files $file");
+  system("fastq-dump --split-files -X 500000 $file");
   my @files = glob("$runId*.fastq");
   print STDERR "DONE: ".scalar(@files)." files (".join(", ",@files).")\n";
   unlink($file);
