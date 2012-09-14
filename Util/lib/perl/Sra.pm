@@ -163,7 +163,7 @@ sub getFastqForSraRunId {
     return;
   }
   print STDERR "extracting fastq file(s)...";
-  system("fastq-dump --split-files -X 500000 $file");
+  system("fastq-dump --split-files $file");
   my @files = glob("$runId*.fastq");
   print STDERR "DONE: ".scalar(@files)." files (".join(", ",@files).")\n";
   unlink($file);
