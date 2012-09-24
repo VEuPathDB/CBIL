@@ -56,7 +56,7 @@ sub readDataHash {
 
     $fn = $display if (! $fn); # if only one value in $file.. it must be the file name
 
-    $fn = $fn . "." . $fileSuffix if($fileSuffix);
+    $fn = $fn . $fileSuffix if($fileSuffix);
 
     push @headers, $display;
 
