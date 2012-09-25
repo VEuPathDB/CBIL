@@ -7,6 +7,7 @@ use strict;
 
 
 sub getConditions            { $_[0]->{conditions} }
+sub getStrand                { $_[0]->{strand} }
 
 #-------------------------------------------------------------------------------
 
@@ -32,6 +33,13 @@ sub new {
    my $mappingStatsSuffix = "mappingStats";
    my $countsSuffix = "count";
 
+   my $strand = $self->getStrand();
+
+   if($strand) {
+     $mappingStatsSuffix = "$strand.$mappingStatsSuffix";
+     $countsSuffix = "$strand.$countsSuffix";
+   }
+
 
    my @groupNames = keys %$conditionsHashRef;
    foreach(@groupNames) {
@@ -52,8 +60,7 @@ sub new {
               my $conditionBDisplayName = $groupNames[$j];
               my $conditionBPrefixName = $conditionsHashRef->{$conditionBDisplayName};
 
-
-              my $outputFile = $self->generateOutputFile($conditionAPrefixName, $conditionBPrefixName);
+              my $outputFile = $self->generateOutputFile($conditionAPrefixName, $conditionBPrefixName, $strand);
               my $clone = $self->clone();
 
               $clone->setSampleName1($conditionADisplayName);
@@ -66,7 +73,10 @@ sub new {
               $clone->setCountsFile2($conditionBPrefixName . "." . $countsSuffix);
 
               $clone->setOutputFile($outputFile);
-              $clone->setAnalysisName("$conditionADisplayName vs $conditionBDisplayName");
+
+              my $analysisName = "$conditionADisplayName vs $conditionBDisplayName";
+              $analysisName = $analysisName . " - $strand" if($strand);
+              $clone->setAnalysisName($analysisName);
 
               my $profileElementsString = $conditionADisplayName . ";" . $conditionBDisplayName;
               $clone->setProfileElementsAsString($profileElementsString);
