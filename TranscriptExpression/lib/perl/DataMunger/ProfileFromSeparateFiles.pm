@@ -24,7 +24,7 @@ sub new {
   my $self = $class->SUPER::new($args);
 
   if(defined $args->{hasHeader}) {
-    $self->setHeader($args->{hasHeader});
+    $self->setHasHeader($args->{hasHeader});
   }
 
   return $self;
