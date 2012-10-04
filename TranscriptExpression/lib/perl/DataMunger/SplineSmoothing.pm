@@ -1,5 +1,5 @@
 package CBIL::TranscriptExpression::DataMunger::SplineSmoothing;
-use base qw(CBIL::TranscriptExpression::DataMunger);
+use base qw(CBIL::TranscriptExpression::DataMunger::Profiles);
 
 use strict;
 
@@ -17,16 +17,10 @@ sub setInterpolationN { $_[0]->{interpolation_n} = $_[1] }
 sub new {
   my ($class, $args) = @_;
 
-  my $requiredParams = ['inputFile',
-                        'outputFile',
-                        ];
 
-  my $self = $class->SUPER::new($args, $requiredParams);
+  $args->{samples} = 'PLACEHOLDER';
 
-  my $inputFile = $args->{inputFile};
-  unless(-e $inputFile) {
-    CBIL::TranscriptExpression::Error->new("input file $inputFile does not exist")->throw();
-  }
+  my $self = $class->SUPER::new($args);
 
   return $self;
 }
@@ -37,20 +31,64 @@ sub new {
 sub munge {
   my ($self) = @_;
 
-  my $rFile = $self->writeRFile();
+  my ($splinesFile, $interpFile, $rFile) = $self->writeRFile();
 
-  $self->runR($rFile);
+  my $splineSamples = $self->readFileHeaderAsSamples($splinesFile);
 
-  unlink($rFile);
+  $self->setSamples($splineSamples);
+  $self->setInputFile($splinesFile);
+
+  $self->SUPER::munge();
+
+  my $interpN = $self->getInterpolationN();
+  if(defined $interpN) {
+    my $interpSamples = $self->readFileHeaderAsSamples($interpFile);
+
+    $self->setSamples($interpSamples);
+    $self->setInputFile($interpFile);
+
+    my $profileSetName = $self->getProfileSetName() . " - Interpolated";
+    $self->setProfileSetName($profileSetName);
+
+    my $outputFile = $self->getOutputFile() . "_" . $interpN;
+    $self->setOutputFile($outputFile);
+
+    $self->SUPER::munge();
+
+    unlink($interpFile);
+  }
+
+  unlink($rFile, $splinesFile);
 }
+
+#-------------------------------------------------------------------------------
+
+sub readFileHeaderAsSamples {
+  my ($self, $fn) = @_;
+
+  open(FILE, $fn) or die "Cannot open file $fn for reading: $!";
+
+  my $header = <FILE>;
+  chomp $header;
+  close FILE;
+
+  my @vals = split(/\t/, $header);
+  
+  # remove the row header column;
+  shift @vals;
+
+  return \@vals;
+}
+
 
 #-------------------------------------------------------------------------------
 
 sub writeRFile {
   my ($self) = @_;
 
+  my ($outputFh, $outputFile) = tempfile();
+
   my $inputFile = $self->getInputFile();
-  my $outputFile = $self->getOutputFile();
   my $interpN = $self->getInterpolationN();
 
 
@@ -122,6 +160,9 @@ RString
 
   close $fh;
 
-  return $file;
+
+  $self->runR($file);
+
+  return $outputFile, $interpFile, $file;
 }
 1;
