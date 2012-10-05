@@ -17,7 +17,6 @@ sub setInterpolationN { $_[0]->{interpolation_n} = $_[1] }
 sub new {
   my ($class, $args) = @_;
 
-
   $args->{samples} = 'PLACEHOLDER';
 
   my $self = $class->SUPER::new($args);
@@ -83,6 +82,7 @@ sub readFileHeaderAsSamples {
 
 #-------------------------------------------------------------------------------
 
+
 sub writeRFile {
   my ($self) = @_;
 
@@ -131,13 +131,31 @@ interpolatedSplines = vector();
 
 predictX = round(approx(xCoords, n=$interpN)\$y, 1);
 
-for(i in 1:nrow(newDat)) {
-  spline = smooth.spline(xCoords, newDat[i,]);
-  splines = rbind(splines, spline\$y);
 
-  if($doInterp) {
-    interpolatedSplines = rbind(interpolatedSplines, predict(spline, predictX)\$y);
+for(i in 1:nrow(newDat)) {
+#Case 1 - all values are NA : 
+#Case 2 - no values are NA :
+#Case 3 - one or more values are NA, but not all :
+  if (sum(is.na(newDat[i,])) == length(newDat[i,]))  {
+    splines = rbind(splines, newDat[i,]);
   }
+  else if(sum(is.na(newDat[i,])) == 0 ) {
+    spline = smooth.spline(xCoords, newDat[i,]);
+    splines = rbind(splines, spline\$y);
+  }
+  else {
+    approxY =approx(newDat[i,], n=length(newDat[i,]))\$y;
+    spline = smooth.spline(xCoords, approxY);
+    splines = rbind(splines, spline\$y);
+  }
+  if($doInterp) {
+    if (sum(is.na(newDat[i,])) == length(newDat[i,] )) {
+      interpolatedSplines = rbind(interpolatedSplines, (predictX * NA));
+    }
+    else {
+      interpolatedSplines = rbind(interpolatedSplines, predict(spline, predictX)\$y);
+     }
+   }
 }
 
 colnames(splines) = as.character(newHeader);
@@ -147,10 +165,10 @@ colnames(splines)[1] = paste("ID\t", colnames(splines)[1], sep="");
 colnames(interpolatedSplines)[1] = paste("ID\t", colnames(interpolatedSplines)[1], sep="");
 
 
-write.table(splines, file="$outputFile",quote=FALSE,sep="\\t", row.names=ids);
+write.table(splines, file="$outputFile", quote=FALSE,sep="\\t", row.names=ids);
 
 if($doInterp) {
-  write.table(interpolatedSplines, file="$interpFile",quote=FALSE,sep="\\t", row.names=ids);
+  write.table(interpolatedSplines, file="$interpFile", quote=FALSE, sep="\\t", row.names=ids);
 }
 
 RString
