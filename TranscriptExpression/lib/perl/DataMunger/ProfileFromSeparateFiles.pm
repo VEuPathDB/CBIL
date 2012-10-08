@@ -7,9 +7,10 @@ use File::Temp qw/ tempfile /;
 
 use CBIL::TranscriptExpression::Error;
 
-# Each File contains 2 columns tab delim (U_ID \t VALUE)
-# Each value in the analysis config can specify a display name
-#   which will be used in the header of the output file ( "Display Name|file")
+# The Default is that Each File contains 2 columns tab delim (U_ID \t VALUE)
+# Each value in the analysis config can specify a display name for the output && optinally a specific column to cut out
+#  ( "Selected Column|Output Column Name|file")
+
 sub getHasHeader     {$_[0]->{hasHeader}}
 sub setHasHeader     {$_[0]->{hasHeader} = $_[1]}
 
@@ -23,7 +24,7 @@ sub new {
   my $self = $class->SUPER::new($args);
 
   if(defined $args->{hasHeader}) {
-    $self->setHeader($args->{hasHeader});
+    $self->setHasHeader($args->{hasHeader});
   }
 
   return $self;
@@ -50,25 +51,62 @@ sub readDataHash {
 
   my $hasHeader = $self->getHasHeader();
 
-  my @headers;
+  my @headers; # these are the output headers
   foreach my $file (@$files) {
-    my ($display, $fn) = split(/\|/, $file);
+    my ($fn, $display, $selectedColumn);
 
-    $fn = $display if (! $fn); # if only one value in $file.. it must be the file name
+    my @options = split(/\|/, $file);
 
-    $fn = $fn . "." . $fileSuffix if($fileSuffix);
+    # if only one value in $file.. it must be the file name
+    if(scalar @options == 1) {
+      $fn = $options[0];
+    } 
+    elsif(scalar @options == 2) {
+      $display = $options[0];
+      $fn = $options[1];
+    } 
+    elsif(scalar @options == 3) {
+      $selectedColumn = $options[0];
+      $display = $options[1];
+      $fn = $options[2];
+    }
+
+    $fn = $fn . $fileSuffix if($fileSuffix);
 
     push @headers, $display;
 
     open(FILE, $fn) or CBIL::TranscriptExpression::Error->new("Cannot open File $fn for reading: $!")->throw();
 
+    if($selectedColumn && !$hasHeader) {
+      CBIL::TranscriptExpression::Error->new("Trying to select a specific column $selectedColumn from file $fn but hasHeader flag was set to false")->throw();
+    }
+
+    my $inputHeader;
+    my @inputHeaders;
     if($hasHeader) {
-      <FILE>;
+      $inputHeader = <FILE>;
+      chomp $inputHeader;
+      @inputHeaders = split(/\t/, $inputHeader);
     }
 
     while(my $line = <FILE>) {
       chomp $line;
-      my ($uId, $value) = split(/\t/, $line);
+      my ($uId, @rest) = split(/\t/, $line);
+
+      my $value;
+      if(!$selectedColumn && scalar @rest == 1) {
+        $value = $rest[0];
+      }
+      else {
+        my( $index ) = grep { $inputHeaders[$_] eq $selectedColumn } 0..$#inputHeaders;
+
+      unless(defined $index) {
+        CBIL::TranscriptExpression::Error->new("Ooops!  I tried to select $selectedColumn from an array of headers  @inputHeaders but didn't find it.")->throw();
+      }
+
+        # subtract 1 because the uid was popped off this array already
+        $value = $rest[$index - 1];
+      }
 
       if($self->{dataHash}->{$uId}->{$display}) {
         CBIL::TranscriptExpression::Error->new("ID $uId is not unique for $display")->throw();
