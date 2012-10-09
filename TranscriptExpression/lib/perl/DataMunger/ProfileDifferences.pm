@@ -25,7 +25,7 @@ sub new {
   my $self = $class->SUPER::new($args, $requiredParams);
 
   unless(-e $self->getMinuendFile() && -e $self->getSubtrahendFile()) {
-    CBIL::TranscriptExpression::Error->("Missing subtrahend or minuend File")->throw();
+    CBIL::TranscriptExpression::Error->new("Missing subtrahend or minuend File")->throw();
   }
 
   $self->{profileSetDescription} = $self->getProfileSetName();

@@ -209,4 +209,25 @@ sub clone {
 } 
 
 
+sub readInputFileHeaderAsSamples {
+  my ($self) = @_;
+
+  my $fn = $self->getInputFile();
+
+  open(FILE, $fn) or die "Cannot open file $fn for reading: $!";
+
+  my $header = <FILE>;
+  chomp $header;
+  close FILE;
+
+  my @vals = split(/\t/, $header);
+  
+  # remove the row header column;
+  shift @vals;
+
+  return \@vals;
+}
+
+
+
 1;
