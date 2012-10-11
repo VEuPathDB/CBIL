@@ -173,7 +173,7 @@ for (i in 1:nrow(data)) {
       p[i]<-fisher.test(m(data[i,1],data[i,2],n1,n2),alternative="less")\$p
    }	
 }
-write.table(p, file=outputFile, col.names=F, row.names=F, sep="\t", eol="\n", quote=F)
+write.table(p, file=outputFile, col.names=F, row.names=F, sep="\\t", eol="\n", quote=F)
 quit("no");
 RString
 
