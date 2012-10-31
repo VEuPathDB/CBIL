@@ -38,6 +38,9 @@ sub new {
               $clone->setConditions($avb);
               $clone->setOutputFile($outputFile);
               $clone->setAnalysisName($analysisName);
+
+              my $profileElementsString = $conditionAName . ";" . $conditionBName;
+              $clone->setProfileElementsAsString($profileElementsString);
               $clone->SUPER::munge();
             }
           }
