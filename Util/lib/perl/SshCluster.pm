@@ -3,6 +3,7 @@ package CBIL::Util::SshCluster;
 use strict;
 use File::Basename;
 use CBIL::Util::Utils;
+use Cwd;
 
 #############################################################################
 #          Public Methods
@@ -29,6 +30,7 @@ sub copyTo {
     my ($self, $fromDir, $fromFile, $toDir) = @_;
           # buildDIr, release/speciesNickname, serverPath
 
+    my $cwd = cwd();
     chdir $fromDir || $self->{mgr}->error("Can't chdir $fromDir\n" . __FILE__ . " line " . __LINE__ . "\n\n");
 
     my @arr = glob("$fromFile");
@@ -42,7 +44,7 @@ sub copyTo {
 
     # workaround scp problems
     $self->{mgr}->runCmd(0, "tar cf - $fromFile | gzip -c | ssh -2 $ssh_to 'cd $toDir; gunzip -c | tar xf -'");
-
+    chdir $cwd;
 }
 
 #  param fromDir  - the directory in which fromFile resides
@@ -50,6 +52,7 @@ sub copyTo {
 sub copyFrom {
     my ($self, $fromDir, $fromFile, $toDir) = @_;
 
+    my $cwd = cwd();
     # workaround scp problems
     chdir $toDir || $self->{mgr}->error("Can't chdir $toDir\n");
 
@@ -61,6 +64,7 @@ sub copyFrom {
 #    $self->runCmd("ssh $server 'cd $fromDir; tar cf - $fromFile' | tar xf -");
     my @arr = glob("$toDir/$fromFile");
     $self->{mgr}->error("$toDir/$fromFile wasn't successfully copied from liniac\n") unless (@arr >= 1);
+    chdir $cwd;
 }
 
 sub runCmdOnCluster {
