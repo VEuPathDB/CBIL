@@ -12,6 +12,9 @@ use CBIL::TranscriptExpression::Error;
 sub getInterpolationN { $_[0]->{interpolation_n} }
 sub setInterpolationN { $_[0]->{interpolation_n} = $_[1] }
 
+sub getSplineDF       { $_[0]->{degrees_of_freedom} }
+sub setSplineDF       { $_[0]->{degrees_of_freedom} = $_[1] }
+
 #-------------------------------------------------------------------------------
 
 sub new {
@@ -90,7 +93,10 @@ sub writeRFile {
 
   my $inputFile = $self->getInputFile();
   my $interpN = $self->getInterpolationN();
+  my $df = $self->getSplineDF();
 
+  my $dfString = ", df=$df";
+  $df = defined($df) ? $dfString : "";
 
   my $doInterp = 'FALSE';
   my $interpFile;
@@ -140,12 +146,12 @@ for(i in 1:nrow(newDat)) {
     splines = rbind(splines, newDat[i,]);
   }
   else if(sum(is.na(newDat[i,])) == 0 ) {
-    spline = smooth.spline(xCoords, newDat[i,]);
+    spline = smooth.spline(xCoords, newDat[i,]$df);
     splines = rbind(splines, spline\$y);
   }
   else {
     approxY =approx(newDat[i,], n=length(newDat[i,]))\$y;
-    spline = smooth.spline(xCoords, approxY);
+    spline = smooth.spline(xCoords, approxY$df);
     splines = rbind(splines, spline\$y);
   }
   if($doInterp) {
