@@ -166,8 +166,7 @@ sub getFastqForSraRunId {
   print STDERR "retrieving $runId with $cmd\n";
   system($cmd);
   if($?){
-    print STDERR "ERROR ($?): Unable to fetch sra file for $runId\n";
-    return;
+    die "ERROR ($?): Unable to fetch sra file for $runId\n";
   }
   print STDERR "extracting fastq file(s)...";
   system("fastq-dump --split-files $file");
