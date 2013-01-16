@@ -83,6 +83,7 @@ sub mail {
 ##method to return the directory where the actual executable is found ... ie follows sym_links
 sub getProgramDir {
   my $program = shift;
+  return dirname($program) if $program =~ /^\//;     # return full path if provided 
   my $pgm = basename($program);
   my $wh = `which $pgm`;
   chomp $wh;
