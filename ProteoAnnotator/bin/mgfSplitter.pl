@@ -7,72 +7,80 @@
 
 use strict;
 
-my $LIMIT = 1000000;  
+use Getopt::Long qw(GetOptions);
+
+use File::Basename;
+my ($help, $inputMgfFile, $outputMgfDirectory, $LIMIT);
+
+GetOptions("inputMgfFile=s" => \$inputMgfFile,
+           "outputDir=s" => \$outputMgfDirectory,
+           "limit=s" => \$LIMIT,
+           "help|h" => \$help,
+          );
+
 my $endTag = "END IONS";
 
-my $numArgs = $#ARGV  + 1;
-
-# print usage information if no arguments supplied  
-if($numArgs != 2) {
-   print "Usage:\n perl mgfSplitter.pl inputMgfDirectory outputMgfDirectory\n";
-   exit 1;
+if($help) {
+  &usage();
 }
 
+unless ($LIMIT)
+  {
+    $LIMIT = 1000000;
+  }
+
 # get arguments and perform basic error checking
-my($inputMgfDirectory);
-  
-my $inputMgfDirectory = $ARGV[0];
-my $outputMgfDirectory = $ARGV[1];
+
 
 mkdir($outputMgfDirectory, 0777) || die "can't create output dir: $!";
 
-opendir(DIR, $inputMgfDirectory) || die "can't opendir $inputMgfDirectory: $!"; 
+open(FILE, $inputMgfFile) || die "can't open file $inputMgfFile: $!"; 
+
+my ($inputMgfFilename ,$dir, $ext) = fileparse($inputMgfFile);
+
+$inputMgfFilename = $inputMgfFilename.$ext;
 
 my $fileCounter = 0;
 
-my @files = grep(/\.mgf$/, readdir(DIR));
 
-foreach my $file (@files) { 
-	
-	open (INFILE,  "<$inputMgfDirectory/$file")  || die "Error: cannot open $file";
-	
-	my $chunk = '';
-	my $lineCounter = 0;
 
-	foreach my $line (<INFILE>) {
-		#chomp($line);
-		$lineCounter++;
-		
-		if(index($line,$endTag) >= 0){ 
-			print "$lineCounter \t $line \t $endTag\n";
-		}
-		
-		$chunk = $chunk . $line;
-		
-		if( $lineCounter >= $LIMIT){ 
-			if (index($line,$endTag) >= 0){
-				$lineCounter = 0;
-				$fileCounter++;
-				my $outputFile = $fileCounter . "_$file"; 
-				open (OUTFILE, ">$outputMgfDirectory/$outputFile")  || die "Error: cannot open output file";
-				print OUTFILE $chunk;
-				close($outputFile);
-				$chunk = '';
-			}
-		} 
-	}
-	
-	# The last remaining bit which might be less than the LIMIT...
-	if($lineCounter > 0){
-		$fileCounter++;
-		my $outputFile = $fileCounter . "_$file"; 
-		open (OUTFILE, ">$outputMgfDirectory/$outputFile")  || die "Error: cannot open output file";
-		print OUTFILE $chunk;
-		close($outputFile);
-	}	
-	
-	close(INFILE);
- 	 
-} 
+open (INFILE,  "<$inputMgfFile")  || die "Error: cannot open $inputMgfFile";
 
-closedir(DIR);
+my $chunk = '';
+my $lineCounter = 0;
+
+foreach my $line (<INFILE>) {
+  #chomp($line);
+  $lineCounter++;
+  
+  if(index($line,$endTag) >= 0){ 
+    print "$lineCounter \t $line \t $endTag\n";
+  }
+  
+  $chunk = $chunk . $line;
+  
+  if( $lineCounter >= $LIMIT){ 
+    if (index($line,$endTag) >= 0){
+      $lineCounter = 0;
+      $fileCounter++;
+      my $outputFile = $fileCounter . "_$inputMgfFilename"; 
+      print STDERR "$outputMgfDirectory/$outputFile";
+      open (OUTFILE, ">$outputMgfDirectory/$outputFile")  || die "Error: cannot open output file: $!";
+      print OUTFILE $chunk;
+      close($outputFile);
+      $chunk = '';
+    }
+  } 
+}
+
+# The last remaining bit which might be less than the LIMIT...
+if($lineCounter > 0){
+  $fileCounter++;
+  my $outputFile = $fileCounter . "_$inputMgfFilename"; 
+  open (OUTFILE, ">$outputMgfDirectory/$outputFile")  || die "Error: cannot open output file  $!";
+  print OUTFILE $chunk;
+  close($outputFile);
+}	
+
+close(INFILE);
+
