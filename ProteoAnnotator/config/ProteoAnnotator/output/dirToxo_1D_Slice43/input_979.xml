@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<bioml>
+
+	<note type="input" label="list path, default parameters">~/Mass_Spec_Pipeline/tandem-linux-12-10-01-1/bin/default_input.xml</note>
+	<note type="input" label="list path, taxonomy information">output/dirToxo_1D_Slice43/taxonomy.xml</note>
+	<note type="input" label="protein, taxon">Toxoplasma</note>
+	<note type="input" label="spectrum, path">/mnt/eupath-home/home/jcade/Mass_Spec_Pipeline/Example-Data/Example-Data/Toxo_Test_MSDataset/Toxo_1D_Slice43.mgf</note>
+	<note type="input" label="output, path">output/dirToxo_1D_Slice43/testrun_osx2352.xml</note>
+	<note type = "input" label = "scoring, maximum missed cleavages sites">1</note>
+	<note type="input" label="protein, cleavage site">[KR]|{P}</note>  
+	
+	
+	<note type="input" label="residue, potential modification mass">15.994915@M</note>
+	<note type="input" label="residue, potential modification mass">42.010565@Protein N-term</note>
+	<note type="input" label="residue, modification mass">57.021464@C</note>
+	<note type="heading">Spectrum general</note> 
+	<note type = "input" label = "spectrum, fragment monoisotopic mass error">0.8</note> 
+	<note type="input" label="spectrum, fragment monoisotopic mass error units">Da</note> 
+	<note type="input" label="spectrum, parent monoisotopic mass error plus">1.5</note> 
+	<note type="input" label="spectrum, parent monoisotopic mass error minus">1.5</note> 
+	<note type="input" label="spectrum, parent monoisotopic mass error units">Da</note> 
+	<note type="input" label="spectrum, parent monoisotopic mass isotope error">yes</note>
+	<note type="input" label="refine, maximum valid expectation value">10</note>
+    <note type="input" label="output, maximum valid expectation value">10</note>
+</bioml>

@@ -1,0 +1,3 @@
+<?xml version="1.0"?> 
+<bioml label="x! taxon-to-file matching list"> 
+<taxon label = "Toxoplasma"><file format="peptide" URL="~/Mass_Spec_Pipeline/Example-Data/Example-Data/DB/TgondiiME49_withdecoy.fasta" /></taxon></bioml>

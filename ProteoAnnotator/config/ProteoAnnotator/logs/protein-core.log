@@ -1,0 +1,65 @@
+2013-02-27 17:43:18,573 INFO ResolveOmssaModificationIdentifiers -modification number extracted from search engine input :: 10 :: Fixed = false
+2013-02-27 17:43:18,573 INFO ResolveOmssaModificationIdentifiers -modification number extracted from search engine input :: 3 :: Fixed = true
+2013-02-27 17:43:18,575 INFO ConstructSearchCommand -XML for Modifications 
+	<note type="input" label="residue, potential modification mass">15.994915@M</note>
+	<note type="input" label="residue, potential modification mass">42.010565@Protein N-term</note>
+	<note type="input" label="residue, modification mass">57.021464@C</note>
+2013-02-27 17:43:18,575 INFO ConstructSearchCommand -XML for Parent mass<note type="input" label="spectrum, parent monoisotopic mass error plus">1.5</note> 
+	<note type="input" label="spectrum, parent monoisotopic mass error minus">1.5</note> 
+	<note type="input" label="spectrum, parent monoisotopic mass error units">Da</note> 
+	<note type="input" label="spectrum, parent monoisotopic mass isotope error">yes</note>
+2013-02-27 17:43:18,575 INFO ConstructSearchCommand -XML for Fragment mass<note type="heading">Spectrum general</note> 
+	<note type = "input" label = "spectrum, fragment monoisotopic mass error">0.8</note> 
+	<note type="input" label="spectrum, fragment monoisotopic mass error units">Da</note>
+2013-02-27 17:43:18,575 INFO ConstructSearchCommand -XML for missed cleavages<note type = "input" label = "scoring, maximum missed cleavages sites">1</note>
+2013-02-27 17:43:18,814 INFO ConstructSearchCommand -Taxonomy file content : 
+<?xml version="1.0"?> 
+<bioml label="x! taxon-to-file matching list"> 
+<taxon label = "Toxoplasma"><file format="peptide" URL="/home/jcade/Mass_Spec_Pipeline/Example-Data/Example-Data/DB/TgondiiME49_withdecoy.fasta" /></taxon></bioml>
+2013-02-27 17:43:18,814 INFO ConstructSearchCommand -Created Command :: <?xml version="1.0"?>
+<bioml>
+
+	<note type="input" label="list path, default parameters">/home/jcade/Mass_Spec_Pipeline/Example-Data/Example-Data/inputFiles/default_input.xml</note>
+	<note type="input" label="list path, taxonomy information">/home/jcade/Mass_Spec_Pipeline/Test_Dir/proteoannotator_output/Orbitrap-sample-243/dir11_Orbitrap-sample-243/taxonomy.xml</note>
+	<note type="input" label="protein, taxon">Toxoplasma</note>
+	<note type="input" label="spectrum, path">/mnt/eupath-home/home/jcade/Mass_Spec_Pipeline/Test_Dir/Toxo_Test_MSDataset/Orbitrap-sample-243/Orbitrap-sample-243/11_Orbitrap-sample-243.mgf</note>
+	<note type="input" label="output, path">/home/jcade/Mass_Spec_Pipeline/Test_Dir/proteoannotator_output/Orbitrap-sample-243/dir11_Orbitrap-sample-243/testrun_osx2277.xml</note>
+	<note type = "input" label = "scoring, maximum missed cleavages sites">1</note>
+	<note type="input" label="protein, cleavage site">[KR]|{P}</note>  
+	
+	
+	<note type="input" label="residue, potential modification mass">15.994915@M</note>
+	<note type="input" label="residue, potential modification mass">42.010565@Protein N-term</note>
+	<note type="input" label="residue, modification mass">57.021464@C</note>
+	<note type="heading">Spectrum general</note> 
+	<note type = "input" label = "spectrum, fragment monoisotopic mass error">0.8</note> 
+	<note type="input" label="spectrum, fragment monoisotopic mass error units">Da</note> 
+	<note type="input" label="spectrum, parent monoisotopic mass error plus">1.5</note> 
+	<note type="input" label="spectrum, parent monoisotopic mass error minus">1.5</note> 
+	<note type="input" label="spectrum, parent monoisotopic mass error units">Da</note> 
+	<note type="input" label="spectrum, parent monoisotopic mass isotope error">yes</note>
+	<note type="input" label="refine, maximum valid expectation value">10</note>
+    <note type="input" label="output, maximum valid expectation value">10</note>
+</bioml>
+
+2013-02-27 17:43:18,815 INFO Pipeline -Omssa Command :: -he 100 -fm /mnt/eupath-home/home/jcade/Mass_Spec_Pipeline/Test_Dir/Toxo_Test_MSDataset/Orbitrap-sample-243/Orbitrap-sample-243/11_Orbitrap-sample-243.mgf -d /home/jcade/Mass_Spec_Pipeline/Example-Data/Example-Data/DB/TgondiiME49_withdecoy.fasta -e 0 -v 1 -to 0.8 -te 1.5 -mf 3 -mv 1,10 -oc /home/jcade/Mass_Spec_Pipeline/Test_Dir/proteoannotator_output/Orbitrap-sample-243/dir11_Orbitrap-sample-243/testrun_osx.csv
+
+2013-02-27 17:43:18,815 INFO ExecuteCommands -Search Engine started..
+2013-02-27 17:43:18,834 INFO ExecuteCommands -Info: Using 24 search threads
+2013-02-27 17:43:28,180 INFO ExecuteCommands -Info: Sequence=0 Percent=0%
+2013-02-27 17:43:31,893 INFO ExecuteCommands -Info: Sequence=10000 Percent=31.2774%
+2013-02-27 17:43:35,190 INFO ExecuteCommands -Info: Sequence=20000 Percent=62.5547%
+2013-02-27 17:43:38,423 INFO ExecuteCommands -Info: Sequence=30000 Percent=93.8321%
+2013-02-27 17:43:42,265 INFO ExecuteCommands -Search Engine finished..
+2013-02-27 17:43:42,288 INFO ExecuteCommands -Search Engine started..
+2013-02-27 17:43:42,291 INFO ExecuteCommands -
+2013-02-27 17:43:42,292 INFO ExecuteCommands -X! TANDEM CYCLONE (2012.10.01.1)
+2013-02-27 17:43:42,292 INFO ExecuteCommands -
+2013-02-27 17:43:43,740 INFO ExecuteCommands -Loading spectra (mgf). loaded.
+2013-02-27 17:43:43,740 INFO ExecuteCommands -Spectra matching criteria = 1078
+2013-02-27 17:43:43,740 INFO ExecuteCommands -Starting threads . started.
+2013-02-27 17:43:43,740 INFO ExecuteCommands -Computing models:
+2013-02-27 17:45:18,970 INFO ExecuteCommands -	testing 1 2 3testing 1 2 3testin	sequences modelled = 32 ks
+2013-02-27 17:45:18,979 INFO ExecuteCommands -Model refinement:
+2013-02-27 17:45:24,002 INFO ExecuteCommands -	partial cleavage ..... done.
+2013-02-27 17:49:32,588 INFO ExecuteCommands -	unanticipated cleavage ..... done.

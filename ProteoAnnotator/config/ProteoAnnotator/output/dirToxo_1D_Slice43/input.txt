@@ -1,0 +1,12 @@
+input_file =  /mnt/eupath-home/home/jcade/Mass_Spec_Pipeline/Example-Data/Example-Data/Toxo_Test_MSDataset/Toxo_1D_Slice43.mgf
+fasta_file = ~/Mass_Spec_Pipeline/Example-Data/Example-Data/DB/TgondiiME49_withdecoy.fasta
+enzyme_name = 0
+product_tolerance = 0.8
+precursor_tolerance =  1.5
+fixed_mod_id = 3
+variable_mod_id = 1,10
+missed_cleavages = 1
+output_file = output/dirToxo_1D_Slice43/testrun_osx.csv
+species = Toxoplasma
+default_input_file = ~/Mass_Spec_Pipeline/tandem-linux-12-10-01-1/bin/default_input.xml
+taxonomy_file = output/dirToxo_1D_Slice43/taxonomy.xml

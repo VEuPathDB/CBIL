@@ -1,0 +1,12 @@
+input_file = {{ input_file_path }}
+fasta_file = /home/jcade/Mass_Spec_Pipeline/Example-Data/Example-Data/DB/TgondiiME49_withdecoy.fasta
+enzyme_name = 0
+product_tolerance = 0.8
+precursor_tolerance =  1.5
+fixed_mod_id = 3
+variable_mod_id = 1,10
+missed_cleavages = 1
+output_file = {{ output_dir_path }}/testrun_osx.csv
+species = Toxoplasma
+default_input_file =  /home/jcade/Mass_Spec_Pipeline/Example-Data/Example-Data/inputFiles/default_input.xml
+taxonomy_file = {{ output_dir_path }}/taxonomy.xml
