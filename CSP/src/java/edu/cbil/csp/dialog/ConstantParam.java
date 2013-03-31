@@ -7,9 +7,11 @@
 
 package edu.cbil.csp.dialog;
 
-import edu.cbil.csp.*;
+import javax.servlet.http.HttpServletRequest;
 
-import javax.servlet.http.*;
+import edu.cbil.csp.AH;
+import edu.cbil.csp.HTMLUtil;
+import edu.cbil.csp.StringTemplate;
 
 /**
  * ConstantParam.java

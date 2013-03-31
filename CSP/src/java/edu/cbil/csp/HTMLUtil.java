@@ -1,5 +1,7 @@
 package edu.cbil.csp;
 
+import org.apache.oro.text.perl.Perl5Util;
+
 
 /**
  * Element
@@ -1870,8 +1872,7 @@ public class HTMLUtil  {
 		  })),
 		};
 
-    protected final static com.oroinc.text.perl.Perl5Util util = 
-	new com.oroinc.text.perl.Perl5Util();
+    protected final static Perl5Util util = new Perl5Util();
 
     protected final static String beginTag(Element el, AH args) {
 	StringBuffer result = new StringBuffer();

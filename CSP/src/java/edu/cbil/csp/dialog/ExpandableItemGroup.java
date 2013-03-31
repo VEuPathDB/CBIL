@@ -7,7 +7,7 @@
 
 package edu.cbil.csp.dialog;
 
-import edu.cbil.csp.*;
+import edu.cbil.csp.StringTemplate;
 
 /**
  * ExpandableItemGroup.java
