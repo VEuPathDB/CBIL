@@ -4,8 +4,7 @@ use base qw(CBIL::TranscriptExpression::DataMunger::Normalization);
 use strict;
 
 use File::Basename;
-use File::Temp qw/ tempfile /;
-
+use File::Temp qw/ tempfile tempdir /;
 
 use Cwd;
 
@@ -19,7 +18,7 @@ sub munge {
 
   my $dir = getcwd();
 
-  my $rTempPackageDir = "/tmp/RtempPackage";
+  my $rTempPackageDir = tempdir( CLEANUP => 1 );
   mkdir $rTempPackageDir;
   chdir $rTempPackageDir;
 
@@ -37,13 +36,14 @@ sub munge {
   my $makeNdfPackageRFile = $self->writeNdfPackage($rTempPackageDir);
   $self->runR($makeNdfPackageRFile);
 
-  my $installCmd = "R CMD INSTALL ${rTempPackageDir}/${cleanNdfName}";
+  my $tmpInstall= tempdir( CLEANUP => 1 );
+  my $installCmd = "R CMD INSTALL -l $tmpInstall ${rTempPackageDir}/${cleanNdfName}";
   my $installRes = system($installCmd);
   unless($installRes / 256 == 0) {
     CBIL::TranscriptExpression::Error->new("Error while attempting to run R:\n$installCmd")->throw();
   }
 
-  my $rFile = $self->writeRScript($dataFilesRString, $cleanNdfName, $rTempPackageDir);
+  my $rFile = $self->writeRScript($dataFilesRString, $cleanNdfName, $tmpInstall);
 
   $self->runR($rFile);
 
@@ -93,7 +93,7 @@ RString
 }
 
 sub writeRScript {
-  my ($self, $samples, $ndfLibrary) = @_;
+  my ($self, $samples, $ndfLibrary,  $ndfLibraryPath) = @_;
 
   my $xysFilePath = $self->getXysFilePath();
 
@@ -107,7 +107,7 @@ sub writeRScript {
   open(RCODE, "> $rFile") or die "Cannot open $rFile for writing:$!";
 
   my $rString = <<RString;
-load.ndf = library($ndfLibrary, logical.return=TRUE);
+load.ndf = library($ndfLibrary, logical.return=TRUE, lib.loc="$ndfLibraryPath");
 
 if(load.ndf) {
   data.files = vector();

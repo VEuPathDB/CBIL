@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="**/.svn/" kind="src" path="src/java"/>
+        <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+        <classpathentry kind="lib" path="lib/java/jakarta-oro-2.0.8.jar"/>
+        <classpathentry kind="lib" path="lib/java/servlet-api-2.5.jar"/>
+	<classpathentry kind="output" path="classes"/>
+</classpath>
