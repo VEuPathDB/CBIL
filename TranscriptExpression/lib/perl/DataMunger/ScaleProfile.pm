@@ -27,7 +27,7 @@ sub new {
   my $self = $class->SUPER::new($args, $requiredParams);
 
   unless(-e $self->getProfileFile() && -e $self->getScalingFactorsFile()) {
-    CBIL::TranscriptExpression::Error->("BOTH profileFile and scaling factor file are required.")->throw();
+    CBIL::TranscriptExpression::Error->new("BOTH profileFile and scaling factor file are required.")->throw();
   }
 
   $self->{profileSetDescription} = $self->getProfileSetName();
