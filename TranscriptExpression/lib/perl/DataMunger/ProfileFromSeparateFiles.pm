@@ -90,6 +90,7 @@ sub readDataHash {
     }
 
     while(my $line = <FILE>) {
+      next if ($line =~ /^\W*$/);
       chomp $line;
       my ($uId, @rest) = split(/\t/, $line);
 
