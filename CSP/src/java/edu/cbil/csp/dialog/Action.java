@@ -7,11 +7,13 @@
 
 package edu.cbil.csp.dialog;
 
-import edu.cbil.csp.*;
+import java.net.URLEncoder;
 
-import java.net.*;
+import org.apache.oro.text.perl.Perl5Util;
 
-import com.oroinc.text.perl.*;
+import edu.cbil.csp.AH;
+import edu.cbil.csp.HTMLUtil;
+import edu.cbil.csp.StringTemplate;
 
 /**
  * Action.java
