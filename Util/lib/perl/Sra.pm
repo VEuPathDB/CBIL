@@ -30,7 +30,7 @@ sub getFastqForSampleIds {
       print STDERR "ERROR: already retrieved '$a->[1]' .. skipping\n";
       next;
     }
-    push(@out,"$a->[0]:$a->[1]:$a->[2]:".($a->[2] ? $a->[3] / $a->[2] : 'undef'));
+    push(@out,"$a->[0]:$a->[1]:$a->[2]:".($a->[2] ? $a->[3] / $a->[2] : 'undef').":$a->[4]");
     $readCount += $a->[2];
     my $id = $a->[1];
     $done{$id} = 1;
@@ -115,6 +115,7 @@ m|<Count>(\d+)</Count>.*<QueryKey>(\d+)</QueryKey>.*<WebEnv>(\S+)</WebEnv>|s;
  my @ids;
  my @expPa;
  my $ep = $root->{'EXPERIMENT_PACKAGE'};
+
  if(ref($ep) eq 'ARRAY'){
    foreach my $a (@{$ep}){
      push(@expPa,$a);
@@ -142,12 +143,15 @@ m|<Count>(\d+)</Count>.*<QueryKey>(\d+)</QueryKey>.*<WebEnv>(\S+)</WebEnv>|s;
    foreach my $rs (@runsets){
      if(ref($rs->{RUN}) eq 'ARRAY'){
        foreach my $r (@{$rs->{RUN}}){
-         push(@ids, [join(",",keys%sids),$r->{accession},$r->{total_spots},$r->{total_bases}]);
+         push(@ids, [join(",",keys%sids),$r->{accession},$r->{total_spots},$r->{total_bases},($e->{EXPERIMENT}->{DESIGN}->{LIBRARY_DESCRIPTOR}->{LIBRARY_LAYOUT}->{PAIRED}) ? "PAIRED" : "SINGLE"]);
        }
      }else{
-       push(@ids, [join(",",keys%sids),$rs->{RUN}->{accession},$rs->{RUN}->{total_spots},$rs->{RUN}->{total_bases}]);
+       push(@ids, [join(",",keys%sids),$rs->{RUN}->{accession},$rs->{RUN}->{total_spots},$rs->{RUN}->{total_bases},($e->{EXPERIMENT}->{DESIGN}->{LIBRARY_DESCRIPTOR}->{LIBRARY_LAYOUT}->{PAIRED}) ? "PAIRED" : "SINGLE" ]);
      }
    }
+
+   #($e->{EXPERIMENT}->{DESIGN}->{LIBRARY_DESCRIPTOR}->{LIBRARY_LAYOUT}->{SINGLE}) ? print STDERR "ssingle\n" : print STDERR "ppaired\n";
+
  }
  return @ids;
 }
