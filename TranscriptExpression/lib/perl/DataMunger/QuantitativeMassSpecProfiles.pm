@@ -15,7 +15,7 @@ sub new {
                         'inputFile'
                        ];
 
-  $args->{outputFile} = '.';
+  $args->{outputFile} = $args->{inputFile};
   $args->{samples} = 'PLACEHOLDER';
 
   my $self = $class->SUPER::new($args, $requiredParams);
@@ -29,7 +29,7 @@ sub new {
 sub munge {
   my ($self) = @_;
 
-  my $outputFile = $self->getInputFile();
+  my $outputFile = $self->getOutputFile();
 
   my $makePercentiles = $self->getMakePercentiles;
 
