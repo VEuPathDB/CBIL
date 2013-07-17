@@ -26,7 +26,8 @@ sub new {
   chomp($header);
   my $samples = [];
   push(@$samples , split('\t',$header));
-
+  shift(@$samples);
+  close(FILE);
   $args->{samples} = $samples;
   
 
@@ -62,13 +63,28 @@ if($makePercentiles) {
 
 
     dat = read.table("$outputFile", header=$header, sep="\\t", check.names=FALSE);
+	print(dat[,-1]);
     dat.samples = list();
 	$samples
     res = list(id=NULL, data=NULL);
     res\$id = as.vector(dat[,1]);
+
     groupNames = row.names(summary(dat.samples));
-		
-    dat\$percentile = percentileMatrix(m=dat);
+	
+	for(i in 1:length(groupNames)) {
+    sampleGroupName = groupNames[i];
+
+    samples = as.vector(dat.samples[sampleGroupName]);
+	
+	groupMatrix=makeGroupMatrix(v=samples, df=dat)
+
+    res\$data = cbind(res\$data, groupMatrix);
+  }
+
+	
+	
+    dat\$percentile = percentileMatrix(m=res\$data);
+	groupNames[1] = paste("ID\t", groupNames[1], sep="");
 	colnames(dat\$percentile) = groupNames;
     write.table(dat\$percentile, file="$pctOutputFile",quote=F,sep="\\t", row.names=res\$id);
 }
