@@ -5,6 +5,8 @@ use strict;
 
 use CBIL::TranscriptExpression::Error;
 
+use Data::Dumper;
+
 use File::Temp qw/ tempfile /;
 
 sub new {
@@ -16,7 +18,18 @@ sub new {
                        ];
 
   $args->{outputFile} = $args->{inputFile};
-  $args->{samples} = 'PLACEHOLDER';
+  
+  my $output = $args->{outputFile};
+  
+  open(FILE, "<$output");
+  my $header = <FILE>;
+  chomp($header);
+  my $samples = [];
+  push(@$samples , split('\t',$header));
+
+  $args->{samples} = $samples;
+  
+
 
   my $self = $class->SUPER::new($args, $requiredParams);
 
@@ -39,6 +52,8 @@ sub munge {
 
   my $header = 'TRUE';
 
+  my $samples = $self->makeSamplesRString();
+  
   my $rString = <<RString;
 
 source("$ENV{GUS_HOME}/lib/R/TranscriptExpression/profile_functions.R");
@@ -46,15 +61,16 @@ source("$ENV{GUS_HOME}/lib/R/TranscriptExpression/profile_functions.R");
 if($makePercentiles) {
 
 
-    dat = read.table("$outputFile", header=$header, sep="\\t", check.names=FALSE, row.names=1);
+    dat = read.table("$outputFile", header=$header, sep="\\t", check.names=FALSE);
     dat.samples = list();
+	$samples
     res = list(id=NULL, data=NULL);
     res\$id = as.vector(dat[,1]);
-    groupNames = row.names(dat);
-    groupNames = paste("ID\t", groupNames, sep="");
-    
+    groupNames = row.names(summary(dat.samples));
+		
     dat\$percentile = percentileMatrix(m=dat);
-    write.table(dat\$percentile, file="$pctOutputFile",quote=F,sep="\\t", row.names=groupNames);
+	colnames(dat\$percentile) = groupNames;
+    write.table(dat\$percentile, file="$pctOutputFile",quote=F,sep="\\t", row.names=res\$id);
 }
 
 quit("no");
