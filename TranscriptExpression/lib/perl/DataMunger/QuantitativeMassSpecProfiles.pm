@@ -79,7 +79,6 @@ if($makePercentiles) {
 
     reorderedSamples = reorderAndGetColCentralVal(pl=dat.samples, df=dat);
 
-    write.table(reorderedSamples\$data, file="$outputFile",quote=F,sep="\\t",row.names=reorderedSamples\$id);
     reorderedSamples\$percentile = percentileMatrix(m=reorderedSamples\$data);
     write.table(reorderedSamples\$percentile, file="$pctOutputFile",quote=F,sep="\\t",row.names=reorderedSamples\$id);
 }
