@@ -7,8 +7,6 @@ use CBIL::TranscriptExpression::Error;
 
 use Data::Dumper;
 
-use List::MoreUtils qw(uniq);
-
 use File::Temp qw/ tempfile /;
 
 sub new {
@@ -25,17 +23,19 @@ sub new {
   
   open(FILE, "<$output");
   my $header = <FILE>;
-  print STDERR $header;
   chomp($header);
   my $samples = [];
   push(@$samples , split('\t',$header));
   shift(@$samples);
   close(FILE);
-  unless (scalar @$samples == scalar(uniq @$samples)){
-    die "sample names must be unique, average samples with the profiles step class before calling this step class";
+
+  my @uniq= ();
+  my %seen = ( );
+  foreach my $item (@$samples) {
+    push(@uniq, $item) unless $seen{$item}++;
   }
-  else {
-    print STDERR Dumper(uniq(@$samples));
+  unless (scalar @$samples == scalar(@uniq)){
+    die "sample names must be unique, average samples with the profiles step class before calling this step class";
   }
   $args->{samples} = $samples;
 
