@@ -28,8 +28,17 @@ sub new {
   push(@$samples , split('\t',$header));
   shift(@$samples);
   close(FILE);
+
+  my @uniq= ();
+  my %seen = ( );
+  foreach my $item (@$samples) {
+    push(@uniq, $item) unless $seen{$item}++;
+  }
+  unless (scalar @$samples == scalar(@uniq)){
+    die "sample names must be unique, average samples with the profiles step class before calling this step class";
+  }
   $args->{samples} = $samples;
-  
+
 
 
   my $self = $class->SUPER::new($args, $requiredParams);
@@ -43,6 +52,7 @@ sub new {
 sub munge {
   my ($self) = @_;
 
+  my $inputFile = $self->getOutputFile();
   my $outputFile = $self->getOutputFile();
 
   my $makePercentiles = $self->getMakePercentiles;
@@ -54,6 +64,7 @@ sub munge {
   my $header = 'TRUE';
 
   my $samples = $self->makeSamplesRString();
+
   
   my $rString = <<RString;
 
@@ -61,32 +72,15 @@ source("$ENV{GUS_HOME}/lib/R/TranscriptExpression/profile_functions.R");
 
 if($makePercentiles) {
 
+    dat = read.delim("$outputFile", header=$header, sep="\\t", check.names=FALSE);
 
-    dat = read.table("$outputFile", header=$header, sep="\\t", check.names=FALSE);
-	print(dat[,-1]);
-    dat.samples = list();
+   dat.samples = list();
 	$samples
-    res = list(id=NULL, data=NULL);
-    res\$id = as.vector(dat[,1]);
 
-    groupNames = row.names(summary(dat.samples));
-	
-	for(i in 1:length(groupNames)) {
-    sampleGroupName = groupNames[i];
+    reorderedSamples = reorderAndGetColCentralVal(pl=dat.samples, df=dat);
 
-    samples = as.vector(dat.samples[sampleGroupName]);
-	
-	groupMatrix=makeGroupMatrix(v=samples, df=dat)
-
-    res\$data = cbind(res\$data, groupMatrix);
-  }
-
-	
-	
-    dat\$percentile = percentileMatrix(m=res\$data);
-	groupNames[1] = paste("ID\t", groupNames[1], sep="");
-	colnames(dat\$percentile) = groupNames;
-    write.table(dat\$percentile, file="$pctOutputFile",quote=F,sep="\\t", row.names=res\$id);
+    reorderedSamples\$percentile = percentileMatrix(m=reorderedSamples\$data);
+    write.table(reorderedSamples\$percentile, file="$pctOutputFile",quote=F,sep="\\t",row.names=reorderedSamples\$id);
 }
 
 quit("no");
