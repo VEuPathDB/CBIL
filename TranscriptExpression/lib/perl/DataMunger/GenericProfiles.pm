@@ -1,4 +1,4 @@
-package CBIL::TranscriptExpression::DataMunger::QuantitativeMassSpecProfiles;
+package CBIL::TranscriptExpression::DataMunger::GenericProfiles;
 use base qw(CBIL::TranscriptExpression::DataMunger::Profiles);
 
 use strict;
@@ -21,6 +21,10 @@ sub new {
   
   my $output = $args->{outputFile};
   
+  unless ($args->{isLogged}) {
+    $args->{isLogged} = 0;
+  }
+
   open(FILE, "<$output");
   my $header = <FILE>;
   chomp($header);
