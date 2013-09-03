@@ -25,24 +25,25 @@ sub new {
     $args->{isLogged} = 0;
   }
 
-  open(FILE, "<$output");
+  my $mainDirectory = $args->{mainDirectory};
+
+  open(FILE, "$mainDirectory/$output") || die "Cannot open file $output for reading $!";
   my $header = <FILE>;
   chomp($header);
-  my $samples = [];
-  push(@$samples , split('\t',$header));
-  shift(@$samples);
+  my @samples = split('\t',$header);
+
+  shift(@samples);
   close(FILE);
 
   my @uniq= ();
   my %seen = ( );
-  foreach my $item (@$samples) {
+  foreach my $item (@samples) {
     push(@uniq, $item) unless $seen{$item}++;
   }
-  unless (scalar @$samples == scalar(@uniq)){
+  unless (scalar @samples == scalar(@uniq)){
     die "sample names must be unique, average samples with the profiles step class before calling this step class";
   }
-  $args->{samples} = $samples;
-
+  $args->{samples} = \@samples;
 
 
   my $self = $class->SUPER::new($args, $requiredParams);
