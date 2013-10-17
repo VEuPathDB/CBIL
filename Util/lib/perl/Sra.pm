@@ -19,7 +19,7 @@ sub getFastqForSampleIds {
   }
   my @out;
   my $readCount = 0;
-  my $fid = $rids[0]->[0];
+  my $fid = $rids[0]->[1];
   my $singleEnd = 0;
   my $doubleEnd = 0;
   my %tsid;
