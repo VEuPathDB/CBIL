@@ -32,7 +32,9 @@
                                             CBIL/TranscriptExpression-Installation,
                                             CBIL/ObjectMapper-Installation" >
 
-    <ant target="defaultProjectInstall"/>
+    <ant target="defaultProjectInstall">
+      <property name="project" value="CBIL"/> 
+    </ant>
 
   </target>  
    
@@ -125,5 +127,4 @@
 
 
 </project>
-
 
