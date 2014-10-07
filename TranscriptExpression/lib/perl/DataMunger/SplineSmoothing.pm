@@ -1,5 +1,5 @@
 package CBIL::TranscriptExpression::DataMunger::SplineSmoothing;
-use base qw(CBIL::TranscriptExpression::DataMunger);
+use base qw(CBIL::TranscriptExpression::DataMunger::Profiles);
 
 use strict;
 
@@ -12,21 +12,17 @@ use CBIL::TranscriptExpression::Error;
 sub getInterpolationN { $_[0]->{interpolation_n} }
 sub setInterpolationN { $_[0]->{interpolation_n} = $_[1] }
 
+sub getSplineDF       { $_[0]->{degrees_of_freedom} }
+sub setSplineDF       { $_[0]->{degrees_of_freedom} = $_[1] }
+
 #-------------------------------------------------------------------------------
 
 sub new {
   my ($class, $args) = @_;
 
-  my $requiredParams = ['inputFile',
-                        'outputFile',
-                        ];
+  $args->{samples} = 'PLACEHOLDER';
 
-  my $self = $class->SUPER::new($args, $requiredParams);
-
-  my $inputFile = $args->{inputFile};
-  unless(-e $inputFile) {
-    CBIL::TranscriptExpression::Error->new("input file $inputFile does not exist")->throw();
-  }
+  my $self = $class->SUPER::new($args);
 
   return $self;
 }
@@ -37,22 +33,70 @@ sub new {
 sub munge {
   my ($self) = @_;
 
-  my $rFile = $self->writeRFile();
+  my ($splinesFile, $interpFile, $rFile) = $self->writeRFile();
 
-  $self->runR($rFile);
+  my $splineSamples = $self->readFileHeaderAsSamples($splinesFile);
 
-  unlink($rFile);
+  $self->setSamples($splineSamples);
+  $self->setInputFile($splinesFile);
+
+  $self->SUPER::munge();
+
+  my $interpN = $self->getInterpolationN();
+  if(defined $interpN) {
+    my $interpSamples = $self->readFileHeaderAsSamples($interpFile);
+
+    $self->setSamples($interpSamples);
+    $self->setInputFile($interpFile);
+
+    my $profileSetName = $self->getProfileSetName() . " - Interpolated";
+    $self->setProfileSetName($profileSetName);
+
+    my $outputFile = $self->getOutputFile() . "_" . $interpN;
+    $self->setOutputFile($outputFile);
+
+    $self->SUPER::munge();
+
+    unlink($interpFile);
+  }
+
+  unlink($rFile, $splinesFile);
 }
 
 #-------------------------------------------------------------------------------
 
+sub readFileHeaderAsSamples {
+  my ($self, $fn) = @_;
+
+  open(FILE, $fn) or die "Cannot open file $fn for reading: $!";
+
+  my $header = <FILE>;
+  chomp $header;
+  close FILE;
+
+  my @vals = split(/\t/, $header);
+  
+  # remove the row header column;
+  shift @vals;
+
+  return \@vals;
+}
+
+
+#-------------------------------------------------------------------------------
+
+
 sub writeRFile {
   my ($self) = @_;
 
-  my $inputFile = $self->getInputFile();
-  my $outputFile = $self->getOutputFile();
-  my $interpN = $self->getInterpolationN();
+  my ($outputFh, $outputFile) = tempfile();
 
+  my $inputFile = $self->getInputFile();
+  my $interpN = $self->getInterpolationN();
+  my $df = $self->getSplineDF();
+
+  my $dfString = ", df=$df";
+  $df = defined($df) ? $dfString : "";
 
   my $doInterp = 'FALSE';
   my $interpFile;
@@ -93,13 +137,31 @@ interpolatedSplines = vector();
 
 predictX = round(approx(xCoords, n=$interpN)\$y, 1);
 
-for(i in 1:nrow(newDat)) {
-  spline = smooth.spline(xCoords, newDat[i,]);
-  splines = rbind(splines, spline\$y);
 
-  if($doInterp) {
-    interpolatedSplines = rbind(interpolatedSplines, predict(spline, predictX)\$y);
+for(i in 1:nrow(newDat)) {
+#Case 1 - all values are NA : 
+#Case 2 - no values are NA :
+#Case 3 - one or more values are NA, but not all :
+  if (sum(is.na(newDat[i,])) == length(newDat[i,]))  {
+    splines = rbind(splines, newDat[i,]);
   }
+  else if(sum(is.na(newDat[i,])) == 0 ) {
+    spline = smooth.spline(xCoords, newDat[i,]$df);
+    splines = rbind(splines, spline\$y);
+  }
+  else {
+    approxY =approx(newDat[i,], n=length(newDat[i,]))\$y;
+    spline = smooth.spline(xCoords, approxY$df);
+    splines = rbind(splines, spline\$y);
+  }
+  if($doInterp) {
+    if (sum(is.na(newDat[i,])) == length(newDat[i,] )) {
+      interpolatedSplines = rbind(interpolatedSplines, (predictX * NA));
+    }
+    else {
+      interpolatedSplines = rbind(interpolatedSplines, predict(spline, predictX)\$y);
+     }
+   }
 }
 
 colnames(splines) = as.character(newHeader);
@@ -109,10 +171,10 @@ colnames(splines)[1] = paste("ID\t", colnames(splines)[1], sep="");
 colnames(interpolatedSplines)[1] = paste("ID\t", colnames(interpolatedSplines)[1], sep="");
 
 
-write.table(splines, file="$outputFile",quote=FALSE,sep="\\t", row.names=ids);
+write.table(splines, file="$outputFile", quote=FALSE,sep="\\t", row.names=ids);
 
 if($doInterp) {
-  write.table(interpolatedSplines, file="$interpFile",quote=FALSE,sep="\\t", row.names=ids);
+  write.table(interpolatedSplines, file="$interpFile", quote=FALSE, sep="\\t", row.names=ids);
 }
 
 RString
@@ -122,6 +184,9 @@ RString
 
   close $fh;
 
-  return $file;
+
+  $self->runR($file);
+
+  return $outputFile, $interpFile, $file;
 }
 1;

@@ -42,6 +42,7 @@ my $TIME_SERIES_CONFIG_FILE_NAME = "time_series_stats_config.txt";
  sub setPercentileSetPrefix      { $_[0]->{percentileSetPrefix} = $_[1]}
 
  sub getProfileSetName          { $_[0]->{profileSetName} }
+ sub setProfileSetName          { $_[0]->{profileSetName} = $_[1]}
  sub getProfileSetDescription   { $_[0]->{profileSetDescription} }
 
  sub getSourceIdType            { $_[0]->{sourceIdType} }
@@ -58,19 +59,32 @@ my $TIME_SERIES_CONFIG_FILE_NAME = "time_series_stats_config.txt";
 
 
 sub new {
-  my ($class, $args) = @_;
+  my ($class, $args, $subclassRequiredParams) = @_;
   my $sourceIdTypeDefault = 'gene';
-  my $requiredParams = ['inputFile',
-                        'outputFile',
-                        'samples',
-                        ];
+  my %requiredParams = ('inputFile', undef,
+                        'outputFile', undef,
+                        'samples', undef,
+                        );
+
+  if($subclassRequiredParams) {
+    foreach(@$subclassRequiredParams) {
+      $requiredParams{$_}++;
+    }
+  }
+
+  my @requiredParams = keys %requiredParams;
+
+
   unless($args->{doNotLoad}) {
-    push @$requiredParams, 'profileSetName';
+    push @requiredParams, 'profileSetName';
     unless ($args->{sourceIdType}) {
       $args->{sourceIdType} = $sourceIdTypeDefault;
     }
     my $sourceIdType = $args->{sourceIdType};
     my $profileSetName = $args->{profileSetName};
+    if ($profileSetName=~m/,/) {
+      CBIL::TranscriptExpression::Error->new("The Profile Set Name  - $profileSetName - Contains the invalid character (,).\n Please replace the invalid character.")->throw();
+    }
     if (!defined $args->{loadProfileElement}) {
       $args->{loadProfileElement} = $LOAD_PROFILE_ELEMENT;
     }
@@ -82,7 +96,7 @@ sub new {
   if ($args->{isTimeSeries} && $args->{hasRedGreenFiles} && !$args->{percentileChannel}) {
     CBIL::TranscriptExpression::Error->new("Must specify percentileChannel for two channel time series experiments")->throw();
   }
-  my $self = $class->SUPER::new($args, $requiredParams);
+  my $self = $class->SUPER::new($args, \@requiredParams);
 
   my $inputFile = $args->{inputFile};
 

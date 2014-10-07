@@ -30,7 +30,7 @@ sub new {
             {
               my $conditionBName = $groupNames[$j];
               my $analysisName = $self->generateAnalysisName($conditionAName,$conditionBName);
-              my $outputFile = $self->generateOutputFile($conditionAName,$conditionBName);
+              my $outputFile = $self->generateOutputFile($conditionAName,$conditionBName, "PageOutput");
               my $aRef = $self->filterConditions($conditionAName);
               my $bRef = $self->filterConditions($conditionBName);
               my $avb = [@$bRef,@$aRef];
@@ -38,6 +38,9 @@ sub new {
               $clone->setConditions($avb);
               $clone->setOutputFile($outputFile);
               $clone->setAnalysisName($analysisName);
+
+              my $profileElementsString = $conditionAName . ";" . $conditionBName;
+              $clone->setProfileElementsAsString($profileElementsString);
               $clone->SUPER::munge();
             }
           }

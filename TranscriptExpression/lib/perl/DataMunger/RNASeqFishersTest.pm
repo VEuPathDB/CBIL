@@ -1,5 +1,5 @@
 package CBIL::TranscriptExpression::DataMunger::RNASeqFishersTest;
-use base qw(CBIL::TranscriptExpression::DataMunger::RadAnalysis);
+use base qw(CBIL::TranscriptExpression::DataMunger::RadAnalysis Exporter);
 
 use strict;
 
@@ -7,12 +7,16 @@ use CBIL::TranscriptExpression::Error;
 
 use File::Temp qw/ tempfile /;
 
+use Exporter;
+
 my $MIN_DEPTH = 0;
 my $MIN_MAX = 'min';
 
 my $PROTOCOL_NAME = 'Fishers Test - RUM Output';
 my $PROTOCOL_TYPE = 'unknown_protocol_type';
-my $CONFIG_FILE = 'analysis_result_config.txt';
+
+our @EXPORT = qw ( $CONFIG_FILE );
+our $CONFIG_FILE = 'analysis_result_config.txt';
 
 
 #-------------------------------------------------------------------------------
@@ -71,9 +75,6 @@ sub new {
   }
 
   my $isPairedEnd = $self->getIsPairedEnd();
-  unless($isPairedEnd eq 'yes' || $isPairedEnd eq 'no') {
-    CBIL::TranscriptExpression::Error->new("isPairedEnd param must equal [yes] or [no]")->throw();
-  }
 
   unless($self->getDoNotLoad()) {
     $self->setProtocolName($PROTOCOL_NAME);
@@ -102,9 +103,9 @@ sub findNumMappersFromMappingStatsFile {
   my $value = 0;
 
   while (my $line=<$fh>) {
-    if (($line =~ /^TOTAL/) && $isPairedEnd eq 'yes'){ 
+    if (($line =~ /^TOTAL/) && $isPairedEnd ){ 
       $startRead = 1;
-    } elsif (($line =~ /^TOTAL:\s+(\S+)\s+\(/) && ($isPairedEnd eq 'no')){
+    } elsif (($line =~ /^TOTAL:\s+(\S+)\s+\(/) && (!$isPairedEnd)){
       $value = $1;
       last;
     }
@@ -172,7 +173,7 @@ for (i in 1:nrow(data)) {
       p[i]<-fisher.test(m(data[i,1],data[i,2],n1,n2),alternative="less")\$p
    }	
 }
-write.table(p, file=outputFile, col.names=F, row.names=F, sep="\t", eol="\n", quote=F)
+write.table(p, file=outputFile, col.names=F, row.names=F, sep="\\t", eol="\n", quote=F)
 quit("no");
 RString
 
@@ -205,6 +206,7 @@ sub munge {
   }
 
   my $countsFile1 = $self->getCountsFile1();
+
   my $countsFile2 = $self->getCountsFile2();
 
   my $data1 = $self->readCountsFile($countsFile1);
