@@ -28,7 +28,7 @@ import edu.cbil.csp.StringTemplate;
  * @author Angel Pizarro
  * @version $Revision$ $Date$ $Author$
  */
-public class RadioTableParam extends Param {
+public class RadioTableParam extends Param<String> {
     
   /**
    * The set of values allowed by the enumeration.
@@ -61,7 +61,7 @@ public class RadioTableParam extends Param {
    * Hashtable that maps values to their labels.  Only used if labels
    * and values are different.
    */
-  protected Hashtable value2label;
+  protected Hashtable<String, String> value2label;
   
   /**
    * Constructor that accepts an initial value.
@@ -84,7 +84,7 @@ public class RadioTableParam extends Param {
   protected RadioTableParam(String name, String descr, String help,
                       StringTemplate st, StringTemplate ht, String prompt,
                       String values[], String labels[], String defs[], String initial, 
-                      boolean optional, Hashtable value2label)
+                      boolean optional, Hashtable<String, String> value2label)
   {
     super(name, descr, help, st, ht, prompt, optional);
     this.n_values = values.length;
@@ -109,7 +109,7 @@ public class RadioTableParam extends Param {
     this.initial = initial;
     
     if ((labels != null) && (values != null) && (labels != values) && (value2label == null)) {
-      this.value2label = new Hashtable();
+      this.value2label = new Hashtable<>();
       for (int i = 0;i < n_values;i++) {
 	    this.value2label.put(this.values[i], this.labels[i]);
       }
@@ -179,11 +179,13 @@ public class RadioTableParam extends Param {
   // Item
   // -----------
   
+  @Override
   public String[] getSampleValues() { 
     return null; 
   }
 
-  public Item copy(String url_subs) {
+  @Override
+  public Item<String> copy(String url_subs) {
     RadioTableParam ep = new RadioTableParam(name, descr, help, template, help_template, 
                                              prompt, values, labels, defs, initial, optional,
                                              value2label);
@@ -191,8 +193,9 @@ public class RadioTableParam extends Param {
     return ep;
   }
   
+  @Override
   public boolean validateHTMLServletInput(HttpServletRequest rq, StringBuffer errors,
-                                          Hashtable inputH, Hashtable inputHTML) 
+                                          Hashtable<String,Object> inputH, Hashtable<String,String> inputHTML) 
   {
     String input = rq.getParameter(this.name);
     
@@ -218,6 +221,7 @@ public class RadioTableParam extends Param {
     return false;
   }
 
+  @Override
   public StringTemplate getDefaultTemplate() {
     String ps[] = StringTemplate.HTMLParams(3);
     return new StringTemplate(HTMLUtil.TR
@@ -233,6 +237,7 @@ public class RadioTableParam extends Param {
                                 HTMLUtil.DIV(new AH(new String[] {"align", "center"}), ps[2]))) + "\n", ps);
   }
   
+  @Override
   public String[] getHTMLParams(String help_url) {
     String anchor = makeHTMLAnchor(false);
     String link = makeHTMLLink(true, help_url, "Help!");
@@ -266,7 +271,8 @@ public class RadioTableParam extends Param {
     return new String[] {anchor + prompt, result.toString(), link};
   }
   
-  public Param copyParam(String new_name) {
+  @Override
+  public Param<String> copyParam(String new_name) {
     RadioTableParam ep = new RadioTableParam(new_name, descr, help, template, help_template, 
                                              prompt, values, labels, defs, initial, optional,
                                              value2label);
@@ -282,7 +288,7 @@ public class RadioTableParam extends Param {
    */
   public String valueToLabel(String label) {
     if (this.value2label == null) return label;
-    return (String)(this.value2label.get(label));
+    return this.value2label.get(label);
   }
   
 } // RadioTableParam

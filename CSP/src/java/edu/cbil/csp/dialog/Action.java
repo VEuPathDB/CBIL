@@ -7,6 +7,7 @@
 
 package edu.cbil.csp.dialog;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
 import org.apache.oro.text.perl.Perl5Util;
@@ -29,7 +30,7 @@ import edu.cbil.csp.StringTemplate;
  *
  * @author Jonathan Crabtree
 */
-public class Action extends Item implements ActionHandler {
+public class Action extends Item<String> implements ActionHandler {
     
     // HTML-specific parameters
 
@@ -112,7 +113,8 @@ public class Action extends Item implements ActionHandler {
      */
     protected static Perl5Util perl = new Perl5Util();
 
-    public Item copy(String url_substitution) {
+    @Override
+    public Item<String> copy(String url_substitution) {
       String new_url = (url == null) ? null : perl.substitute(url_substitution, url);
       return new Action(name, descr, help, template, help_template, type, value, new_url);
     }
@@ -121,6 +123,7 @@ public class Action extends Item implements ActionHandler {
     // ActionHandler
     // --------------
 
+    @Override
     public boolean handleAction(String action) {
 	return true;
     }
@@ -129,11 +132,13 @@ public class Action extends Item implements ActionHandler {
     // Item
     // --------
 
+    @Override
     public StringTemplate getDefaultTemplate() { 
 	String ps[] = StringTemplate.HTMLParams(1);
 	return new StringTemplate(ps[0] + "&nbsp;&nbsp", ps);
     }
 
+    @Override
     public String[] getHTMLParams(String help_url) {
 
 	// Hyperlink/GET version - does not support "reset"
@@ -141,8 +146,8 @@ public class Action extends Item implements ActionHandler {
 	if ((url != null) && (!type.equals("reset")))
 	    return new String[] {
 	    HTMLUtil.A(new AH(new String[] {"href", url + "&" +
-						URLEncoder.encode(name) + "=" + 
-						URLEncoder.encode(value)}), 
+						encodeUtf8(name) + "=" + 
+						encodeUtf8(value)}), 
 		       "[" + value + "]")
 		};
 	else {
@@ -157,4 +162,13 @@ public class Action extends Item implements ActionHandler {
 	}
     }
     
-} // Action
+    private static String encodeUtf8(String s) {
+      try { return URLEncoder.encode(s, "UTF-8"); }
+      catch (UnsupportedEncodingException e) { throw new RuntimeException(e); }
+    }
+
+    @Override
+    protected String convertToNativeType(String parameter) {
+      return parameter;
+    }
+}

@@ -90,7 +90,8 @@ public class Dialog extends ItemGroup {
     // Item
     // -------------------
 
-    public Item copy(String url_subs) {
+    @Override
+    public Item<Object> copy(String url_subs) {
       Dialog result = new Dialog(purpose, cgi_url, cgi_method, hiddenParams, template, help_template);
       copyItems(this, result, url_subs);
       return result;
@@ -103,17 +104,17 @@ public class Dialog extends ItemGroup {
     /**
      * Formatting constant.
      */
-    protected static AH fullwidth = new AH(new String[] {"width", "100%"});
     protected static AH fullwidthTable = new AH(new String[] {"width", "100%", 
 							      "cellspacing", "2", 
 							      "cellpadding", "1"});
     protected static AH fullwidth_debug = new AH(new String[] {"width", "100%", "border", "1"});
 
+    @Override
     public String[] getHTMLParams(String help_url) {
 	StringBuffer itemText = new StringBuffer();
 	int n_items = items.size();
 	for (int i = 0;i < n_items;i++) {
-	    Item di = (Item)items.elementAt(i);
+	    Item<?> di = items.elementAt(i);
 	    itemText.append(di.makeHTML(help_url));
 	    itemText.append("\n");
 	}
@@ -130,6 +131,7 @@ public class Dialog extends ItemGroup {
 	return new String[] {hiddenText.toString(), itemText.toString()};
     }
 
+    @Override
     public StringTemplate getDefaultTemplate() {
 	String ps[] = StringTemplate.HTMLParams(2);
 
@@ -142,6 +144,7 @@ public class Dialog extends ItemGroup {
 				   ps[0] + HTMLUtil.TABLE(fullwidth_debug, ps[1])) + "\n", ps);
     }
 
+    @Override
     public StringTemplate getDefaultHelpTemplate() {
 	String ps[] = StringTemplate.HTMLParams(3);
 	return new StringTemplate(ps[0] +
@@ -161,6 +164,7 @@ public class Dialog extends ItemGroup {
 				   ps[2]) + "\n", ps);
     }
     
+    @Override
     public String[] getHTMLHelpParams(String form_url) {
 	StringBuffer space = new StringBuffer();
 	for (int i = 0;i < 40;i++) space.append(HTMLUtil.BR());

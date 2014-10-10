@@ -35,7 +35,7 @@ import edu.cbil.csp.StringTemplate;
  * @author Jonathan Crabtree
  * @version $Revision$ $Date$ $Author$
  */
-public class TreeEnumParam extends Param {
+public class TreeEnumParam extends Param<String> {
 
     /**
      * Controlled vocabulary this object represents.
@@ -45,7 +45,7 @@ public class TreeEnumParam extends Param {
     /**
      * Mapping from keys to names (descriptions).
      */
-    protected Hashtable keyToNameHash;
+    protected Hashtable<String,String> keyToNameHash;
 
     /**
      * How many rows to display in the select list.
@@ -64,7 +64,7 @@ public class TreeEnumParam extends Param {
 	super(name, descr, help, st, ht, prompt, optional);
 	this.vocab = vocab;
 	this.sizeHint = sizeHint;
-	this.keyToNameHash = new Hashtable();
+	this.keyToNameHash = new Hashtable<>();
 	updateKeyToNameHash(vocab, "", true);
     }
 
@@ -72,15 +72,18 @@ public class TreeEnumParam extends Param {
     // Item
     // --------------------------------------------
 
+    @Override
     public String[] getSampleValues() { return null; }
 
-    public Item copy(String url_subs) {
+    @Override
+    public Item<String> copy(String url_subs) {
 	return new TreeEnumParam(name, descr, help, template, help_template, 
 				 prompt, optional, sizeHint, vocab);
     }
 
+    @Override
     public boolean validateHTMLServletInput(HttpServletRequest rq, StringBuffer errors,
-					    Hashtable inputH, Hashtable inputHTML) 
+					    Hashtable<String,Object> inputH, Hashtable<String,String> inputHTML) 
     {
 	String input1 = rq.getParameter(this.name + "_hidden");
 	String input2 = rq.getParameter(this.name);
@@ -102,6 +105,7 @@ public class TreeEnumParam extends Param {
 	return true;
     }
 
+    @Override
     public StringTemplate getDefaultTemplate() {
 	String ps[] = StringTemplate.HTMLParams(3);
 	return new StringTemplate(HTMLUtil.TR
@@ -117,12 +121,13 @@ public class TreeEnumParam extends Param {
 				    HTMLUtil.DIV(new AH(new String[] {"align", "center"}), ps[2]))) + "\n", ps);
     }
 
+    @Override
     public String[] getHTMLParams(String helpURL) {
 	String anchor = makeHTMLAnchor(false);
 	String link = makeHTMLLink(true, helpURL, "Help!");
 
 	String size = Integer.toString(this.sizeHint);
-	StringBuffer result = new StringBuffer("\n");
+	//StringBuffer result = new StringBuffer("\n");
 
 	// Necessary for multiple-form pages
 	//
@@ -156,7 +161,8 @@ public class TreeEnumParam extends Param {
 	return new String[] {anchor + prompt, select, link};
     }
 
-    public Param copyParam(String newName) {
+    @Override
+    public Param<String> copyParam(String newName) {
 	return new TreeEnumParam(newName, descr, help, template, help_template, 
 				 prompt, optional, sizeHint, vocab);
     }

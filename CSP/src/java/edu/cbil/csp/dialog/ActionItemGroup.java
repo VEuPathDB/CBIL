@@ -30,12 +30,7 @@ public class ActionItemGroup extends ItemGroup {
     /**
      * The list of actions.
      */
-    protected Vector actions;
-
-    /**
-     * Background color of the element: a concession to customizability.
-     */
-    protected String bgcolor;
+    protected Vector<Action> actions;
 
     /**
      * Constructor.
@@ -54,7 +49,7 @@ public class ActionItemGroup extends ItemGroup {
 			   StringTemplate st, StringTemplate ht, String bgcolor) 
     {
 	super(name, descr, help, st, ht);
-	this.actions = new Vector();
+	this.actions = new Vector<>();
 	this.bgcolor = (bgcolor == null) ? "E0E0E0" : bgcolor;
     }
 
@@ -97,7 +92,7 @@ public class ActionItemGroup extends ItemGroup {
      * @return   The <code>Action</code> at the specified index.
      */
     public Action getActionAt(int in) {
-	return (Action)(actions.elementAt(in));
+	return actions.elementAt(in);
     }
 
     /**
@@ -117,7 +112,8 @@ public class ActionItemGroup extends ItemGroup {
     // Item
     // -------------------
 
-    public Item copy(String url_subs) {
+    @Override
+    public Item<Object> copy(String url_subs) {
 	ActionItemGroup result = new ActionItemGroup(name, descr, help, 
 						     template, help_template, bgcolor);
 	copyItems(this, result, url_subs);
@@ -125,6 +121,7 @@ public class ActionItemGroup extends ItemGroup {
 	return result;
     }
 
+    @Override
     public StringTemplate getDefaultTemplate() {
 	String ps[] = StringTemplate.HTMLParams(3);
 
@@ -143,6 +140,7 @@ public class ActionItemGroup extends ItemGroup {
 				     HTMLUtil.TABLE(ps[2]))), ps);
     }
 
+    @Override
     public String[] getHTMLParams(String help_url) {
 	String super_params[] = super.getHTMLParams(help_url);
 
@@ -150,7 +148,7 @@ public class ActionItemGroup extends ItemGroup {
 	int n_actions = actions.size();
 
 	for (int i = 0;i < n_actions;i++) {
-	    Action a = (Action)(actions.elementAt(i));
+	    Action a = actions.elementAt(i);
 	    action_str.append(a.makeHTML(help_url));
 	}
 

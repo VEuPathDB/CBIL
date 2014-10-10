@@ -28,12 +28,12 @@ import edu.cbil.csp.StringTemplate;
  *
  * @author Jonathan Crabtree
  */
-public class ItemGroup extends Item {
+public class ItemGroup extends Item<Object> {
 
     /**
      * The Items that belong to this item group.
      */
-    protected Vector items;
+    protected Vector<Item<?>> items;
 
     /**
      * Background color.
@@ -57,7 +57,7 @@ public class ItemGroup extends Item {
 		     StringTemplate st, StringTemplate ht, String bgcolor) 
     {
 	super(name, descr, help, st, ht);
-	this.items = new Vector();
+	this.items = new Vector<>();
 	this.bgcolor = (bgcolor == null) ? "E0E0E0" : bgcolor;
     }
 
@@ -83,23 +83,26 @@ public class ItemGroup extends Item {
     // Item
     // -------------------
 
-    public Item copy(String url_subs) {
+    @Override
+    public Item<Object> copy(String url_subs) {
 	ItemGroup result = new ItemGroup(name, descr, help, template, help_template);
 	copyItems(this, result, url_subs);
 	return result;
     }
 
+    @Override
     public void storeHTMLServletInput(HttpServletRequest rq) {
 	int n_items = items.size();
 
 	for (int i = 0;i < n_items;i++) {
-	    Item di = (Item)items.elementAt(i);
+	    Item<?> di = items.elementAt(i);
 	    di.storeHTMLServletInput(rq);
 	}	
     }
 
+    @Override
     public boolean validateHTMLServletInput(HttpServletRequest rq, StringBuffer errors,
-					    Hashtable inputH, Hashtable inputHTML) 
+					    Hashtable<String, Object> inputH, Hashtable<String, String> inputHTML) 
     {
 	boolean all_ok = true;
 
@@ -107,11 +110,10 @@ public class ItemGroup extends Item {
 	StringBuffer item_errors = new StringBuffer();
 
 	// Validate each element in turn
-	//
 	for (int i = 0;i < n_items;i++) {
-	    Item di = (Item)items.elementAt(i);
+	    Item<?> di = items.elementAt(i);
 	    StringBuffer error = new StringBuffer();
-	    if (di instanceof Param) error.append(HTMLUtil.B(((Param)di).prompt) + HTMLUtil.BR());
+	    if (di instanceof Param) error.append(HTMLUtil.B(((Param<?>)di).prompt) + HTMLUtil.BR());
 
 	    if (!di.validateHTMLServletInput(rq, error, inputH, inputHTML)) {
 		all_ok = false;
@@ -133,6 +135,7 @@ public class ItemGroup extends Item {
 	return all_ok;
     }
 
+    @Override
     public StringTemplate getDefaultTemplate() {
 	String ps[] = StringTemplate.HTMLParams(2);
 
@@ -153,13 +156,14 @@ public class ItemGroup extends Item {
 						   ps[1]))) + "\n", ps);
     }
 
+    @Override
     public String[] getHTMLParams(String help_url) {
 	StringBuffer itemtext = new StringBuffer();
 
 	int n_items = items.size();
 
 	for (int i = 0;i < n_items;i++) {
-	    Item di = (Item)items.elementAt(i);
+	    Item<?> di = items.elementAt(i);
 	    itemtext.append(di.makeHTML(help_url));
 	    itemtext.append("\n");
 	}
@@ -172,6 +176,7 @@ public class ItemGroup extends Item {
     protected static AH caption_ah = new AH(new String[] {"cellpadding", "2", "border", "0"});
     protected static AH debugtable = new AH(new String[] {"width", "100%", "border", "0"});
 
+    @Override
     public StringTemplate getDefaultHelpTemplate() {
 	String ps[] = StringTemplate.HTMLParams(2);
 	return new StringTemplate(HTMLUtil.TR
@@ -186,13 +191,14 @@ public class ItemGroup extends Item {
 				    (fullwidth, (ps[1])))), ps);
     }
 
+    @Override
     public String[] getHTMLHelpParams(String form_url) {
 	StringBuffer help = new StringBuffer();
 
 	int n_items = items.size();
 
 	for (int i = 0;i < n_items;i++) {
-	    Item di = (Item)items.elementAt(i);
+	    Item<?> di = items.elementAt(i);
 	    help.append(di.makeHTMLHelp(form_url));
 	    help.append("\n");
 	}
@@ -215,7 +221,7 @@ public class ItemGroup extends Item {
 	int n_items = from.numItems();
 	
 	for (int i = 0;i < n_items;i++) {
-	    Item item = from.getItemAt(i);
+	    Item<?> item = from.getItemAt(i);
 	    to.addItem(item.copy(url_subs));
 	}
     }
@@ -241,8 +247,8 @@ public class ItemGroup extends Item {
      * @param index  The 0-based index of the desired item.
      * @return       The Item stored at index <code>index</code>
      */
-    public Item getItemAt(int index) {
-	return (Item)(items.elementAt(index));
+    public Item<?> getItemAt(int index) {
+	return items.elementAt(index);
     }
 
     /**
@@ -253,7 +259,7 @@ public class ItemGroup extends Item {
      * @param index  The index at which to add the new item.
      * @return       A boolean indicating whether the operation succeeded.
      */
-    public boolean addItemAt(Item di, int index) {
+    public boolean addItemAt(Item<?> di, int index) {
 	items.insertElementAt(di, index);
 	return true;
     }
@@ -265,7 +271,7 @@ public class ItemGroup extends Item {
      * @param di     The item to add.
      * @return       A boolean indicating whether the operation succeeded.
      */
-    public boolean addItem(Item di) {
+    public boolean addItem(Item<?> di) {
 	items.addElement(di);
 	return true;
     }
@@ -278,7 +284,7 @@ public class ItemGroup extends Item {
      * @param di     The item to add.
      * @return       A boolean indicating whether the operation succeeded.
      */
-    public boolean addItemTo(ItemGroup ig, Item di) {
+    public boolean addItemTo(ItemGroup ig, Item<?> di) {
 	if (ig == this) {
 	    this.addItem(di);
 	    return true;
@@ -287,7 +293,7 @@ public class ItemGroup extends Item {
 	int n_items = items.size();
 
 	for (int i = 0;i < n_items;i++) {
-	    Item item = (Item)items.elementAt(i);
+	    Item<?> item = items.elementAt(i);
 	    if (item instanceof ItemGroup) {
 		ItemGroup grp = (ItemGroup)item;
 		if (grp.addItemTo(ig, di)) return true;
@@ -303,7 +309,7 @@ public class ItemGroup extends Item {
      * @param recurse  Whether to recursively search for the item.
      * @return         A boolean indicating whether the operation succeeded.
      */
-    public boolean removeItem(Item di, boolean recurse) {
+    public boolean removeItem(Item<?> di, boolean recurse) {
 
 	// First check if it's an immediate child of this group
 	//
@@ -315,7 +321,7 @@ public class ItemGroup extends Item {
 	    int n_items = items.size();
 
 	    for (int i = 0;i < n_items;i++) {
-		Item item = (Item)items.elementAt(i);
+		Item<?> item = items.elementAt(i);
 		if (item instanceof ItemGroup) {
 		    ItemGroup ig = (ItemGroup)item;
 		    if (ig.removeItem(di, true)) return true;
@@ -357,7 +363,7 @@ public class ItemGroup extends Item {
 	int n_removed = 0;
 
 	for (int i = 0;i < n_items; i++) {
-	    Item di = (Item)items.elementAt(i);
+	    Item<?> di = items.elementAt(i);
 	    if (perl.match(pattern, di.name)) {
 		items.removeElementAt(i);
 		if (!remove_all) return 1;
@@ -367,7 +373,7 @@ public class ItemGroup extends Item {
 
 	if (recurse) {
 	    for (int i = 0;i < n_items;i++) {
-		Item di = (Item)items.elementAt(i);
+		Item<?> di = items.elementAt(i);
 		if (di instanceof ItemGroup) {
 		    ItemGroup ig = (ItemGroup)di;
 		    n_removed += (ig.removeItemByName(name, true, remove_all));
@@ -386,11 +392,11 @@ public class ItemGroup extends Item {
      * @param recurse   Whether to recursively search for the item.
      * @return          A boolean indicating whether the operation succeeded.
      */
-    public boolean replaceItemByName(String name, Item new_item, boolean recurse) {
+    public boolean replaceItemByName(String name, Item<?> new_item, boolean recurse) {
 	int n_items = items.size();
 
 	for (int i = 0;i < n_items;i++) {
-	    Item di = (Item)items.elementAt(i);
+	    Item<?> di = items.elementAt(i);
 	    if (di.name.equals(name)) {
 		items.setElementAt(new_item, i);
 		return true;
@@ -399,7 +405,7 @@ public class ItemGroup extends Item {
 
 	if (recurse) {
 	    for (int i = 0;i < n_items;i++) {
-		Item di = (Item)items.elementAt(i);
+		Item<?> di = items.elementAt(i);
 		if (di instanceof ItemGroup) {
 		    ItemGroup ig = (ItemGroup)di;
 		    if (ig.replaceItemByName(name, new_item, true)) return true;
@@ -421,13 +427,13 @@ public class ItemGroup extends Item {
 	int n_items = items.size();
 
 	for (int i = 0;i < n_items;i++) {
-	    Item di = (Item)items.elementAt(i);
+	    Item<?> di = items.elementAt(i);
 	    if (di.name.equals(name)) return this;
 	}
 
 	if (recurse) {
 	    for (int i = 0;i < n_items;i++) {
-		Item di = (Item)items.elementAt(i);
+		Item<?> di = items.elementAt(i);
 		if (di instanceof ItemGroup) {
 		    ItemGroup ig = (ItemGroup)di;
 		    ItemGroup parent = ig.getParentByName(name, recurse);
@@ -446,10 +452,10 @@ public class ItemGroup extends Item {
      *         has a name that matches <code>pattern</code>.  Never
      *         returns <code>null</code>, but can return a 0-length array.
      */
-    public Item[] getItemsByPattern(String pattern) {
-	Vector v = new Vector();
+    public Item<?>[] getItemsByPattern(String pattern) {
+	Vector<Item<?>> v = new Vector<>();
 	getItemsByPattern_aux(pattern, v);
-	Item result[] = new Item[v.size()];
+	Item<?> result[] = new Item[v.size()];
 	v.copyInto(result);
 	return result;
     }
@@ -460,16 +466,16 @@ public class ItemGroup extends Item {
      * @param pattern  Regular expression against which to match item names.
      * @param v        Vector in which current search results are stored.
      */
-    protected void getItemsByPattern_aux(String pattern, Vector v) {
+    protected void getItemsByPattern_aux(String pattern, Vector<Item<?>> v) {
 	int n_items = items.size();
 
 	for (int i = 0;i < n_items;i++) {
-	    Item di = (Item)items.elementAt(i);
+	    Item<?> di = items.elementAt(i);
 	    if (perl.match(pattern, di.name)) v.addElement(di);
 	}
 
 	for (int i = 0;i < n_items;i++) {
-	    Item di = (Item)items.elementAt(i);
+	    Item<?> di = items.elementAt(i);
 	    if (di instanceof ItemGroup) {
 		ItemGroup ig = (ItemGroup)di;
 		ig.getItemsByPattern_aux(pattern, v);
@@ -484,10 +490,10 @@ public class ItemGroup extends Item {
      * @param c  The class whose instances are to be retrieved.
      * @param An array of the {@link edu.cbil.csp.dialog.Item}s found.
      */
-    public Item[] getItemsByClass(Class c) {
-	Vector v = new Vector();
+    public <T extends Item<?>> Item<?>[] getItemsByClass(Class<T> c) {
+	Vector<Item<?>> v = new Vector<>();
 	getItemsByClass_aux(c, v);
-	Item result[] = new Item[v.size()];
+	Item<?> result[] = new Item[v.size()];
 	v.copyInto(result);
 	return result;
     }
@@ -498,17 +504,17 @@ public class ItemGroup extends Item {
      * @param c  Class whose instances are to be retrieved.
      * @param v  Vector in which current search results are stored.
      */
-    protected void getItemsByClass_aux(Class c, Vector v) {
+    protected <T extends Item<?>> void getItemsByClass_aux(Class<T> c, Vector<Item<?>> v) {
 	int n_items = items.size();
 
 	for (int i = 0;i < n_items;i++) {
-	    Item di = (Item)items.elementAt(i);
+	    Item<?> di = items.elementAt(i);
 	    System.out.println("item = " + di + "name = " + di.getName() + " class = " + di.getClass());
 	    if (di.getClass().equals(c)) v.addElement(di);
 	}
 
 	for (int i = 0;i < n_items;i++) {
-	    Item di = (Item)items.elementAt(i);
+	    Item<?> di = items.elementAt(i);
 	    if (di instanceof ItemGroup) {
 		ItemGroup ig = (ItemGroup)di;
 		ig.getItemsByClass_aux(c, v);
@@ -523,20 +529,20 @@ public class ItemGroup extends Item {
      * @param recurse  Whether to search for the item recursively.
      * @return The named item, or <code>null</code> if it could not be found.
      */
-    public Item getItemByName(String name, boolean recurse) {
+    public Item<?> getItemByName(String name, boolean recurse) {
 	int n_items = items.size();
 
 	for (int i = 0;i < n_items;i++) {
-	    Item di = (Item)items.elementAt(i);
+	    Item<?> di = items.elementAt(i);
 	    if (di.name.equals(name)) return di;
 	}
 
 	if (recurse) {
 	    for (int i = 0;i < n_items;i++) {
-		Item di = (Item)items.elementAt(i);
+		Item<?> di = items.elementAt(i);
 		if (di instanceof ItemGroup) {
 		    ItemGroup ig = (ItemGroup)di;
-		    Item item = ig.getItemByName(name, recurse);
+		    Item<?> item = ig.getItemByName(name, recurse);
 		    if (item != null) return item;
 		}
 	    }
@@ -544,4 +550,8 @@ public class ItemGroup extends Item {
 	return null;
     }
 
-} // ItemGroup
+    @Override
+    protected String convertToNativeType(String parameter) {
+      return parameter;
+    }
+}

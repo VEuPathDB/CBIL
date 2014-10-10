@@ -1,5 +1,7 @@
 package edu.cbil.csp;
 
+import java.util.Hashtable;
+
 /**
  * AH
  *
@@ -9,7 +11,9 @@ package edu.cbil.csp;
  *
  * Sat May 20 14:37:01 2000
  */
-public class AH extends java.util.Hashtable {
+public class AH extends Hashtable<String, String> {
+
+  private static final long serialVersionUID = 1L;
 
     /**
      * Construct a new instance from an even-length array of objects.
@@ -19,7 +23,7 @@ public class AH extends java.util.Hashtable {
      * @param arr   An even-length array of <code>Object</code>s.  The array
      *              is assumed to alternate between keys and values.
      */
-    public AH(Object arr[])
+    public AH(String arr[])
     {
 	super(Math.max(arr.length, 1));
 	int a_length = arr.length;
@@ -36,7 +40,7 @@ public class AH extends java.util.Hashtable {
     /**
      * An "empty" instance of <code>AH</code>, provided for your programming convenience.
      */
-    public static AH E = new AH(new Object[] {});
+    public static AH E = new AH(new String[] {});
 
     /**
      * An "empty" instance of <code>AH</code>, provided for your programming convenience.

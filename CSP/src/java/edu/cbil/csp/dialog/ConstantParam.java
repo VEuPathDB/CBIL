@@ -25,7 +25,7 @@ import edu.cbil.csp.StringTemplate;
  * @author Jonathan Crabtree
  * @version $Revision$ $Date$ $Author$
 */
-public class ConstantParam extends Param {
+public class ConstantParam extends Param<String> {
     
     /**
      * Whether the value of the parameter should be hidden from the user.
@@ -73,21 +73,23 @@ public class ConstantParam extends Param {
     // Item
     // --------
 
-    public Item copy(String url_subs) {
+    @Override
+    public Item<String> copy(String url_subs) {
 	return new ConstantParam(name, descr, help, template, help_template, prompt, hidden, value);
     }
 
     /**
      * Since the parameter is constant a call to this method has no effect.
      */
+    @Override
     public void storeHTMLServletInput(HttpServletRequest rq) {}
 
+    @Override
     public String[] getHTMLParams(String help_url) {
 	String input_elt = HTMLUtil.INPUT
 	    (new AH(new String[] {"type", "hidden",
 				  "name", name,
 				  "value", value}));
-	String items[] = null;
 
 	if (hidden) return new String[] {input_elt, "", ""};
 	return new String[] { input_elt + HTMLUtil.B(prompt), HTMLUtil.I(value), ""};
@@ -95,6 +97,7 @@ public class ConstantParam extends Param {
 
     protected static AH left2 = new AH(new String[] {"align", "left", "colspan", "2"});
 
+    @Override
     public StringTemplate getDefaultTemplate() {
 	if (hidden) {
 	    String ps[] = StringTemplate.HTMLParams(3);

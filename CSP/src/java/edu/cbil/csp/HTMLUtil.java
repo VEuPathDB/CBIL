@@ -1882,15 +1882,15 @@ public class HTMLUtil  {
 	AH attr = el.attribs;
 	AH depr = el.depr;
 
-	java.util.Enumeration attrs = args.keys();
+	java.util.Enumeration<?> attrs = args.keys();
 
 	while (attrs.hasMoreElements()) {
 	    String att = (String)(attrs.nextElement());
-	    String descr = (String)(attr.get(att));
+	    String descr = attr.get(att);
 
 	    if (descr == null) {
 		// TO DO: deprecated warning
-		descr = (String)(depr.get(att));
+		descr = depr.get(att);
 	    }
 
 	    if (descr == null) {
@@ -1900,8 +1900,7 @@ public class HTMLUtil  {
 
 	    if (descr.equals("%s")) {
 		// Attribute requires value
-		//
-		String val = (String)(args.get(att));
+		String val = args.get(att);
 
 		if (val == null) {
 		    System.err.println("No value specified for attribute '" + att + "'" +
@@ -1936,7 +1935,7 @@ public class HTMLUtil  {
 	Element el = elements[tagnum];
 
 	if (el == null) {
-	    throw new IllegalArgumentException("UNKNOWN HTML TAG '" + el.tag + "'");
+	    throw new IllegalArgumentException("UNKNOWN HTML TAGNUM '" + tagnum + "'");
 	}
 	
 	StringBuffer result = new StringBuffer();

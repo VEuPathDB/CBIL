@@ -25,7 +25,7 @@ import edu.cbil.csp.StringTemplate;
  *
  * @author Jonathan Crabtree
  */
-public class IntParam extends Param {
+public class IntParam extends Param<Integer> {
     
     /**
      * Minimum allowed value for the parameter (inclusive).
@@ -113,18 +113,21 @@ public class IntParam extends Param {
     // Item
     // -------
 
+    @Override
     public String[] getSampleValues() { 
 	return sample_value_strs; 
     }
 
-    public Item copy(String url_subs) {
+    @Override
+    public Item<Integer> copy(String url_subs) {
 	return new IntParam(name, descr, help, template, 
 			    help_template, prompt, min, max, initial,
 			    optional, sample_values);
     }
 
+    @Override
     public boolean validateHTMLServletInput(HttpServletRequest rq, StringBuffer errors,
-					    Hashtable inputH, Hashtable inputHTML) 
+					    Hashtable<String, Object> inputH, Hashtable<String, String> inputHTML) 
     {
 	String input = rq.getParameter(this.name);
 	int inval;
@@ -160,18 +163,19 @@ public class IntParam extends Param {
 	    return false;
 	}
 
-	inputH.put(this.name, new Integer(inval));
-	inputHTML.put(this.name, Integer.toString(inval));
+	inputH.put(this.name, inval);
+	inputHTML.put(this.name, String.valueOf(inval));
 	return true;
     }
 
+    @Override
     public String[] getHTMLParams(String help_url) {
 	String anchor = makeHTMLAnchor(false);
 	String link = makeHTMLLink(true, help_url, "Help!");
 	String val;
 
 	if (current_value != null) {
-	    val = current_value;
+	    val = String.valueOf(current_value);
 	} else {
 	    val = (initial != null) ? Integer.toString(initial.intValue()) : "";
 	}
@@ -189,10 +193,15 @@ public class IntParam extends Param {
 				 link};
     }
 
-    public Param copyParam(String new_name) {
+    @Override
+    public Param<Integer> copyParam(String new_name) {
 	return new IntParam(new_name, descr, help, template, 
 			    help_template, prompt, min, max, initial, 
 			    optional, sample_values);
     }
-    
-} // IntParam
+
+    @Override
+    protected Integer convertToNativeType(String parameter) {
+      return Integer.valueOf(parameter);
+    }
+}

@@ -26,7 +26,7 @@ import edu.cbil.csp.StringTemplate;
  *
  * @author Jonathan Crabtree
  */
-public class EnumParam extends Param {
+public class EnumParam extends Param<String> {
     
     /**
      * HTML-specific; a constant used by the HTML rendering code to decide when to switch
@@ -71,7 +71,7 @@ public class EnumParam extends Param {
      * Hashtable that maps values to their labels.  Only used if labels
      * and values are different.
      */
-    protected Hashtable value2label;
+    protected Hashtable<String, String> value2label;
 
     /**
      * Constructor that accepts an initial value and a size hint.
@@ -94,7 +94,7 @@ public class EnumParam extends Param {
     protected EnumParam(String name, String descr, String help,
 			StringTemplate st, StringTemplate ht, String prompt,
 			String values[], String labels[], String initial, 
-			boolean optional, int size_hint, Hashtable value2label)
+			boolean optional, int size_hint, Hashtable<String, String> value2label)
     {
 	super(name, descr, help, st, ht, prompt, optional);
 	this.n_values = values.length;
@@ -112,7 +112,7 @@ public class EnumParam extends Param {
 	this.size_hint = size_hint;
 
 	if ((labels != null) && (values != null) && (labels != values) && (value2label == null)) {
-	  this.value2label = new Hashtable();
+	  this.value2label = new Hashtable<>();
 	  for (int i = 0;i < n_values;i++) {
 	    this.value2label.put(this.values[i], this.labels[i]);
 	  }
@@ -166,11 +166,13 @@ public class EnumParam extends Param {
     // Item
     // -----------
 
+    @Override
     public String[] getSampleValues() { 
 	return null; 
     }
 
-    public Item copy(String url_subs) {
+    @Override
+    public Item<String> copy(String url_subs) {
 	EnumParam ep = new EnumParam(name, descr, help, template, help_template, 
 				     prompt, values, labels, initial, optional,
 				     size_hint, value2label);
@@ -178,8 +180,9 @@ public class EnumParam extends Param {
 	return ep;
     }
 
+    @Override
     public boolean validateHTMLServletInput(HttpServletRequest rq, StringBuffer errors,
-					    Hashtable inputH, Hashtable inputHTML) 
+					    Hashtable<String, Object> inputH, Hashtable<String, String> inputHTML) 
     {
 	String input = rq.getParameter(this.name);
 
@@ -205,6 +208,7 @@ public class EnumParam extends Param {
 	return false;
     }
 
+    @Override
     public StringTemplate getDefaultTemplate() {
 	String ps[] = StringTemplate.HTMLParams(3);
 	return new StringTemplate(HTMLUtil.TR
@@ -220,6 +224,7 @@ public class EnumParam extends Param {
 				    HTMLUtil.DIV(new AH(new String[] {"align", "center"}), ps[2]))) + "\n", ps);
     }
 
+    @Override
     public String[] getHTMLParams(String help_url) {
 	String anchor = makeHTMLAnchor(false);
 	String link = makeHTMLLink(true, help_url, "Help!");
@@ -272,7 +277,8 @@ public class EnumParam extends Param {
 	}
     }
 
-    public Param copyParam(String new_name) {
+    @Override
+    public Param<String> copyParam(String new_name) {
         EnumParam ep = new EnumParam(new_name, descr, help, template, help_template, 
 				     prompt, values, labels, initial, optional,
 				     size_hint, value2label);
@@ -288,7 +294,7 @@ public class EnumParam extends Param {
      */
     public String valueToLabel(String label) {
       if (this.value2label == null) return label;
-      return (String)(this.value2label.get(label));
+      return this.value2label.get(label);
     }
 
 } // EnumParam

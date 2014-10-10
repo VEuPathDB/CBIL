@@ -114,6 +114,7 @@ public class ExpandableItemGroup extends ActionItemGroup implements ActionHandle
      * Changes the current state of the item group, which
      * must then be redisplayed.
      */
+    @Override
     public boolean handleAction(String value) {
 	if (value.equals(show_string)) {
 	    expanded = true;
@@ -129,7 +130,8 @@ public class ExpandableItemGroup extends ActionItemGroup implements ActionHandle
     // Item
     //--------
 
-    public Item copy(String url_subs) {
+    @Override
+    public Item<Object> copy(String url_subs) {
 	ExpandableItemGroup result = new ExpandableItemGroup(name, descr, help, template, 
 							     help_template, bgcolor, expanded,
 							     my_url, show_string, hide_string);
@@ -141,7 +143,8 @@ public class ExpandableItemGroup extends ActionItemGroup implements ActionHandle
     // ItemGroup
     //--------------
     
-    public Item getItemByName(String name, boolean recurse) {
+    @Override
+    public Item<?> getItemByName(String name, boolean recurse) {
 	System.out.println("ExpandableItemGroup: called with " + name + " have show = " 
 			   + show_name + 
 			   "and hide = " + hide_name);
@@ -158,6 +161,7 @@ public class ExpandableItemGroup extends ActionItemGroup implements ActionHandle
     // Item
     //--------------
 
+    @Override
     public String[] getHTMLParams(String help_url) {
 	String[] super_params = super.getHTMLParams(help_url);
 

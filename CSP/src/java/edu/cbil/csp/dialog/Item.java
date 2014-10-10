@@ -37,7 +37,7 @@ import edu.cbil.csp.StringTemplate;
  *
  * @author Jonathan Crabtree
  */
-public abstract class Item {
+public abstract class Item<T> {
 
     /**
      * Hard-coded link to CSP "help" image.
@@ -160,7 +160,10 @@ public abstract class Item {
      *                  to apply to each of the URLs in the item and its children.
      * @return          A copy of this item.
      */
-    public abstract Item copy(String url_subs);
+    public abstract Item<T> copy(String url_subs);
+
+
+    protected abstract T convertToNativeType(String parameter);
 
     /**
      * Set the item's description.
@@ -198,7 +201,7 @@ public abstract class Item {
      * @return           True if all the recognized input validates.
      */
     public boolean validateHTMLServletInput(HttpServletRequest rq, StringBuffer errors,
-					    Hashtable input, Hashtable inputHTML) 
+					    Hashtable<String,Object> input, Hashtable<String,String> inputHTML) 
     {
 	return true;
     }

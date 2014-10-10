@@ -113,6 +113,7 @@ public class StringTemplate {
 	return result.toString();
     }
 
+    @Override
     public String toString() { return template; }
 
     // -------------------------------------------------------------------

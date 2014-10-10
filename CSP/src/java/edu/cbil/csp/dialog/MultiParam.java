@@ -72,7 +72,7 @@ public class MultiParam extends EnumParam {
 
     public MultiParam(String name, String descr, String help,
                       StringTemplate st, StringTemplate ht, String prompt,
-                      String values[], String labels[], Hashtable value2label)
+                      String values[], String labels[], Hashtable<String,String> value2label)
     {
 	super(name, descr, help, st, ht, prompt, values, labels, null, false, 5, value2label);
 
@@ -80,7 +80,7 @@ public class MultiParam extends EnumParam {
 
     public MultiParam(String name, String descr, String help,
                       StringTemplate st, StringTemplate ht, String prompt,
-                      String values[], String labels[], boolean optional, Hashtable value2label)
+                      String values[], String labels[], boolean optional, Hashtable<String,String> value2label)
     {
 	super(name, descr, help, st, ht, prompt, values, labels, null, optional, 5, value2label);
 
@@ -91,7 +91,8 @@ public class MultiParam extends EnumParam {
     // Item
     // --------------------------------------------
 
-   public Item copy(String url_subs) {
+   @Override
+  public Item<String> copy(String url_subs) {
 	MultiParam mp = new MultiParam(name, descr, help, template, help_template, 
 				     prompt, values, labels, value2label);
         return mp;
@@ -102,6 +103,7 @@ public class MultiParam extends EnumParam {
      */
     protected String[] current_values;
     
+    @Override
     public String getCurrentValue(){
         StringBuffer c_value = new StringBuffer("");
         for (int i = 0; i < current_values.length; i++) {
@@ -112,13 +114,15 @@ public class MultiParam extends EnumParam {
     }
 
     public String[] getCurrentValues() { return current_values; }
+    @Override
     public void storeHTMLServletInput(HttpServletRequest rq) {
         String input_value[] = rq.getParameterValues(this.name);
         if (input_value != null) this.current_values = input_value;
     }
 
+    @Override
     public boolean validateHTMLServletInput(HttpServletRequest rq, StringBuffer errors,
-					    Hashtable inputH, Hashtable inputHTML) 
+					    Hashtable<String,Object> inputH, Hashtable<String,String> inputHTML) 
     {
 	String input[] = rq.getParameterValues(this.name);
 
@@ -153,6 +157,7 @@ public class MultiParam extends EnumParam {
         return true;
     }
 
+    @Override
     public StringTemplate getDefaultTemplate() {
 	String ps[] = StringTemplate.HTMLParams(3);
 	return new StringTemplate(HTMLUtil.TR(HTMLUtil.TD(new AH
@@ -165,6 +170,7 @@ public class MultiParam extends EnumParam {
                                                                     "valign", "top"}), 
                                                HTMLUtil.DIV(new AH(new String[] {"align", "center"}), ps[2]))) + "\n", ps);
     }
+    @Override
     public String[] getHTMLParams(String help_url) {
 	String anchor = makeHTMLAnchor(false);
 	String link = makeHTMLLink(true, help_url, "Help!");

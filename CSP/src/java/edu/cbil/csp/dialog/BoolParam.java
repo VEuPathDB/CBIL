@@ -25,7 +25,7 @@ import edu.cbil.csp.StringTemplate;
  * @author Jonathan Crabtree
  * @version
  */
-public class BoolParam extends Param {
+public class BoolParam extends Param<Boolean> {
     
     /**
      * Initial value for the parameter.
@@ -58,13 +58,15 @@ public class BoolParam extends Param {
     // Param
     // ------------
 
+    @Override
     public String[] getSampleValues() { return null; }
 
     // ------------
     // BoolParam
     // ------------
 
-    public Param copyParam(String new_name) {
+    @Override
+    public Param<Boolean> copyParam(String new_name) {
 	return new BoolParam(new_name, descr, help, template, help_template, prompt, initial);
     }
     
@@ -72,30 +74,28 @@ public class BoolParam extends Param {
     // Item
     // --------
 
-    public Item copy(String url_subs) {
+    @Override
+    public Item<Boolean> copy(String url_subs) {
        BoolParam b = (BoolParam)(this.copyParam(name));
        b.current_value = this.current_value;
        return b;
     }
 
     /**
-     * The current value of the parameter (i.e. any data the user has 
-     * entered and submitted so far.)
-     */
-    protected Boolean current_value;
-
-    /**
      * @return The current value of the parameter.
      */
-    public String getCurrentValue() { return current_value.toString(); }
+    @Override
+    public Boolean getCurrentValue() { return current_value; }
 
+    @Override
     public void storeHTMLServletInput(HttpServletRequest rq) {
 	String value = rq.getParameter(this.name);
 	current_value = (value == null) ? Boolean.FALSE : Boolean.TRUE;
     }
 
+    @Override
     public boolean validateHTMLServletInput(HttpServletRequest rq, StringBuffer errors,
-					    Hashtable inputH, Hashtable inputHTML) 
+					    Hashtable<String,Object> inputH, Hashtable<String,String> inputHTML) 
     {
 	
 	String input = rq.getParameter(this.name);
@@ -114,6 +114,7 @@ public class BoolParam extends Param {
 	return true;
     }
 
+    @Override
     public StringTemplate getDefaultTemplate() {
 	String ps[] = StringTemplate.HTMLParams(3);
 	return new StringTemplate(HTMLUtil.TR
@@ -128,6 +129,7 @@ public class BoolParam extends Param {
 							     "valign", "middle"}), ps[2])), ps);
     }
 
+    @Override
     public String[] getHTMLParams(String help_url) {
 	String anchor = makeHTMLAnchor(false);
 	String link = makeHTMLLink(true, help_url, "Help!");
@@ -149,4 +151,8 @@ public class BoolParam extends Param {
 	return new String[] {anchor + prompt, checkbox, link};
     }
 
-} // BoolParam
+    @Override
+    protected Boolean convertToNativeType(String parameter) {
+      return Boolean.valueOf(parameter);
+    }
+}

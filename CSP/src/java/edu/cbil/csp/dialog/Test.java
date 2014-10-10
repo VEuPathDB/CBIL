@@ -75,7 +75,7 @@ public class Test {
 	// to the user in the form.  Finally, the last argument is an optional
 	// array of "sample values" that will appear in the help section.
         //	
-	ig1.addItem(new Param("name", 
+	ig1.addItem(new Param<String>("name", 
 			      "First name", 
   		              "Enter your first name or nickname in the space provided.", 
                               null, null, 

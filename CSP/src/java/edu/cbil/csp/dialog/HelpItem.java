@@ -24,7 +24,7 @@ import edu.cbil.csp.StringTemplate;
  *
  * @author Jonathan Crabtree
  */
-public class HelpItem extends Item {
+public class HelpItem extends Item<String> {
 
     /**
      * The help text that is to appear in the main dialog.
@@ -56,7 +56,8 @@ public class HelpItem extends Item {
     // Item
     // --------
     
-    public Item copy(String url_subs) {
+    @Override
+    public Item<String> copy(String url_subs) {
 	return new HelpItem(name, descr, help_text, help, template, help_template);
     }
 
@@ -65,6 +66,7 @@ public class HelpItem extends Item {
      */
     protected AH fwidth = new AH(new String[] {"colspan", "3"});
 
+    @Override
     public StringTemplate getDefaultTemplate() 
     {
 	String ps[] = StringTemplate.HTMLParams(1);
@@ -72,11 +74,16 @@ public class HelpItem extends Item {
 				  (HTMLUtil.TD(fwidth, ps[0])), ps);
     }
 
+    @Override
     public String[] getHTMLParams(String help_url) 
     {
 	return new String [] {
 	    makeHTMLAnchor(false) + help_text 
 	    + ((help != null) ? makeHTMLLink(true, help_url, "Help!") : "")};
     }
-    
-} // HelpItem
+
+    @Override
+    protected String convertToNativeType(String parameter) {
+      return parameter;
+    }
+}
