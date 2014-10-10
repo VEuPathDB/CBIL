@@ -1,5 +1,5 @@
 package CBIL::TranscriptExpression::DataMunger::RNASeqFishersTest;
-use base qw(CBIL::TranscriptExpression::DataMunger::RadAnalysis Exporter);
+use base qw(CBIL::TranscriptExpression::DataMunger::TwoStateComparison Exporter);
 
 use strict;
 
