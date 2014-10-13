@@ -167,14 +167,10 @@ for(i in 1:nrow(newDat)) {
 colnames(splines) = as.character(newHeader);
 colnames(interpolatedSplines) = as.character(predictX);
 
-colnames(splines)[1] = paste("ID\t", colnames(splines)[1], sep="");
-colnames(interpolatedSplines)[1] = paste("ID\t", colnames(interpolatedSplines)[1], sep="");
-
-
-write.table(splines, file="$outputFile", quote=FALSE,sep="\\t", row.names=ids);
+write.table(splines, file="$outputFile", quote=FALSE,sep="\\t", row.names=ids, col.names=NA);
 
 if($doInterp) {
-  write.table(interpolatedSplines, file="$interpFile", quote=FALSE, sep="\\t", row.names=ids);
+  write.table(interpolatedSplines, file="$interpFile", quote=FALSE, sep="\\t", row.names=ids, col.names=NA);
 }
 
 RString

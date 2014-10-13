@@ -52,4 +52,20 @@ sub new {
    return $conditionAName." vs ".$conditionBName;
  }
 
+ sub filterConditions {
+   my ($self, $conditionName) = @_;
+
+   my $conditions =$self->getConditions();
+   my @rv;
+
+   foreach my $condition (@$conditions){
+     my ($name, $value) = split(/\|/, $condition);
+     if ( $name eq $conditionName){
+       push @rv, $condition;
+     }
+   }
+   return \@rv;
+ }
+
+
 1;

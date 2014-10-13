@@ -85,7 +85,7 @@ if($makePercentiles) {
     reorderedSamples = reorderAndGetColCentralVal(pl=dat.samples, df=dat);
 
     reorderedSamples\$percentile = percentileMatrix(m=reorderedSamples\$data);
-    write.table(reorderedSamples\$percentile, file="$pctOutputFile",quote=F,sep="\\t",row.names=reorderedSamples\$id);
+    write.table(reorderedSamples\$percentile, file="$pctOutputFile",quote=F,sep="\\t",row.names=reorderedSamples\$id, col.names=NA);
 }
 
 quit("no");
@@ -101,7 +101,8 @@ RString
   unless($doNotLoad){
     $self->createConfigFile();
     if($self->getIsTimeSeries() ){
-      $self->createTimeSeriesConfigFile();
+      # TODO:  Write param for is Time Series
+      #$self->createTimeSeriesConfigFile();
     }
 }	
 }

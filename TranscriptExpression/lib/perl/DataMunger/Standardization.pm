@@ -46,7 +46,7 @@ source("$ENV{GUS_HOME}/lib/R/TranscriptExpression/profile_functions.R");
 
 dat = read.table("$inputFile", header=T, sep="\\t", check.names=FALSE);
 standardizedProfiles = standardizeProfiles(df=dat, refColName=$refColName);
-write.table(standardizedProfiles\$data, file="$outputFile",quote=F,sep="\\t",row.names=standardizedProfiles\$id);
+write.table(standardizedProfiles\$data, file="$outputFile",quote=F,sep="\\t",row.names=standardizedProfiles\$id, col.names=NA);
 
 quit("no");
 RString

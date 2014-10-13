@@ -120,13 +120,11 @@ if(load.ndf) {
   dat = read.xysfiles(xysFiles);
   res = rma(dat);
 
-  colnames(exprs(res))[1] = paste("ID\t", colnames(exprs(res))[1], sep="");
-
   if($hasGeneSourceIdRegex) {
     gene.filter = grepl("$geneSourceIdRegex", rownames(exprs(res)));
-    write.table(exprs(res)[gene.filter,], file="$outputFile",quote=F, sep="\\t", row.names=TRUE);
+    write.table(exprs(res)[gene.filter,], file="$outputFile",quote=F, sep="\\t", row.names=TRUE, col.names=NA);
   } else {
-    write.table(exprs(res), file="$outputFile",quote=F, sep="\\t", row.names=TRUE);
+    write.table(exprs(res), file="$outputFile",quote=F, sep="\\t", row.names=TRUE, col.names=NA);
   }
 
 } else {

@@ -116,10 +116,9 @@ if(load.affy && load.cdf) {
   dat = ReadAffy(filenames=data.files, cdfname="$cdfLibrary", celfile.path="$celFilePath")
   res = rma(dat)
 
-  data.files[1] = paste("ID\t", data.files[1], sep="");
   colnames(exprs(res)) = data.files;
 
-  write.table(exprs(res), file="$outputFile",quote=F,sep="\\t", row.names=TRUE);
+  write.table(exprs(res), file="$outputFile",quote=F,sep="\\t", row.names=TRUE, col.names=NA);
 
 } else {
   stop("ERROR:  could not load required libraries affy and $cdfLibrary");
