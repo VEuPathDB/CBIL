@@ -1,5 +1,8 @@
-package CBIL::TranscriptExpression::DataMunger::GenericProfiles;
+package CBIL::TranscriptExpression::DataMunger::NoSampleConfigurationProfiles;
 use base qw(CBIL::TranscriptExpression::DataMunger::Profiles);
+
+# Use if you have a tab file and don't want to code the samples property in the configuration file
+# The output file will equal the input file;  You must specify whether or not to calculate the percentiles
 
 use strict;
 
