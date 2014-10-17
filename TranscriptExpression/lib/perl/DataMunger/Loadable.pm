@@ -2,158 +2,138 @@ package CBIL::TranscriptExpression::DataMunger::Loadable;
 use base qw(CBIL::TranscriptExpression::DataMunger);
 
 use strict;
+use CBIL::TranscriptExpression::Error;
+
+my $CONFIG_BASE_NAME = "insert_study_results_config.txt";
 
 sub getDoNotLoad               { $_[0]->{doNotLoad} }
+
+sub getSourceIdType         { $_[0]->{sourceIdType} }
+sub setSourceIdType         { $_[0]->{sourceIdType} = $_[1] }
+
+#--------------------------------------------------------------------------------
+
 
 sub getProtocolName         { 
   my $self = shift;
 
-  return $self->{_protocol_name} if($self->{_protocol_name});
+  if($self->{_protocol_name}) {
+    return $self->{_protocol_name};
+  }
 
-  my $protocolByClassName = ref $self;
-  $protocolByClassName =~ /\:\:(.+)$/;
-  my $protocolName = $1;
-
-  return $protocolName
+  return ref $self;
 }
 sub setProtocolName         { $_[0]->{_protocol_name} = $_[1] }
 
-sub getProtocolParamNames         { $_[0]->{_protocol_param_names} }
-sub setProtocolParamNames         { $_[0]->{_protocol_param_names} = $_[1] }
+sub getProtocolParamsHash         { $_[0]->{_protocol_params_hash} }
+sub addProtocolParamValue {
+  my ($self, $key, $value) = @_;
 
-sub getInputProtocolAppNodes         { $_[0]->{_input_protocol_app_nodes} }
-sub setInputProtocolAppNodes         { $_[0]->{_input_protocol_app_nodes} = $_[1] }
+  return $self->{_protocol_params_hash}->{$key} = $value;
+}
 
-sub getSourceIdType         { $_[0]->{_source_id_type} }
-sub setSourceIdType         { $_[0]->{_source_id_type} = $_[1] }
+sub getConfigFilePath         { 
+  my ($self) = @_;
 
-sub getConfigFilePath         { $_[0]->{_config_file_path} }
-sub setConfigFilePath         { $_[0]->{_config_file_path} = $_[1] }
+  my $mainDir = $self->getMainDirectory();
+  my $configBaseName = $self->getConfigFileBaseName();
 
-sub createConfigFile { }
+  return $mainDir . "/" . $configBaseName;
+}
 
-# sub createConfigFile {
-#   my ($self, $skipRow) = @_;
+sub getConfigFileBaseName {
+  my $self = shift;
+  if($b = $self->{_config_file_base_name}) {
+    return $b;
+  }
 
-#   return if($self->getDoNotLoad());
+  # Default
+  return $CONFIG_BASE_NAME;
+} 
+sub setConfigFileBaseName         { $_[0]->{_config_file_base_name} = $_[1] }
 
-#   my $analysisName = $self->getAnalysisName();
-#   my $profileSetName = $self->getProfileSetName();
+sub getNames         { $_[0]->{_names} }
+sub setNames         { $_[0]->{_names} = $_[1] }
 
-#   my $mainDir = $self->getMainDirectory();
-#   my $dataFile = $self->getOutputFile() ;
+sub getFileNames         { $_[0]->{_file_names} }
+sub setFileNames         { $_[0]->{_file_names} = $_[1] }
 
-#   my $profileElementName= $self->getProfileElementsAsString();
-#   my $protocolName = $self->getProtocolName();
-#   my $protocolType = $self->getProtocolType();
-#   my $configFile = $self->getConfigFile();
+sub getInputProtocolAppNodesHash         { $_[0]->{_input_protocol_app_nodes} }
+sub setInputProtocolAppNodesHash         { $_[0]->{_input_protocol_app_nodes} = $_[1] }
 
-#   my $configFileLocation = $mainDir . "/" . $configFile;
+sub createConfigFile { 
+  my ($self) = @_;
 
-#   my @configLineColumns = ($dataFile, $analysisName, $protocolName, $protocolType, $profileSetName, $profileElementName);
-#   my $configLine = join("\t", @configLineColumns) . "\n";
+  return if($self->getDoNotLoad());
 
-#   my $analysisHeader = "dataFile\tanalysisName\tprotocolName\tprotocolType\tprofilesetname\tprofileelementnames\n";
+  my $configFilePath = $self->getConfigFilePath();
 
-#   if (-e $configFileLocation){
-#     open(CFH, ">> $configFileLocation") or die "Cannot open file $configFileLocation for writing: $!";  
-#   }
-#   else {
-#     open(CFH, "> $configFileLocation") or die "Cannot open file $configFileLocation for writing: $!";
-#     print CFH $analysisHeader;
-#   }
+  if(-e $configFilePath) {
+    open(CONFIG, ">> $configFilePath") or die "Cannot open config file for writing: $!";
+  }
+  else {
+    open(CONFIG, "> $configFilePath") or die "Cannot open config file for writing: $!";
+    $self->printConfigHeader(\*CONFIG);
+  }
 
-#   print CFH $configLine unless($skipRow);
-#   close CFH;
-# }
+  my $names = $self->getNames();
 
-# sub createConfigFile{
-#   my ($self) = @_;
-#   my $profileString = '';
-#   my $percentileString = '';
-#   my $standardErrorString = '';
-#   my $redPercentileString = '';
-#   my $greenPercentileString = '';
-#   my $isLogged = 1;
-#   my $base = 2;
-#   if (defined $self->getIsLogged()){
-#     $isLogged = $self->getIsLogged();
-#   }
-#   if ($isLogged && defined $self->getBase() ) {
-#       $base= $self->getBase();
-#     }
-#   if (!$isLogged) {
-#     $base = undef;
-#   }
-  
-#   my $sourceIdType = $self->getSourceIdType;
-#   my $loadProfileElement = $self->getLoadProfileElement();
-#   my $baseCols = [$sourceIdType,$SKIP_SECOND_ROW,$loadProfileElement];
-#   my $mainDir = $self->getMainDirectory();
-#   my $PROFILE_CONFIG_FILE_LOCATION = $mainDir. "/" . $PROFILE_CONFIG_FILE_NAME;
-#   unless(-e $PROFILE_CONFIG_FILE_LOCATION){
-#    open(PCFH, "> $PROFILE_CONFIG_FILE_LOCATION") or die "Cannot open file $PROFILE_CONFIG_FILE_NAME for writing: $!"; 
-#   }
-#   else {
-#    open(PCFH, ">> $PROFILE_CONFIG_FILE_LOCATION") or die "Cannot open file $PROFILE_CONFIG_FILE_NAME for writing: $!";
-#    }
-#   $profileString = $self->createConfigLine('',$baseCols, $isLogged, $base );
-#   print PCFH "$profileString\n" ;
-#   if ($self->getMakePercentiles() && !$self->getHasRedGreenFiles()) {
-#     $percentileString = $self->createConfigLine('pct',$baseCols, 0, undef );
-#     print PCFH "$percentileString\n";
-#   }
-#   if ($self->getMakeStandardError()) {
-#     $standardErrorString = $self->createConfigLine('stderr',$baseCols, 0, undef );
-#     print PCFH "$standardErrorString\n";
-#   }
-#   if ($self->getMakePercentiles() && $self->getHasRedGreenFiles()) {
-#     $greenPercentileString = $self->createConfigLine('greenPct',$baseCols, 0, undef );
-#     $redPercentileString = $self->createConfigLine('redPct',$baseCols, 0, undef );
-#     print PCFH "$greenPercentileString\n$redPercentileString\n";
-#   close PCFH;
-#   }
-# }
+  my $fileNames = $self->getFileNames();
+  my $inputProtocolAppNodesHash = $self->getInputProtocolAppNodesHash();
 
-# sub createConfigLine {
-#   my ($self,$type,$baseCols, $logged, $baseX) = @_;
-#   my $dataFileBase = $self->getOutputFile();
-#   my $profileSetName = $self->getProfileSetName();
-#   my $profileSetDescription = $self->getProfileSetDescription();
-#   my @base = (@$baseCols, $logged, $baseX);
-#   my $prefix = '';
-#   if ($type eq 'pct') {
-#     $prefix = 'percentile - ';
-#     if (!$self->getHasRedGreenFiles()) {
-#       $self->setPercentileSetPrefix($prefix);
-#     }
-#   }
-#   elsif ($type eq 'stderr') {
-#     $prefix = 'standard error - ';}
-#   elsif ($type eq 'greenPct') {
-#     $prefix = 'green percentile - ';
-#     if ($self->getPercentileChannel() =='green') {
-#       $self->setPercentileSetPrefix($prefix);
-#     }
-#   }
-#   elsif ($type eq 'redPct') {
-#     $prefix = 'red percentile - ';
-#       if ($self->getPercentileChannel()=='red') {
-#       $self->setPercentileSetPrefix($prefix);
-#     }
-#   }
-#   else { $prefix = '';}
-#   if ($prefix) {
-#     $type = '.' . $type;
-#   }
-#   my $dataFile = $dataFileBase . $type; 
-#   my $profileSetName = $prefix . $profileSetName;
-#   my $profileSetDescription = $prefix . $profileSetDescription;
-#   my @cols = ("$dataFile", "$profileSetName",  "$profileSetDescription",);
-#   push(@cols, @base);
-#   my $configString = join("\t", @cols);
-  
-#   return $configString;
-# }
+  unless(scalar @$names == scalar @$fileNames && scalar @$names > 0) {
+    CBIL::TranscriptExpression::Error->new("AppNode Names and/or file name not specified correctly")->throw();
+  }
+
+
+  for(my $i = 0; $i < scalar @$names; $i++) {
+    my $name = $names->[$i];
+    my $fileName = $fileNames->[$i];
+    my $inputProtocolAppNodes = $inputProtocolAppNodesHash->{$name};
+
+    my $inputProtocolAppNodesString = join(";", @$inputProtocolAppNodes);
+
+    $self->printConfigLine(\*CONFIG, $name, $fileName, $inputProtocolAppNodesString);
+  }
+
+  close CONFIG;
+}
+
+sub printConfigLine {
+  my ($self, $fh, $name, $fileName, $inputProtocolAppNodesString) = @_;
+
+  my $protocolParamsHash = $self->getProtocolParamsHash();
+
+  # Need to sort the keys here the same way as when printing the header
+  my @protocolParamValues = map {$protocolParamsHash->{$_}} sort keys %{$protocolParamsHash};
+
+  my @line = ($name,
+              $fileName,
+              $self->getSourceIdType(),
+              $inputProtocolAppNodesString,
+              $self->getProtocolName(),
+              @protocolParamValues
+      );
+
+  print $fh join("\t", @line) . "\n";
+}
+
+sub printConfigHeader {
+  my ($self, $fh) = @_;
+
+  my @protocolParamHeaders = map { "ProtocolParam [$_]" } sort keys %{$self->getProtocolParamsHash()};
+
+  my @header = ("Name",
+                "File Name",
+                "Source ID Type",
+                "Input ProtocolAppNodes",
+                "Protocol",
+                @protocolParamHeaders
+      );
+
+  print $fh join("\t", @header) . "\n";
+}
+
+
 
 1;

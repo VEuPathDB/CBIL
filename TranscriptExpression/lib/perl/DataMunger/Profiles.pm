@@ -11,9 +11,7 @@ use Data::Dumper;
 
 use File::Temp qw/ tempfile /;
 
-my $SKIP_SECOND_ROW = 0;
-my $LOAD_PROFILE_ELEMENT = 1;
-my $PROFILE_CONFIG_FILE_NAME = "insert_study_results_config.txt";
+
 
 #-------------------------------------------------------------------------------
 
@@ -24,22 +22,13 @@ my $PROFILE_CONFIG_FILE_NAME = "insert_study_results_config.txt";
  sub getFindMedian              { $_[0]->{findMedian} }
  sub getPercentileChannel       { $_[0]->{percentileChannel} }
 
- sub getIsLogged                { $_[0]->{isLogged} }
- sub setIsLogged                { $_[0]->{isLogged} = $_[1]}
-
- sub getBase                    { $_[0]->{Base} }
- sub setBase                    { $_[0]->{Base} = $_[1]}
-
  sub getHasRedGreenFiles        { $_[0]->{hasRedGreenFiles} }
  sub getMakePercentiles         { $_[0]->{makePercentiles} }
 
  sub getIsTimeSeries            { $_[0]->{isTimeSeries} }
- sub getMappingFile             { $_[0]->{mappingFile} }
+ sub getIsLogged                { $_[0]->{isLogged} }
+ sub getBase                    { $_[0]->{Base} }
 
- sub setPercentileSetPrefix      { $_[0]->{percentileSetPrefix} = $_[1]}
-
- sub getSourceIdType            { $_[0]->{sourceIdType} }
- sub setSourceIdType            { $_[0]->{sourceIdType} = $_[1]}
 
 sub getIgnoreStdError          { $_[0]->{ignoreStdErrorEstimation} }
 #-------------------------------------------------------------------------------
@@ -74,6 +63,16 @@ sub new {
   if ($args->{isTimeSeries} && $args->{hasRedGreenFiles} && !$args->{percentileChannel}) {
     CBIL::TranscriptExpression::Error->new("Must specify percentileChannel for two channel time series experiments")->throw();
   }
+
+
+  unless (defined $args->{isLogged}){
+    $args->{isLogged} = 1;
+  }
+
+  unless (defined $args->{base}){
+    $args->{base} = 2;
+  }
+
   my $self = $class->SUPER::new($args, \@requiredParams);
 
   my $inputFile = $args->{inputFile};
@@ -82,12 +81,15 @@ sub new {
     CBIL::TranscriptExpression::Error->new("input file $inputFile does not exist")->throw();
   }
 
+
+
   return $self;
 }
 
 
 sub munge {
   my ($self) = @_;
+
 
   my $samplesRString = $self->makeSamplesRString();
 
@@ -103,14 +105,29 @@ sub munge {
 
   system("rm $rFile");
   my $doNotLoad = $self->getDoNotLoad(); 
-  unless($doNotLoad){
-    $self->createConfigFile();
 
-    if($self->getIsTimeSeries() ){
-      # TODO:  Need protocolparam for PercentileChannel and is time series
-    }
+
+  my $samplesHash = $self->groupListHashRef($self->getSamples());
+
+  my @names = keys %$samplesHash;
+  $self->setNames(\@names);
+
+  my @fileNames;
+  my $outputFile = $self->getOutputFile();
+
+  foreach(@names) {
+    s/\s/_/g;
+
+    my $sampleOutputFile = ".$outputFile/$_";
+    push @fileNames, $sampleOutputFile;
   }
+
+  $self->setFileNames(\@fileNames);
+  $self->setInputProtocolAppNodesHash($samplesHash);
+
+  $self->createConfigFile();
 }
+
 
 sub checkMakeStandardError {
   my ($self) = @_;
@@ -144,6 +161,15 @@ sub writeRScript {
   my $makePercentiles = $self->getMakePercentiles() ? "TRUE" : "FALSE";
   my $makeStandardError = $self->getMakeStandardError() ? "TRUE" : "FALSE";
   my $findMedian = $self->getFindMedian() ? "TRUE" : "FALSE";
+
+  my $statistic = $self->getFindMedian() ? 'median' : 'average';
+  my $isTimeSeries = $self->getIsTimeSeries() ? "TRUE" : "FALSE";
+  my $isLogged = $self->getIsLogged() ? "TRUE" : "FALSE";
+
+  $self->addProtocolParamValue("isTwoChannel", $hasRedGreenFiles);
+  $self->addProtocolParamValue("statistic", $statistic);
+  $self->addProtocolParamValue("isTimeSeries", $isTimeSeries);
+  $self->addProtocolParamValue("percentileChannel", $self->getPercentileChannel());
 
   my $rString = <<RString;
 
@@ -236,7 +262,10 @@ if($makePercentiles) {
      }
    }
 
-   write.table(sample, file=paste(samplesDir, "/", sampleId, sep=""),quote=F,sep="\\t",row.names=reorderedSamples\$id, col.names=NA);
+   # simply replace spaces w/ underscore
+   sampleFile = gsub(\" \", \"_\", sampleId, fixed=TRUE);
+
+   write.table(sample, file=paste(samplesDir, "/", sampleFile, sep=""),quote=F,sep="\\t",row.names=reorderedSamples\$id, col.names=NA);
  }
 
 
