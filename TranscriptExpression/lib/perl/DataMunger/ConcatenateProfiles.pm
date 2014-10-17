@@ -16,7 +16,6 @@ sub new {
   my $requiredParams = ['outputFile',
                         'fileOne',
                         'fileTwo',
-                        'profileSetName'
                        ];
 
   $args->{inputFile} = '.';
@@ -27,8 +26,6 @@ sub new {
   unless(-e $self->getFileOne() && -e $self->getFileTwo()) {
     CBIL::TranscriptExpression::Error->("Missing Required File")->throw();
   }
-
-  $self->{profileSetDescription} = $self->getProfileSetName();
 
   return $self;
 }
