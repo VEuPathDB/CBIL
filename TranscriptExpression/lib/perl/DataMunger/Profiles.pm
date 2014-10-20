@@ -112,17 +112,12 @@ sub munge {
   my @names = keys %$samplesHash;
   $self->setNames(\@names);
 
-  my @fileNames;
   my $outputFile = $self->getOutputFile();
 
-  foreach(@names) {
-    s/\s/_/g;
-
-    my $sampleOutputFile = ".$outputFile/$_";
-    push @fileNames, $sampleOutputFile;
-  }
+  my @fileNames = map { my $n = $_;  $n =~ s/\s/_/g; ".$outputFile/$n";} @names;
 
   $self->setFileNames(\@fileNames);
+
   $self->setInputProtocolAppNodesHash($samplesHash);
 
   $self->createConfigFile();

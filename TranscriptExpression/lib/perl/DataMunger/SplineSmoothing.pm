@@ -3,6 +3,8 @@ use base qw(CBIL::TranscriptExpression::DataMunger::Profiles);
 
 use strict;
 
+use Data::Dumper;
+
 use File::Temp qw/ tempfile /;
 
 use CBIL::TranscriptExpression::Error;
@@ -35,7 +37,7 @@ sub munge {
 
   my ($splinesFile, $interpFile, $rFile) = $self->writeRFile();
 
-  my $splineSamples = $self->readFileHeaderAsSamples($splinesFile);
+  my $splineSamples = $self->readFileHeaderAsSamples($splinesFile, "spline smoothed");
 
   $self->setSamples($splineSamples);
   $self->setInputFile($splinesFile);
@@ -49,11 +51,10 @@ sub munge {
     $self->setSamples($interpSamples);
     $self->setInputFile($interpFile);
 
-    my $profileSetName = $self->getProfileSetName() . " - Interpolated";
-    $self->setProfileSetName($profileSetName);
-
     my $outputFile = $self->getOutputFile() . "_" . $interpN;
     $self->setOutputFile($outputFile);
+
+    $self->setProtocolName($self->getProtocolName() . " - Interpolation");
 
     $self->SUPER::munge();
 
@@ -66,7 +67,7 @@ sub munge {
 #-------------------------------------------------------------------------------
 
 sub readFileHeaderAsSamples {
-  my ($self, $fn) = @_;
+  my ($self, $fn, $append) = @_;
 
   open(FILE, $fn) or die "Cannot open file $fn for reading: $!";
 
@@ -78,6 +79,11 @@ sub readFileHeaderAsSamples {
   
   # remove the row header column;
   shift @vals;
+
+  if($append) {
+    my @rv = map { $_ . " - $append|$_" } @vals;
+    return \@rv;
+  }
 
   return \@vals;
 }
