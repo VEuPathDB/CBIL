@@ -37,7 +37,7 @@ sub munge {
 
   my ($splinesFile, $interpFile, $rFile) = $self->writeRFile();
 
-  my $splineSamples = $self->readFileHeaderAsSamples($splinesFile, "spline smoothed");
+  my $splineSamples = $self->readFileHeaderAsSamplesWithSuffix($splinesFile, "spline smoothed");
 
   $self->setSamples($splineSamples);
   $self->setInputFile($splinesFile);
@@ -66,28 +66,14 @@ sub munge {
 
 #-------------------------------------------------------------------------------
 
-sub readFileHeaderAsSamples {
+sub readFileHeaderAsSamplesWithSuffix {
   my ($self, $fn, $append) = @_;
 
-  open(FILE, $fn) or die "Cannot open file $fn for reading: $!";
+  my $samples = $self->readFileHeaderAsSamples($fn);
 
-  my $header = <FILE>;
-  chomp $header;
-  close FILE;
-
-  my @vals = split(/\t/, $header);
-  
-  # remove the row header column;
-  shift @vals;
-
-  if($append) {
-    my @rv = map { $_ . " - $append|$_" } @vals;
+    my @rv = map { $_ . " - $append|$_" } @$samples;
     return \@rv;
-  }
-
-  return \@vals;
 }
-
 
 #-------------------------------------------------------------------------------
 

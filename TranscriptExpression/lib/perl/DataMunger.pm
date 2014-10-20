@@ -214,6 +214,12 @@ sub readInputFileHeaderAsSamples {
 
   my $fn = $self->getInputFile();
 
+  return $self->readFileHeaderAsSamples($fn);
+}
+
+sub readFileHeaderAsSamples {
+  my ($self, $fn) = @_;
+
   open(FILE, $fn) or die "Cannot open file $fn for reading: $!";
 
   my $header = <FILE>;
@@ -227,6 +233,7 @@ sub readInputFileHeaderAsSamples {
 
   return \@vals;
 }
+
 
 
 
