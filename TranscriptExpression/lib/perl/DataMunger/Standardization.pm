@@ -23,11 +23,21 @@ sub new {
 sub munge {
   my ($self) = @_;
 
+  $self->{doNotLoad} = 1;
   $self->SUPER::munge();
 
   my $rFile = $self->writeStdRScript();
 
   $self->runR($rFile);
+
+  $self->{doNotLoad} = undef;
+  my $outputFile = $self->getOutputFile();
+
+  my $samples = $self->readFileHeaderAsSamples($outputFile);
+  $self->setSamples($samples);
+  $self->setInputFile($outputFile);
+
+  $self->SUPER::munge();
 
   system("rm $rFile");
 }
