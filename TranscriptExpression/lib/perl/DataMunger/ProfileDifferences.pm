@@ -72,7 +72,12 @@ RString
 
   $self->runR($tempFn);
 
-  $self->createConfigFile();
+
+  my $samples = $self->readFileHeaderAsSamples($outputFile);
+  $self->setSamples($samples);
+  $self->setInputFile($outputFile);
+
+  $self->SUPER::munge();
 
   unlink($tempFn);
 }

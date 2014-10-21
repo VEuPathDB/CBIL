@@ -46,6 +46,8 @@ sub munge {
 
   my $interpN = $self->getInterpolationN();
   if(defined $interpN) {
+    $self->addProtocolParamValue("interpolationN", $interpN);
+
     my $interpSamples = $self->readFileHeaderAsSamples($interpFile);
 
     $self->setSamples($interpSamples);

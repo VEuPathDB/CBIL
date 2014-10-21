@@ -104,15 +104,16 @@ sub printConfigLine {
 
   my $protocolParamsHash = $self->getProtocolParamsHash();
 
-  # Need to sort the keys here the same way as when printing the header
-  my @protocolParamValues = map {$protocolParamsHash->{$_}} sort keys %{$protocolParamsHash};
+  my @protocolParamValues = map {"$_|$protocolParamsHash->{$_}"} keys %{$protocolParamsHash};
+  my $ppvString = join(";", @protocolParamValues);
+
 
   my @line = ($name,
               $fileName,
               $self->getSourceIdType(),
               $inputProtocolAppNodesString,
               $self->getProtocolName(),
-              @protocolParamValues
+              $ppvString,
       );
 
   print $fh join("\t", @line) . "\n";
@@ -121,14 +122,12 @@ sub printConfigLine {
 sub printConfigHeader {
   my ($self, $fh) = @_;
 
-  my @protocolParamHeaders = map { "ProtocolParam [$_]" } sort keys %{$self->getProtocolParamsHash()};
-
   my @header = ("Name",
                 "File Name",
                 "Source ID Type",
                 "Input ProtocolAppNodes",
                 "Protocol",
-                @protocolParamHeaders
+                "ProtocolParams"
       );
 
   print $fh join("\t", @header) . "\n";
