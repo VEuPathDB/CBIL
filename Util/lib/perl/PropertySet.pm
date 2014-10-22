@@ -107,9 +107,13 @@ sub getPropRelaxed {
 }
 
 
+sub setProp {
+    my ($self, $name, $value) = @_;
+    $self->{props}->{$name} = $value;
+}
+
 sub addProperty {
     my ($self, $name, $value) = @_;
-    
     $self->{props}->{$name} = $value;
 }
 

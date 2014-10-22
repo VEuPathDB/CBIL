@@ -2,9 +2,10 @@ package CBIL::Util::Utils;
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(commafy runCmd timestampLog appendToLogFile timeformat mail);
+@EXPORT = qw(commafy runCmd timestampLog appendToLogFile timeformat mail getProgramDir);
 
 use strict;
+use File::Basename;
 
 sub commafy {
   my $Rv = shift;
@@ -77,6 +78,17 @@ sub mail {
   unless($result / 256 == 0) {
     die "ERROR running the following command:  $cmd";
   }
+}
+
+##method to return the directory where the actual executable is found ... ie follows sym_links
+sub getProgramDir {
+  my $program = shift;
+  return dirname($program) if $program =~ /^\//;     # return full path if provided 
+  my $pgm = basename($program);
+  my $wh = `which $pgm`;
+  chomp $wh;
+  my $link = readlink($wh);
+  return dirname($link);
 }
 
 
