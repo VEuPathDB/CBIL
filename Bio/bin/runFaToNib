@@ -1,4 +1,4 @@
-#!@perl@
+#!/usr/bin/perl
 
 use strict;
 use lib "$ENV{GUS_HOME}/lib/perl";
@@ -10,11 +10,11 @@ my ($filesFile);
 
 die ("usage: runFaToNib --filesFile (file of new line delimited list of fasta sequence files\n") unless (-e $filesFile);
 
-print "$filesFile\n";
+print STDERR "$filesFile\n";
 
 open (FILES,$filesFile) || die ("file of fasta files cannot be opened for reading\n");
 
-print "$filesFile, file of file names is being read\n";
+print STDERR "$filesFile, file of file names is being read\n";
 
 while(<FILES>) {
   chomp;
@@ -25,14 +25,21 @@ while(<FILES>) {
   my $faFile = basename($filePath);
   my $dir = dirname($filePath);
 
-  system("mkdir -p $dir/nib");
+  runCmd("mkdir -p $dir/nib");
 
   my $nibFile = $faFile;
   $nibFile =~ s/\.\S+/\.nib/;
 
-  system("faToNib $dir/$faFile $dir/nib/$nibFile") unless (-e "$dir/nib/$nibFile");
+  die "Error: $dir/nib/$nibFile already exists" if (-e "$dir/nib/$nibFile");
 
-  print("$filePath reformatted to $nibFile or $nibFile already exists\n");
+  runCmd("faToNib $dir/$faFile $dir/nib/$nibFile");
+
+  print STDERR "$filePath reformatted to $dir/nib/$nibFile\n";
+}
+
+sub runCmd {
+  my ($cmd) = @_;
+  system($cmd) && die "Failed running:\n$cmd\nError: $?";
 }
 
 
