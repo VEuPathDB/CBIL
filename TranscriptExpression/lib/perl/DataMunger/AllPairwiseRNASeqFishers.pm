@@ -76,10 +76,11 @@ sub new {
 
               my $analysisName = "$conditionADisplayName vs $conditionBDisplayName";
               $analysisName = $analysisName . " - $strand" if($strand);
-              $clone->setAnalysisName($analysisName);
 
-              my $profileElementsString = $conditionADisplayName . ";" . $conditionBDisplayName;
-              $clone->setProfileElementsAsString($profileElementsString);
+              my $protocolAppNodesHash = {$analysisName => [$conditionADisplayName, $conditionBDisplayName]};
+              $self->setNames([$analysisName]);
+              $self->setFileNames([$analysisName]);
+              $self->setInputProtocolAppNodesHash($protocolAppNodesHash);
 
               $clone->SUPER::munge();
             }
