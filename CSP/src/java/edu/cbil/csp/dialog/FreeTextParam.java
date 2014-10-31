@@ -23,9 +23,8 @@ import edu.cbil.csp.StringTemplate;
  * @author Jonathan Crabtree
  *
  */
-public class FreeTextParam extends Param {
+public class FreeTextParam extends Param<String> {
 
-  protected String initial_value;
   protected String sample_values[];
   protected int width_hint, height_hint;
   protected StringValidatorI validator;
@@ -57,12 +56,14 @@ public class FreeTextParam extends Param {
   // Item
   // -------
   
+  @Override
   public String[] getSampleValues() 
     { 
       return sample_values;
     }
 
-  public Item copy(String url_subs) {
+  @Override
+  public Item<String> copy(String url_subs) {
     return new FreeTextParam(name, descr, help, template, help_template,
 			     prompt, optional, width_hint, height_hint,
 			     initial_value, sample_values, validator);
@@ -70,6 +71,7 @@ public class FreeTextParam extends Param {
 
   protected AH textarea = new AH(new String[] {"colspan", "3"});
 
+  @Override
   public StringTemplate getDefaultTemplate() {
     String ps[] = StringTemplate.HTMLParams(3);
     return new StringTemplate(HTMLUtil.TR
@@ -81,11 +83,11 @@ public class FreeTextParam extends Param {
 			       HTMLUtil.TD(textarea, ps[1])), ps);
   }
 
+  @Override
   public String[] getHTMLParams(String help_url) 
     {
       String anchor = makeHTMLAnchor(false);
       String link = makeHTMLLink(true, help_url, "Help!");
-      String val;
       
       return new String[] {anchor + prompt,
 			   HTMLUtil.TEXTAREA
@@ -99,7 +101,8 @@ public class FreeTextParam extends Param {
 			   , link};
     }
 
-    public Param copyParam(String new_name) 
+    @Override
+    public Param<String> copyParam(String new_name) 
       {
 	return new FreeTextParam(new_name, descr, help, template, 
 				 help_template, prompt, optional,
@@ -111,8 +114,9 @@ public class FreeTextParam extends Param {
   // Param
   // -------
   
+  @Override
   public boolean validateHTMLServletInput(HttpServletRequest rq, StringBuffer errors,
-					  Hashtable inputH, Hashtable inputHTML) 
+					  Hashtable<String, Object> inputH, Hashtable<String, String> inputHTML) 
     {
 	String input = rq.getParameter(this.name);
 

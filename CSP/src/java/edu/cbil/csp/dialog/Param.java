@@ -28,7 +28,7 @@ import edu.cbil.csp.StringTemplate;
  * @author Jonathan Crabtree
  * @version
  */
-public class Param extends Item {
+public class Param<T> extends Item<T> {
 
     /**
      * Prompt to spur the user into telling us something useful.
@@ -42,17 +42,13 @@ public class Param extends Item {
 
     /**
      * Sample values for the parameter.
-     *
-     * TO DO - this field is duplicated in some subclasses
      */
     protected String sample_vals[];
 
     /**
      * Initial value.
-     *
-     * TO DO - this field is duplicated in some subclasses
      */
-    protected String initial_value;
+    protected T initial_value;
 
     /**
      * Constructor that takes an array of sample values.
@@ -115,7 +111,7 @@ public class Param extends Item {
      */
     public Param(String name, String descr, String help, 
 		 StringTemplate st, StringTemplate ht, String prompt,
-		 boolean optional, String initial_value, String sample_values[]) 
+		 boolean optional, T initial_value, String sample_values[]) 
     {
 	super(name, descr, help, st, ht);
 	this.prompt = prompt;
@@ -141,7 +137,7 @@ public class Param extends Item {
      */
     public Param(String name, String descr, String help, 
 		 StringTemplate st, StringTemplate ht, String prompt,
-		 String initial_value, boolean optional) 
+		 T initial_value, boolean optional) 
     {
 	this(name, descr, help, st, ht, prompt, optional, initial_value, null);
     }
@@ -150,8 +146,9 @@ public class Param extends Item {
     // Param
     // --------
 
-    public Item copy(String url_subs) {
-	Param p = new Param(name, descr, help, template, help_template, prompt, 
+    @Override
+    public Item<T> copy(String url_subs) {
+	Param<T> p = new Param<T>(name, descr, help, template, help_template, prompt, 
 			    optional, initial_value, sample_vals);
 	p.current_value = this.current_value;
 	return p;
@@ -165,6 +162,7 @@ public class Param extends Item {
     // Item
     // --------
 
+    @Override
     public StringTemplate getDefaultHelpTemplate() {
 	String ps[] = StringTemplate.HTMLParams(4);
 	return new StringTemplate(HTMLUtil.TR
@@ -177,6 +175,7 @@ public class Param extends Item {
 				  HTMLUtil.TR(HTMLUtil.TD(ps[3])), ps);
     }
 
+    @Override
     public String[] getHTMLHelpParams(String form_url) {
 	String sample_vals[] = getSampleValues();
 	StringBuffer samples = new StringBuffer("");
@@ -199,19 +198,21 @@ public class Param extends Item {
     /**
      * Used to store any value obtained in <code>storeHTMLServletInput</code>.
      */
-    protected String current_value;
+    protected T current_value;
 
-    public String getCurrentValue() { return current_value; }
+    public T getCurrentValue() { return current_value; }
 
+    @Override
     public void storeHTMLServletInput(HttpServletRequest rq) {
 	String input_value = rq.getParameter(this.name);
-	if (input_value != null) this.current_value = input_value;
+	if (input_value != null) this.current_value = convertToNativeType(input_value);
     }
 
+    @Override
     public boolean validateHTMLServletInput(HttpServletRequest rq, StringBuffer errors,
-					    Hashtable inputH, Hashtable inputHTML) 
+					    Hashtable<String,Object> inputH, Hashtable<String,String> inputHTML) 
     {
-	String input = rq.getParameter(this.name);
+	T input = convertToNativeType(rq.getParameter(this.name));
 	
 	if (!optional && ((input == null) || (input.equals("")))) {
 	    errors.append("This parameter is required and no value was entered.");
@@ -219,11 +220,12 @@ public class Param extends Item {
 	}
 
 	inputH.put(this.name, input);
-	inputHTML.put(this.name, input);
+	inputHTML.put(this.name, String.valueOf(input));
 
 	return true;
     }
 
+    @Override
     public StringTemplate getDefaultTemplate() {
 	String ps[] = StringTemplate.HTMLParams(3);
 	return new StringTemplate(HTMLUtil.TR
@@ -236,13 +238,14 @@ public class Param extends Item {
 						ps[2]))) + "\n", ps);
     }
 
+    @Override
     public String[] getHTMLParams(String help_url) {
         String value = "";
 
 	if (current_value != null) 
-	  value = current_value;
+	  value = String.valueOf(current_value);
 	else if (initial_value != null)
-	  value = initial_value;
+	  value = String.valueOf(initial_value);
 
 	return new String [] {
 	    makeHTMLAnchor(false) + prompt, 
@@ -269,11 +272,17 @@ public class Param extends Item {
      * @param new_name  Name for the newly-created object.
      * @return          A new instance of <code>Param</code> with name <code>new_name</code>.
      */
-    public Param copyParam(String new_name) {
-      Param p = new Param(new_name, descr, help, template, help_template, prompt, 
+    public Param<T> copyParam(String new_name) {
+      Param<T> p = new Param<T>(new_name, descr, help, template, help_template, prompt, 
 			  optional, initial_value, sample_vals);
       p.current_value = this.current_value;
       return p;
     }
 
-} // Param
+    @SuppressWarnings("unchecked")
+    @Override
+    protected T convertToNativeType(String parameter) {
+      // assume String type unless overridden
+      return (T)parameter;
+    }
+}

@@ -25,7 +25,7 @@ import edu.cbil.csp.StringTemplate;
  *
  * @author Jonathan Crabtree
  */
-public class DoubleParam extends Param {
+public class DoubleParam extends Param<Double> {
 
     // TO DO - factor out the elements common to this class and IntParam ?
     
@@ -116,18 +116,21 @@ public class DoubleParam extends Param {
     // Item
     // --------
 
-    public Item copy(String url_subs) {
+    @Override
+    public Item<Double> copy(String url_subs) {
 	return new DoubleParam(name, descr, help, template, 
 			       help_template, prompt, min, max, initial, 
 			       optional, sample_values);
     }
 
+    @Override
     public String[] getSampleValues() { 
 	return sample_value_strs; 
     }
 
+    @Override
     public boolean validateHTMLServletInput(HttpServletRequest rq, StringBuffer errors,
-					    Hashtable inputH, Hashtable inputHTML) 
+					    Hashtable<String, Object> inputH, Hashtable<String, String> inputHTML) 
     {
 	String input = rq.getParameter(this.name);
 	double inval;
@@ -172,13 +175,14 @@ public class DoubleParam extends Param {
 	return true;
     }
 
+    @Override
     public String[] getHTMLParams(String help_url) {
 	String anchor = makeHTMLAnchor(false);
 	String link = makeHTMLLink(true, help_url, "Help!");
 	String val;
 
 	if (current_value != null) {
-	    val = current_value;
+	    val = String.valueOf(current_value);
 	} else {
 	    val = (initial != null) ? Double.toString(initial.doubleValue()) : "";
 	}
@@ -196,10 +200,15 @@ public class DoubleParam extends Param {
 				 link};
     }
 
-    public Param copyParam(String new_name) {
+    @Override
+    public Param<Double> copyParam(String new_name) {
 	return new DoubleParam(new_name, descr, help, template, 
 			       help_template, prompt, min, max, initial, 
 			       optional, sample_values);
     }
-    
+
+    @Override
+    protected Double convertToNativeType(String parameter) {
+      return Double.valueOf(parameter);
+    }
 } // DoubleParam

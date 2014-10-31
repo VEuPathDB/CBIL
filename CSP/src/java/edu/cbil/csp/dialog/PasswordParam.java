@@ -24,7 +24,7 @@ import edu.cbil.csp.StringTemplate;
  * @author Jonathan Crabtree
  * @version
  */
-public class PasswordParam extends Param {
+public class PasswordParam extends Param<String> {
     
     /**
      * Constructor.
@@ -52,6 +52,7 @@ public class PasswordParam extends Param {
     // Item
     // --------
 
+    @Override
     public String[] getHTMLParams(String help_url) {
 	return new String [] {
 	    makeHTMLAnchor(false) + prompt, 
@@ -68,7 +69,8 @@ public class PasswordParam extends Param {
     // Param
     // --------
 
-    public Item copy(String url_subs) {
+    @Override
+    public Item<String> copy(String url_subs) {
 	return new PasswordParam(name, descr, help, template, help_template, prompt, optional);
     }
 
