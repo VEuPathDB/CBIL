@@ -252,7 +252,7 @@ if($makePercentiles) {
      } else {
 
        pctSample = as.matrix(reorderedSamples\$percentile[,i]);
-       colnames(pctSample)= c("percentile");
+       colnames(pctSample)= c("percentile_channel1");
        sample = cbind(sample, pctSample);
      }
    }
