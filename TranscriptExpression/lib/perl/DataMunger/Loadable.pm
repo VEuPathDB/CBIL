@@ -11,6 +11,9 @@ sub getDoNotLoad               { $_[0]->{doNotLoad} }
 sub getSourceIdType         { $_[0]->{sourceIdType} }
 sub setSourceIdType         { $_[0]->{sourceIdType} = $_[1] }
 
+sub getDisplaySuffix {$_[0]->{displaySuffix}}
+sub setDisplaySuffix {$_[0]->{displaySuffix} = $_[1]}
+
 #--------------------------------------------------------------------------------
 
 
@@ -88,10 +91,16 @@ sub createConfigFile {
 
   for(my $i = 0; $i < scalar @$names; $i++) {
     my $name = $names->[$i];
+
+
     my $fileName = $fileNames->[$i];
     my $inputProtocolAppNodes = $inputProtocolAppNodesHash->{$name};
 
     my $inputProtocolAppNodesString = join(";", @$inputProtocolAppNodes);
+
+    if(my $displaySuffix = $self->getDisplaySuffix()) {
+      $name .= $displaySuffix;
+    }
 
     $self->printConfigLine(\*CONFIG, $name, $fileName, $inputProtocolAppNodesString);
   }

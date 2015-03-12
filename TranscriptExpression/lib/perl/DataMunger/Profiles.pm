@@ -114,7 +114,7 @@ sub munge {
 
   my $outputFile = $self->getOutputFile();
 
-  my @fileNames = map { my $n = $_;  $n =~ s/\s/_/g; ".$outputFile/$n";} @names;
+  my @fileNames = map { my $n = $_;  $n =~ s/\s/_/g; $n=~ s/[\(\)]//g; ".$outputFile/$n";} @names;
 
   $self->setFileNames(\@fileNames);
 
@@ -164,7 +164,9 @@ sub writeRScript {
   $self->addProtocolParamValue("isTwoChannel", $hasRedGreenFiles);
   $self->addProtocolParamValue("statistic", $statistic);
   $self->addProtocolParamValue("isTimeSeries", $isTimeSeries);
-  $self->addProtocolParamValue("percentileChannel", $self->getPercentileChannel());
+  $self->addProtocolParamValue("percentileChannel", $self->getPercentileChannel()) if($self->getHasRedGreenFiles());
+  $self->addProtocolParamValue("isLogged", $isLogged);
+  $self->addProtocolParamValue("baseX", $self->getBase()) if($isLogged eq "TRUE");
 
   my $rString = <<RString;
 
@@ -259,6 +261,8 @@ if($makePercentiles) {
 
    # simply replace spaces w/ underscore
    sampleFile = gsub(\" \", \"_\", sampleId, fixed=TRUE);
+   sampleFile = gsub(\"(\", \"\", sampleFile, fixed=TRUE);
+   sampleFile = gsub(\")\", \"\", sampleFile, fixed=TRUE);
 
    write.table(sample, file=paste(samplesDir, "/", sampleFile, sep=""),quote=F,sep="\\t",row.names=reorderedSamples\$id, col.names=NA);
  }
