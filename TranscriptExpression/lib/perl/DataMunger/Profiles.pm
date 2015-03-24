@@ -41,7 +41,7 @@ sub getIgnoreStdError          { $_[0]->{ignoreStdErrorEstimation} }
 sub new {
   my ($class, $args, $subclassRequiredParams) = @_;
 
-  my $sourceIdTypeDefault = 'transcript';
+  my $sourceIdTypeDefault = 'gene';
 
   my %requiredParams = ('inputFile', undef,
                         'outputFile', undef,
