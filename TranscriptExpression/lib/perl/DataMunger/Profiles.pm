@@ -27,7 +27,7 @@ use File::Temp qw/ tempfile /;
 
  sub getIsTimeSeries            { $_[0]->{isTimeSeries} }
  sub getIsLogged                { $_[0]->{isLogged} }
- sub getBase                    { $_[0]->{Base} }
+ sub getBase                    { $_[0]->{base} }
 
 
 sub getIgnoreStdError          { $_[0]->{ignoreStdErrorEstimation} }
@@ -46,6 +46,7 @@ sub new {
   my %requiredParams = ('inputFile', undef,
                         'outputFile', undef,
                         'samples', undef,
+                        'profileSetName', undef,
                         );
 
   if($subclassRequiredParams) {

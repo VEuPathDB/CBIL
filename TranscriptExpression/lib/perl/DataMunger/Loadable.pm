@@ -16,6 +16,8 @@ sub setDisplaySuffix {$_[0]->{displaySuffix} = $_[1]}
 
 #--------------------------------------------------------------------------------
 
+sub getProfileSetName          { $_[0]->{profileSetName} }
+sub setProfileSetName          { $_[0]->{profileSetName} = $_[1] }
 
 sub getProtocolName         { 
   my $self = shift;
@@ -123,6 +125,7 @@ sub printConfigLine {
               $inputProtocolAppNodesString,
               $self->getProtocolName(),
               $ppvString,
+              $self->getProfileSetName()
       );
 
   print $fh join("\t", @line) . "\n";
@@ -136,7 +139,8 @@ sub printConfigHeader {
                 "Source ID Type",
                 "Input ProtocolAppNodes",
                 "Protocol",
-                "ProtocolParams"
+                "ProtocolParams",
+                "ProfileSet"
       );
 
   print $fh join("\t", @header) . "\n";
