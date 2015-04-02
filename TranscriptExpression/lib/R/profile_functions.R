@@ -30,7 +30,6 @@ reorderAndGetColCentralVal <- function (pl=NULL, df=NULL, isFirstColNames=TRUE, 
     res$stdErr = cbind(res$stdErr, colStdErr);
   }
 
-  groupNames[1] = paste("ID\t", groupNames[1], sep="");
   colnames(res$data) = groupNames;
   colnames(res$stdErr) = groupNames;
   
@@ -190,7 +189,6 @@ standardizeProfiles <- function (df=NULL, refColName=NULL) {
 
   res$id = as.vector(df[,1]);
   colNames = colnames(df[,2:length(df)]);
-  colNames[1] = paste("ID\t", colNames[1], sep="");
 
   if (is.null(refColName)) {
     divCol = apply(df[,2:length(df)],1,max,na.rm=T);

@@ -1,5 +1,5 @@
 package CBIL::TranscriptExpression::DataMunger::PaGE;
-use base qw(CBIL::TranscriptExpression::DataMunger::RadAnalysis);
+use base qw(CBIL::TranscriptExpression::DataMunger::TwoStateComparison);
 
 use strict;
 

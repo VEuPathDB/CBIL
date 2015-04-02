@@ -16,7 +16,6 @@ sub new {
   my $requiredParams = ['outputFile',
                         'fileOne',
                         'fileTwo',
-                        'profileSetName'
                        ];
 
   $args->{inputFile} = '.';
@@ -27,8 +26,6 @@ sub new {
   unless(-e $self->getFileOne() && -e $self->getFileTwo()) {
     CBIL::TranscriptExpression::Error->("Missing Required File")->throw();
   }
-
-  $self->{profileSetDescription} = $self->getProfileSetName();
 
   return $self;
 }
@@ -60,9 +57,8 @@ if(ncol(dat1) != ncol(dat2) || sum(colnames(dat1) == colnames(dat2)) != ncol(dat
 }
 
 output = rbind(dat1, dat2)
-colnames(output)[1] = paste("ID\\t", colnames(output)[1], sep="");
 
-write.table(output, file="$outputFileTemp", quote=FALSE, sep="\\t", row.names=TRUE);
+write.table(output, file="$outputFileTemp", quote=FALSE, sep="\\t", row.names=TRUE, col.names=NA);
 
 quit("no");
 RString

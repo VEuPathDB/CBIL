@@ -28,13 +28,10 @@
                                             CBIL/Util-Installation,
                                             CBIL/Cider-Installation,
                                             CBIL/HQ-Installation,
-                                            CBIL/ProteoAnnotator-Installation,
                                             CBIL/TranscriptExpression-Installation,
                                             CBIL/ObjectMapper-Installation" >
 
-    <ant target="defaultProjectInstall">
-      <property name="project" value="CBIL"/> 
-    </ant>
+    <ant target="defaultProjectInstall"/>
 
   </target>  
    
@@ -98,13 +95,6 @@
     </ant>
   </target>  
 
-  <target name="CBIL/ProteoAnnotator-Installation">
-    <ant target="defaultComponentInstall">
-      <property name="project" value="CBIL"/>
-      <property name="component" value="ProteoAnnotator"/>
-    </ant>
-  </target>  
-
   <target name="CBIL/TranscriptExpression-Installation">
     <ant target="defaultComponentInstall">
       <property name="project" value="CBIL"/>
@@ -127,4 +117,5 @@
 
 
 </project>
+
 

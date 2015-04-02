@@ -7,11 +7,10 @@
 
 package edu.cbil.csp.dialog;
 
-import java.util.Vector;
+import edu.cbil.csp.*;
 
-import edu.cbil.csp.AH;
-import edu.cbil.csp.HTMLUtil;
-import edu.cbil.csp.StringTemplate;
+import java.util.*;
+import javax.servlet.http.*;
 
 /**
  * ActionItemGroup.java

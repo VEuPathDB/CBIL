@@ -7,13 +7,11 @@
 
 package edu.cbil.csp.dialog;
 
-import java.util.Hashtable;
+import edu.cbil.csp.*;
 
-import javax.servlet.http.HttpServletRequest;
+import java.util.*;
 
-import edu.cbil.csp.AH;
-import edu.cbil.csp.HTMLUtil;
-import edu.cbil.csp.StringTemplate;
+import javax.servlet.http.*;
 
 /**
  * EnumParam.java

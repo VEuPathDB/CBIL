@@ -7,15 +7,12 @@
 
 package edu.cbil.csp.dialog;
 
-import java.util.Hashtable;
+import edu.cbil.csp.*;
 
-import javax.servlet.http.HttpServletRequest;
+import java.util.*;
+import javax.servlet.http.*;
 
-import org.apache.oro.text.perl.Perl5Util;
-
-import edu.cbil.csp.AH;
-import edu.cbil.csp.HTMLUtil;
-import edu.cbil.csp.StringTemplate;
+import com.oroinc.text.perl.*;
 
 /**
  * TreeEnumParam.java

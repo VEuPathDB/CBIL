@@ -1,5 +1,5 @@
 package CBIL::TranscriptExpression::DataMunger::RNASeqFishersTest;
-use base qw(CBIL::TranscriptExpression::DataMunger::RadAnalysis Exporter);
+use base qw(CBIL::TranscriptExpression::DataMunger::TwoStateComparison Exporter);
 
 use strict;
 
@@ -14,10 +14,6 @@ my $MIN_MAX = 'min';
 
 my $PROTOCOL_NAME = 'Fishers Test - RUM Output';
 my $PROTOCOL_TYPE = 'unknown_protocol_type';
-
-our @EXPORT = qw ( $CONFIG_FILE );
-our $CONFIG_FILE = 'analysis_result_config.txt';
-
 
 #-------------------------------------------------------------------------------
 
@@ -61,7 +57,6 @@ sub new {
   unless($args->{doNotLoad}) {
     push @$requiredParams, 'sampleName1';
     push @$requiredParams, 'sampleName2';
-    push @$requiredParams, 'profileSetName';
   }
 
   my $self = $class->SUPER::new($args, $requiredParams);
@@ -78,15 +73,18 @@ sub new {
 
   unless($self->getDoNotLoad()) {
     $self->setProtocolName($PROTOCOL_NAME);
-    $self->setProtocolType($PROTOCOL_TYPE);
-    $self->setConfigFile($CONFIG_FILE);
+
 
     my $s1 = $self->getSampleName1();
     my $s2 = $self->getSampleName2();
 
-    $self->setAnalysisName("$s1 vs $s2");
-    my $profileElementsString = $s1 . ";" . $s2;
-    $self->setProfileElementsAsString($profileElementsString);
+
+    my $name = "$s1 vs $s2";
+    my $protocolAppNodesHash = {$name => [$s1, $s2]};
+
+    $self->setNames([$name]);
+    $self->setFileNames([$name]);
+    $self->setInputProtocolAppNodesHash($protocolAppNodesHash);
   }
 
   return $self;
