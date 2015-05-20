@@ -6,7 +6,7 @@ use Data::Dumper;
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(getRunIdsFromSraSampleIds getFastqForSraRunId getFastqForSampleIds);
+@EXPORT = qw(getRunIdsFromSraSampleIds getFastqForSraRunId getFastqForSampleIds getCsForSampleIds);
 
 
 sub getFastqForSampleIds {
