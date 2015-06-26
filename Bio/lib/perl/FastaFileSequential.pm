@@ -12,7 +12,7 @@ sub new {
     $self->{fastaFileName} = $fastaFileName;
     $self->{cursor} = 0;
     open(FA, $fastaFileName) || die "Can't open fasta file '$fastaFileName'\n";
-    $self->initCursor();
+    $self->initCursor($fastaFileName);
     return $self;
 }
 
@@ -31,12 +31,12 @@ sub getCount {
 
 # advance into file to the first defline, and remember the defline
 sub initCursor {
-  my ($self) = @_;
+  my ($self, $fastaFileName) = @_;
   die "cursor already initialized\n" if $self->{cursor};
     while (<FA>) {
 	chomp;
 	next if /^\s*$/;  # skip empty lines
-	die "Error in fasta file '' on line ${.}.  Expected a line starting with >" unless /^>/;
+	die "Error in fasta file '$fastaFileName' on line ${.}.  Expected a line starting with >" unless /^>/;
 	$self->{cursorDefLine} = $_;
         $self->{cursor} = 0;  
         last;
