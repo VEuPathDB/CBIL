@@ -1,12 +1,12 @@
 package CBIL::Util::Sra;
 
-use LWP::Simple; 
-use XML::Simple; 
-use Data::Dumper; 
+use LWP::Simple;
+use XML::Simple;
+use Data::Dumper;
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(getRunIdsFromSraSampleIds getFastqForSraRunId getFastqForSampleIds);
+@EXPORT = qw(getRunIdsFromSraSampleIds getFastqForSraRunId getFastqForSampleIds getCsForSampleIds);
 
 
 sub getFastqForSampleIds {
@@ -73,7 +73,7 @@ sub getFastqForSampleIds {
       $singleEnd = 1;
       die "ERROR: this sample '$a->[0]' contains both single and double end reads\n" if $singleEnd && $doubleEnd;
     }
-  } 
+  }
   print "input: (",join(", ",@{$sids}),") ", scalar(keys%tsid), " samples, ", scalar(@rids) , " runs, $readCount spots: " , (scalar(@rids) == 0 ? "ERROR: unable to retrieve runIds\n" : "(",join(", ",@out),")\n");
   ##now mv the files to a final filename ...
 #  rename("$fid.fastq","reads.fastq") if (-e "$fid.fastq");
@@ -81,35 +81,105 @@ sub getFastqForSampleIds {
   rename("tmpReads_2.fastq","$fileouttwo") if (-e "tmpReads_2.fastq");
 }
 
-sub getRunIdsFromSraSampleId { 
- my ($sid) = @_; 
+sub getCsForSampleIds {
+  my($sids,$fileoutone,$fileouttwo,$dontdownload) = @_;
+  $fileoutone = $fileoutone ? $fileoutone : "reads_1.csfasta";
+  $fileouttwo = $fileouttwo ? $fileouttwo : "reads_2.csfasta";
+  my @rids;
+  foreach my $sid (@{$sids}){
+    push(@rids,&getRunIdsFromSraSampleId($sid));
+  }
+  my @out;
+  my $readCount = 0;
+  my $fid = $rids[0]->[1];
+  my $singleEnd = 0;
+  my $doubleEnd = 0;
+  my %tsid;
+  my %done;
+  foreach my $a (@rids){
+    $tsid{$a->[0]} = 1;
+    if($done{$a->[1]}){
+      print STDERR "ERROR: already retrieved '$a->[1]' .. skipping\n";
+      next;
+    }
+    push(@out,"$a->[0]:$a->[1]:$a->[2]:".($a->[2] ? $a->[3] / $a->[2] : 'undef').":$a->[4]");
+    $readCount += $a->[2];
+    my $id = $a->[1];
+    $done{$id} = 1;
+    next if $dontdownload;
+    &getCsForSraRunId($id);
+    ##if single end will have two files labeled _F3.csfasta and _F3_QV.qual .. otherwise four labeled _F3.csfasta and _F3_QV.qual, _R3.csfasta and _R3_QV.qual
+    my $foundFile = 0;
+    if(-e "$id\_F3.csfasta" && -e "$id\_F3_QV.qual"){
+      $foundFile++;
+      if($fid ne $id){
+        system("cat $id\_F3.csfasta >> tmpReads_1.csfasta");
+        system("cat $id\_F3_QV.qual >> tmpReads_1.csfasta.qual");
+        unlink("$id\_F3.csfasta");
+        unlink("$id\_F3.csfasta");
+      }else{
+        rename("$id\_F3.csfasta","tmpReads_1.csfasta");
+        rename("$id\_F3_QV.qual","tmpReads_1.csfasta.qual");
+      }
+    }
+    if(-e "$id\_R3.csfasta" && -e "$id\_R3_QV.qual"){
+      $doubleEnd = 1;
+      die "ERROR: this sample '$a->[0]' contains both single and double end reads\n" if $singleEnd && $doubleEnd;
+      $foundFile++;
+      if($fid ne $id){
+        system("cat $id\_R3.csfasta >> tmpReads_2.csfasta");
+        system("cat $id\_R3_QV.qual >> tmpReads_2.csfasta.qual");
+        unlink("$id\_R3.csfasta");
+        unlink("$id\_R3.csfasta");
+      }else{
+        rename("$id\_R3.csfasta","tmpReads_2.csfasta");
+        rename("$id\_R3_QV.qual","tmpReads_2.csfasta.qual");
+      }
+    }else{
+      ##is single end only
+      $singleEnd = 1;
+      die "ERROR: this sample '$a->[0]' contains both single and double end reads\n" if $singleEnd && $doubleEnd;
+    }
+  }
+  print "input: (",join(", ",@{$sids}),") ", scalar(keys%tsid), " samples, ", scalar(@rids) , " runs, $readCount spots: " , (scalar(@rids) == 0 ? "ERROR: unable to retrieve runIds\n" : "(",join(", ",@out),")\n");
+  ##now mv the files to a final filename ...
 
- my $utils = "http://www.ncbi.nlm.nih.gov/entrez/eutils"; 
+  rename("tmpReads_1.csfasta","$fileoutone") if (-e "tmpReads_1.csfasta");
+  rename("tmpReads_2.csfasta","$fileouttwo") if (-e "tmpReads_2.csfasta");
+  rename("tmpReads_1.csfasta.qual","$fileoutone.qual") if (-e "tmpReads_1.csfasta.qual");
+  rename("tmpReads_2.csfasta.qual","$fileouttwo.qual") if (-e "tmpReads_2.csfasta.qual");
+}
 
- my $db     = "sra"; 
- my $report = "xml"; 
 
- my $esearch = "$utils/esearch.fcgi?db=$db&retmax=1&usehistory=y&term="; 
- my $esearch_result = get($esearch . $sid); 
+sub getRunIdsFromSraSampleId {
+ my ($sid) = @_;
+
+ my $utils = "http://www.ncbi.nlm.nih.gov/entrez/eutils";
+
+ my $db     = "sra";
+ my $report = "xml";
+
+ my $esearch = "$utils/esearch.fcgi?db=$db&retmax=1&usehistory=y&term=";
+ my $esearch_result = get($esearch . $sid);
 
 # print $esearch_result;
 
- $esearch_result =~ 
-m|<Count>(\d+)</Count>.*<QueryKey>(\d+)</QueryKey>.*<WebEnv>(\S+)</WebEnv>|s; 
+ $esearch_result =~
+m|<Count>(\d+)</Count>.*<QueryKey>(\d+)</QueryKey>.*<WebEnv>(\S+)</WebEnv>|s;
 
- my $Count    = $1; 
- my $QueryKey = $2; 
- my $WebEnv   = $3; 
+ my $Count    = $1;
+ my $QueryKey = $2;
+ my $WebEnv   = $3;
 
- my $efetch = "$utils/efetch.fcgi?rettype=$report&retmode=text&retmax=$Count&db=$db&query_key=$QueryKey&WebEnv=$WebEnv"; 
+ my $efetch = "$utils/efetch.fcgi?rettype=$report&retmode=text&retmax=$Count&db=$db&query_key=$QueryKey&WebEnv=$WebEnv";
 
 # print "\n--------------\n$efetch\n--------------\n";
 
- my $efetch_result = get($efetch); 
+ my $efetch_result = get($efetch);
 
- my $root = XMLin($efetch_result); 
+ my $root = XMLin($efetch_result);
 
-# print Dumper $root; 
+# print Dumper $root;
 # exit;
  
  my @ids;
@@ -179,4 +249,22 @@ sub getFastqForSraRunId {
   unlink($file);
 }
 
+sub getCsForSraRunId {
+  my($runId,$pe) = @_;
+  my $file = "$runId.sra";
+  unlink("$runId.sra") if -e "$runId.sra";
+  my $cmd = "wget http://ftp-private.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/".substr($runId,0,3)."/".substr($runId,0,6)."/$runId/$file";
+  print STDERR "retrieving $runId with $cmd\n";
+  system($cmd);
+  if($?){
+    die "ERROR ($?): Unable to fetch sra file for $runId\n";
+  }
+  print STDERR "extracting fastq file(s)...";
+  system("abi-dump ./$file");
+  my @files = glob("$runId*.*");
+  print STDERR "DONE: ".scalar(@files)." files (".join(", ",@files).")\n";
+  unlink($file);
+}
+
 1;
+  

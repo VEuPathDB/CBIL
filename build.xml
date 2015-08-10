@@ -23,18 +23,28 @@
   <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="CBIL-Installation" depends="CBIL/Bio-Installation,
+  <target name="CBIL-Installation" depends="CBIL-MavenInstallation,
+                                            CBIL/Bio-Installation,
                                             CBIL/CSP-Installation,
                                             CBIL/Util-Installation,
                                             CBIL/Cider-Installation,
                                             CBIL/HQ-Installation,
+                                            CBIL/ProteoAnnotator-Installation,
                                             CBIL/TranscriptExpression-Installation,
                                             CBIL/ObjectMapper-Installation" >
 
-    <ant target="defaultProjectInstall"/>
+    <ant target="defaultProjectInstall">
+      <property name="project" value="CBIL"/> 
+    </ant>
 
   </target>  
-   
+
+  <target name="CBIL-MavenInstallation">
+    <ant target="mavenBuildProject">
+      <property name="project" value="CBIL"/>
+    </ant>
+    <property name="alreadyBuilt" value="true"/>
+  </target>   
 
   <!-- oooooooooooooooooo  Installation Postprocess  ooooooooooooooooooooo -->
 
@@ -95,6 +105,13 @@
     </ant>
   </target>  
 
+  <target name="CBIL/ProteoAnnotator-Installation">
+    <ant target="defaultComponentInstall">
+      <property name="project" value="CBIL"/>
+      <property name="component" value="ProteoAnnotator"/>
+    </ant>
+  </target>  
+
   <target name="CBIL/TranscriptExpression-Installation">
     <ant target="defaultComponentInstall">
       <property name="project" value="CBIL"/>
@@ -117,5 +134,4 @@
 
 
 </project>
-
 
