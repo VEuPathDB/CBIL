@@ -97,11 +97,18 @@ sub createConfigFile {
     my $fileName = $fileNames->[$i];
     my $inputProtocolAppNodes = $inputProtocolAppNodesHash->{$name};
 
-    my $inputProtocolAppNodesString = join(";", @$inputProtocolAppNodes);
+    my $protocolName = $self->getProtocolName();
+    CBIL::TranscriptExpression::Error->new("Class " . ref $self . " is required to setProtocolName OR set doNotLoad=1")->throw() unless($protocolName);
+
+    my @inputAppNodesWithProtocolSuffix = map {"$_ ($protocolName)"} @$inputProtocolAppNodes;
+
+    my $inputProtocolAppNodesString = join(";", @inputAppNodesWithProtocolSuffix);
 
     if(my $displaySuffix = $self->getDisplaySuffix()) {
       $name .= $displaySuffix;
     }
+
+    $name .= " ($protocolName)";
 
     $self->printConfigLine(\*CONFIG, $name, $fileName, $inputProtocolAppNodesString);
   }
