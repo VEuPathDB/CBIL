@@ -26,7 +26,6 @@ sub getProtocolName         {
     return $self->{_protocol_name};
   }
 
-  return ref $self;
 }
 sub setProtocolName         { $_[0]->{_protocol_name} = $_[1] }
 
@@ -119,11 +118,14 @@ sub printConfigLine {
   my $ppvString = join(";", @protocolParamValues);
 
 
+  my $protocolName = $self->getProtocolName();
+  CBIL::TranscriptExpression::Error->new("Class " . ref $self . " is required to setProtocolName OR set doNotLoad=1")->throw() unless($protocolName);
+
   my @line = ($name,
               $fileName,
               $self->getSourceIdType(),
               $inputProtocolAppNodesString,
-              $self->getProtocolName(),
+              $protocolName,
               $ppvString,
               $self->getProfileSetName()
       );
