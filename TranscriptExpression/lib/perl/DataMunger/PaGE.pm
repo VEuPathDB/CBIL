@@ -16,8 +16,6 @@ my $PAGE_EXECUTABLE = "PaGE_5.1.6.1_modifiedConfOutput.pl";
 my $MISSING_VALUE = 'NA';
 my $USE_LOGGED_DATA = 1;
 my $PROTOCOL_NAME = 'PaGE';
-my $PROTOCOL_TYPE = 'unknown_protocol_type';
-my $CONFIG_FILE = 'analysis_result_config.txt';
 
 #-------------------------------------------------------------------------------
 
@@ -72,8 +70,6 @@ sub new {
   }
 
   $self->setProtocolName($PROTOCOL_NAME);
-  $self->setProtocolType($PROTOCOL_TYPE);
-  $self->setConfigFile($CONFIG_FILE);
 
   my $profileElementsString = $self->createProfileElementName();
   $self->setProfileElementsAsString($profileElementsString);

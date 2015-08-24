@@ -19,6 +19,9 @@ sub setDisplaySuffix {$_[0]->{displaySuffix} = $_[1]}
 sub getProfileSetName          { $_[0]->{profileSetName} }
 sub setProfileSetName          { $_[0]->{profileSetName} = $_[1] }
 
+
+
+
 sub getProtocolName         { 
   my $self = shift;
 
@@ -97,10 +100,10 @@ sub createConfigFile {
     my $fileName = $fileNames->[$i];
     my $inputProtocolAppNodes = $inputProtocolAppNodesHash->{$name};
 
-    my $protocolName = $self->getProtocolName();
-    CBIL::TranscriptExpression::Error->new("Class " . ref $self . " is required to setProtocolName OR set doNotLoad=1")->throw() unless($protocolName);
+    my $technologyType = $self->getTechnologyType();
+    CBIL::TranscriptExpression::Error->new("Class " . ref $self . " is required to setProtocolName OR set doNotLoad=1")->throw() unless($technologyType);
 
-    my @inputAppNodesWithProtocolSuffix = map {"$_ ($protocolName)"} @$inputProtocolAppNodes;
+    my @inputAppNodesWithProtocolSuffix = map {"$_ ($technologyType)"} @$inputProtocolAppNodes;
 
     my $inputProtocolAppNodesString = join(";", @inputAppNodesWithProtocolSuffix);
 
@@ -108,7 +111,7 @@ sub createConfigFile {
       $name .= $displaySuffix;
     }
 
-    $name .= " ($protocolName)";
+    $name .= " ($technologyType)";
 
     $self->printConfigLine(\*CONFIG, $name, $fileName, $inputProtocolAppNodesString);
   }

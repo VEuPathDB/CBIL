@@ -45,6 +45,9 @@ sub setMappingFileGeneColumn   { $_[0]->{mappingFileGeneColumn} = $_[1] }
 sub getMappingFileHasHeader    { $_[0]->{mappingFileHasHeader} }
 sub setMappingFileHasHeader    { $_[0]->{mappingFileHasHeader} = $_[1] }
 
+sub getTechnologyType          { $_[0]->{_technology_type} }
+sub setTechnologyType          { $_[0]->{_technology_type} = $_[1] }
+
 #--------------------------------------------------------------------------------
 
 my $MAP_HAS_HEADER = 0;
