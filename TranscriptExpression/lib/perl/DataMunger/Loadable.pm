@@ -19,16 +19,13 @@ sub setDisplaySuffix {$_[0]->{displaySuffix} = $_[1]}
 sub getProfileSetName          { $_[0]->{profileSetName} }
 sub setProfileSetName          { $_[0]->{profileSetName} = $_[1] }
 
-
-
-
 sub getProtocolName         { 
   my $self = shift;
 
   if($self->{_protocol_name}) {
     return $self->{_protocol_name};
   }
-
+  return ref($self);
 }
 sub setProtocolName         { $_[0]->{_protocol_name} = $_[1] }
 
@@ -101,35 +98,33 @@ sub createConfigFile {
     my $inputProtocolAppNodes = $inputProtocolAppNodesHash->{$name};
 
     my $technologyType = $self->getTechnologyType();
-    CBIL::TranscriptExpression::Error->new("Class " . ref $self . " is required to setProtocolName OR set doNotLoad=1")->throw() unless($technologyType);
+    CBIL::TranscriptExpression::Error->new("Class" . ref($self) . "  is required to setTechnologyType OR set doNotLoad=1")->throw() unless($technologyType);
 
-    my @inputAppNodesWithProtocolSuffix = map {"$_ ($technologyType)"} @$inputProtocolAppNodes;
+     my @inputAppNodesWithProtocolSuffix = map {"$_ ($technologyType)"} @$inputProtocolAppNodes;
 
-    my $inputProtocolAppNodesString = join(";", @inputAppNodesWithProtocolSuffix);
+     my $inputProtocolAppNodesString = join(";", @inputAppNodesWithProtocolSuffix);
 
-    if(my $displaySuffix = $self->getDisplaySuffix()) {
-      $name .= $displaySuffix;
-    }
+     if(my $displaySuffix = $self->getDisplaySuffix()) {
+       $name .= $displaySuffix;
+     }
 
-    $name .= " ($technologyType)";
+     $name .= " ($technologyType)";
 
-    $self->printConfigLine(\*CONFIG, $name, $fileName, $inputProtocolAppNodesString);
-  }
+     $self->printConfigLine(\*CONFIG, $name, $fileName, $inputProtocolAppNodesString);
+   }
 
-  close CONFIG;
-}
+   close CONFIG;
+ }
 
-sub printConfigLine {
-  my ($self, $fh, $name, $fileName, $inputProtocolAppNodesString) = @_;
+ sub printConfigLine {
+   my ($self, $fh, $name, $fileName, $inputProtocolAppNodesString) = @_;
 
-  my $protocolParamsHash = $self->getProtocolParamsHash();
+   my $protocolParamsHash = $self->getProtocolParamsHash();
 
-  my @protocolParamValues = map {"$_|$protocolParamsHash->{$_}"} keys %{$protocolParamsHash};
-  my $ppvString = join(";", @protocolParamValues);
+   my @protocolParamValues = map {"$_|$protocolParamsHash->{$_}"} keys %{$protocolParamsHash};
+   my $ppvString = join(";", @protocolParamValues);
 
-
-  my $protocolName = $self->getProtocolName();
-  CBIL::TranscriptExpression::Error->new("Class " . ref $self . " is required to setProtocolName OR set doNotLoad=1")->throw() unless($protocolName);
+   my $protocolName = $self->getProtocolName();
 
   my @line = ($name,
               $fileName,
