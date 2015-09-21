@@ -84,6 +84,8 @@ RString
   $self->setSamples($samples);
   $self->setInputFile($outputFile);
 
+  $self->setProtocolName("Scaling Data Transformation");
+
   $self->SUPER::munge();
 
   unlink($tempFn);
