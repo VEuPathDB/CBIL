@@ -3,14 +3,9 @@ use base qw(CBIL::ISA::Commentable);
 
 use strict;
 
-sub setOntologyTerm {
-  my ($self, $ot) = @_;
-  $self->setRole($ot);
-}
-sub getOntologyTerm { $_[0]->getRole() }
-
-sub setRole { $_[0]->{_role} = $_[1] }
-sub getRole { $_[0]->{_role} }
+# Person Roles is an ontologyterm
+sub setPersonRoles { $_[0]->{_person_roles} = $_[1] }
+sub getPersonRoles { $_[0]->{_person_roles} }
 
 sub setPersonLastName { $_[0]->{_person_last_name} = $_[1] }
 sub getPersonLastName { $_[0]->{_person_last_name} }

@@ -6,6 +6,10 @@ use strict;
 use CBIL::ISA::Publication;
 use CBIL::ISA::Contact;
 use CBIL::ISA::OntologyTerm;
+use CBIL::ISA::StudyDesign;
+use CBIL::ISA::StudyFactor;
+use CBIL::ISA::StudyAssay;
+use CBIL::ISA::Protocol;
 
 use Data::Dumper;
 
@@ -30,8 +34,8 @@ sub getFileName { $_[0]->{_file_name} }
 sub setPublications { 
   my ($self, $hash, $columnCount) = @_;
 
-  my $otRegex = qr/_publication_status/;
-  $self->{_publications} = $self->makeStudyObjectsFromHash($hash, $columnCount, "CBIL::ISA::Publication", $otRegex);
+  my $otRegexs = ["_publication_status"];
+  $self->{_publications} = $self->makeStudyObjectsFromHash($hash, $columnCount, "CBIL::ISA::Publication", $otRegexs);
 
   return $self->getPublications();
 }
@@ -40,27 +44,54 @@ sub getPublications { $_[0]->{_publications} }
 sub setContacts { 
   my ($self, $hash, $columnCount) = @_;
 
-  my $otRegex = qr/_person_roles/;
-  $self->{_contacts} = $self->makeStudyObjectsFromHash($hash, $columnCount, "CBIL::ISA::Contact", $otRegex);
+  my $otRegexs = ["_person_roles"];
+  $self->{_contacts} = $self->makeStudyObjectsFromHash($hash, $columnCount, "CBIL::ISA::Contact", $otRegexs);
 
   return $self->getContacts();
 }
 sub getContacts { $_[0]->{_contacts} }
 
-sub addProtocol { push @{$_[0]->{_protocols}}, $_[1] }
+
+sub setProtocols { 
+  my ($self, $hash, $columnCount) = @_;
+
+  my $otRegexs = ["_protocol_type", "_protocol_parameters", "_protocol_components_type"];
+  $self->{_protocols} = $self->makeStudyObjectsFromHash($hash, $columnCount, "CBIL::ISA::Protocol", $otRegexs);
+
+  return $self->getProtocols();
+}
 sub getProtocols { $_[0]->{_protocols} }
 
-sub addStudyDesign { push @{$_[0]->{_study_designs}}, $_[1] }
+sub setStudyDesigns { 
+  my ($self, $hash, $columnCount) = @_;
+
+  my $otRegexs = ["_design_type"];
+  $self->{_study_designs} = $self->makeStudyObjectsFromHash($hash, $columnCount, "CBIL::ISA::StudyDesign", $otRegexs);
+
+  return $self->getStudyDesigns();
+}
 sub getStudyDesigns { $_[0]->{_study_designs} }
 
-sub addStudyFactor { push @{$_[0]->{_study_factors}}, $_[1] }
+
+sub setStudyFactors { 
+  my ($self, $hash, $columnCount) = @_;
+
+  my $otRegexs = ["_factor_type"];
+  $self->{_study_factors} = $self->makeStudyObjectsFromHash($hash, $columnCount, "CBIL::ISA::StudyFactor", $otRegexs);
+
+  return $self->getStudyFactors();
+}
 sub getStudyFactors { $_[0]->{_study_factors} }
 
-sub setStudyFile { $_[0]->{_study_file} = $_[1] }
-sub getStudyFile { $_[0]->{_study_file} }
+sub setStudyAssays { 
+  my ($self, $hash, $columnCount) = @_;
 
-sub addAssayFile { push @{$_[0]->{_assay_files}}, $_[1] }
-sub getAssayFiles { $_[0]->{_assay_files} }
+  my $otRegexs = ["_assay_measurement_type", "_assay_technology_type"];
+  $self->{_study_assays} = $self->makeStudyObjectsFromHash($hash, $columnCount, "CBIL::ISA::StudyAssay", $otRegexs);
+
+  return $self->getStudyAssays();
+}
+sub getStudyAssays { $_[0]->{_study_assays} }
 
 sub addFactorValue { push @{$_[0]->{_factor_values}}, $_[1] }
 sub getFactorValues { $_[0]->{_factor_values} }
@@ -71,19 +102,21 @@ sub getNodes { $_[0]->{_nodes} }
 sub addEdge { push @{$_[0]->{_edges}}, $_[1] }
 sub getEdges { $_[0]->{_edges} }
 
-
-
 sub makeStudyObjectsFromHash {
-  my ($self, $hash, $columnCount, $class, $otRegex) = @_;
+  my ($self, $hash, $columnCount, $class, $otRegexs) = @_;
 
   my @rv;
 
-  my @keys = keys%{$hash};
+  $otRegexs = [] unless($otRegexs);
 
-  my @otKeys;
-  if($otRegex) {
-    @keys = grep {!/$otRegex/} keys%{$hash};
-    @otKeys = grep {/$otRegex/} keys%{$hash};
+  my @keys = keys%{$hash};
+  my %otKeys;
+
+  foreach my $otRegex (@$otRegexs) {
+    my @otKeys = grep {/$otRegex/} @keys;
+    push @{$otKeys{$otRegex}}, @otKeys;
+
+    @keys = grep {!/$otRegex/} @keys;
   }
 
   for(my $i = 0; $i < $columnCount; $i++) {
@@ -96,10 +129,19 @@ sub makeStudyObjectsFromHash {
       die "Unable to create class $class: $@";
     }
 
-    if($otRegex) {
-      my %otHash = map { $_ => $hash->{$_}->[$i] } @otKeys;
+    foreach my $otRegex (@$otRegexs) {
+      my %otHash = map { $_ => $hash->{$_}->[$i] } @{$otKeys{$otRegex}};
       my $ontologyTerm = CBIL::ISA::OntologyTerm->new(\%otHash);
-      $obj->setOntologyTerm($ontologyTerm);
+
+      my $setterName = "set" . join("", map { ucfirst } split("_", $otRegex));
+
+      eval {
+        $obj->$setterName($ontologyTerm);
+
+      };
+      if ($@) {
+        die "Unable to $setterName for class $class: $@";
+      }
     }
 
     push @rv, $obj;

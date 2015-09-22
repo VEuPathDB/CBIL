@@ -1,20 +1,14 @@
 package CBIL::ISA::StudyFactor;
-use base qw(CBIL::ISA::OntologyTerm);
+use base qw(CBIL::ISA::Commentable);
 
 use strict;
 
-sub setType {
-  my ($self, $type) = @_;
-  $self->setTerm($type);
-}
+sub setFactorType { $_[0]->{_factor_type} = $_[1] }
+sub getFactorType { $_[0]->{_factor_type} }
 
-sub getType {
-  my ($self) = @_;
-  return $self->getTerm();
-}
+sub setFactorName { $_[0]->{_factor_name} = $_[1] }
+sub getFactorName { $_[0]->{_factor_name} }
 
-sub setName { $_[0]->{_name} = $_[1] }
-sub getName { $_[0]->{_name} }
 
 
 1;

@@ -56,6 +56,8 @@ sub read {
 
   my ($lineContext, $studyIdentifier);
 
+  my $studiesKey = "_studies";
+
   while(<FILE>) {
     chomp;
     # split and remove leading and trailing quotes
@@ -75,9 +77,11 @@ sub read {
     $header = "_" . lc $header;
     $header =~ s/ /_/g;
 
+
+
     if($lineContext =~ /^study/i) {
-      push @{$iHash->{$studyIdentifier}->{$lineContext}->{$header}}, @a;
-      push @{$columnCounts->{$studyIdentifier}->{$lineContext}}, scalar @a;
+      push @{$iHash->{$studiesKey}->{$studyIdentifier}->{$lineContext}->{$header}}, @a;
+      push @{$columnCounts->{$studiesKey}->{$studyIdentifier}->{$lineContext}}, scalar @a;
     }
     else {
       push @{$iHash->{$lineContext}->{$header}}, @a;
@@ -85,18 +89,23 @@ sub read {
     }
   }
 
-  my $maxColumnCounts = {};
-  foreach my $col (keys %$columnCounts) {
+  
 
+  my $maxColumnCounts = {};
+  
+
+  foreach my $col (keys %$columnCounts) {
     if(ref($columnCounts->{$col}) eq 'ARRAY') {
       my $max = CBIL::Util::V::max(@{$columnCounts->{$col}});
       $maxColumnCounts->{$col} = $max;
     }
-    else {
-      foreach my $other (keys %{$columnCounts->{$col}}) {
-        my $max = CBIL::Util::V::max(@{$columnCounts->{$col}->{$other}});
-        $maxColumnCounts->{$col}->{$other} = $max;
-      }
+  }
+
+ 
+  foreach my $studyId (keys %{$columnCounts->{$studiesKey}}) {
+    foreach my $lineContext (keys %{$columnCounts->{$studiesKey}->{$studyId}}) {
+      my $max = CBIL::Util::V::max(@{$columnCounts->{$studiesKey}->{$studyId}->{$lineContext}});
+      $maxColumnCounts->{$studiesKey}->{$studyId}->{$lineContext} = $max;
     }
   }
 

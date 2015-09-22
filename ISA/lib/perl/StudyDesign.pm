@@ -1,17 +1,12 @@
 package CBIL::ISA::StudyDesign;
-use base qw(CBIL::ISA::OntologyTerm);
+use base qw(CBIL::ISA::Commentable);
 
 use strict;
 
-sub setType {
-  my ($self, $type) = @_;
-  $self->setTerm($type);
-}
+sub setDesignType { $_[0]->{_design_type} = $_[1] }
+sub getDesignType { $_[0]->{_design_type} }
 
-sub getType {
-  my ($self) = @_;
-  return $self->getTerm();
-}
+
 
 
 1;
