@@ -3,7 +3,12 @@ package CBIL::ISA::Commentable;
 use strict;
 use CBIL::ISA::Comment;
 
-use Data::Dumper;
+sub getComments {
+  my ($self) = @_;
+
+  return $self->{_comments};
+}
+
 
 sub new {
   my ($class, $args) = @_;

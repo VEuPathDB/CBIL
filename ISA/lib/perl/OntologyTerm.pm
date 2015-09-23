@@ -1,4 +1,5 @@
 package CBIL::ISA::OntologyTerm;
+use base qw(CBIL::ISA::Commentable);
 
 use strict;
 use Data::Dumper;

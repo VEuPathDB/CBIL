@@ -1,4 +1,5 @@
 package CBIL::ISA::Comment;
+use base qw(CBIL::ISA::Node);
 
 use strict;
 
