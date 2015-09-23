@@ -1,5 +1,5 @@
 package CBIL::ISA::StudyAssayEntity::File;
-use base qw(CBIL::ISA::Commentable);
+use base qw(CBIL::ISA::StudyAssayEntity);
 
 use strict;
 

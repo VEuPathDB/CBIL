@@ -1,0 +1,11 @@
+package CBIL::ISA::StudyAssayEntity::TermSourceRef;
+use base qw(CBIL::ISA::StudyAssayEntity);
+
+use strict;
+
+sub getParents {
+  return ["Characteristic", "MaterialType", "FactorValue", "ParameterValue", "Unit"];
+}
+
+
+1;

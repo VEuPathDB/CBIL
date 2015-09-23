@@ -3,9 +3,8 @@ use base qw(CBIL::ISA::Commentable);
 
 use strict;
 
-
 # subclasses must implement the following methods
-sub isNode { }
+sub isNode { return 0; }
 
 # subclasses must consider these
 sub getAttributeNames {
