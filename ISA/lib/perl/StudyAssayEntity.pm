@@ -5,16 +5,14 @@ use strict;
 
 
 # subclasses must implement the following methods
-
-sub getNodeType { die "All Subclasses of Node must implement getNodeType method"; }
-
+sub isNode { }
 
 # subclasses must consider these
-sub getAttributeQualifiers {
-  return ["comment"];
+sub getAttributeNames {
+  return ["Comment"];
 }
 
-sub getParentNodes {
+sub getParents {
   return [];
 }
 

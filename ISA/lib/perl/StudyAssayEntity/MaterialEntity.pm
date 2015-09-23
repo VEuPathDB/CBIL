@@ -1,5 +1,5 @@
-package CBIL::ISA::Node::MaterialEntity;
-use base qw(CBIL::ISA::Node);
+package CBIL::ISA::StudyAssayEntity::MaterialEntity;
+use base qw(CBIL::ISA::StudyAssayEntity);
 
 use strict;
 
@@ -12,15 +12,19 @@ sub getCharacteristics { $_[0]->{_characteristics} }
 sub addMaterialType { $_[0]->{_material_type} = $_[1] }
 sub getMaterialType { $_[0]->{_material_type} }
 
+# @OVERRIDE
+sub isNode { return 1}
 
-sub getAttributeQualifiers {
+sub getAttributeNames {
   my ($self) = @_;
 
-  my @attributeQualifiers = ("characteristics", "material_type", "description");
+  my @attributeQualifiers = ("Characteristic", "Material Type", "Description");
 
-  my $attrs = $self->SUPER::getAttributeQualifiers();
+  my $attrs = $self->SUPER::getAttributeNames();
 
   push @{$attrs}, @attributeQualifiers;
+
+  return $attrs;
 }
 
 1;
