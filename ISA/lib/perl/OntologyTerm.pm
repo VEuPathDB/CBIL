@@ -7,11 +7,9 @@ use Data::Dumper;
 sub setTerm { $_[0]->{_term} = $_[1] }
 sub getTerm { $_[0]->{_term} }
 
-sub addTermAccessionNumber { $_[0]->setTermAccessionNumber($_[1]) }
 sub setTermAccessionNumber { $_[0]->{_term_accession_number} = $_[1] }
 sub getTermAccessionNumber { $_[0]->{_term_accession_number} }
 
-sub addTermAccessionNumber { $_[0]->setTermSourceRef($_[1]) }
 sub setTermSourceRef { $_[0]->{_term_source_ref} = $_[1] }
 sub getTermSourceRef { $_[0]->{_term_source_ref} }
 

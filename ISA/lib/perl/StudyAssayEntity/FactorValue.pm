@@ -19,4 +19,9 @@ sub getAttributeNames {
   return $attrs;
 }
 
+sub qualifierContextMethod {
+  return "addFactorValue";
+}
+
+
 1;

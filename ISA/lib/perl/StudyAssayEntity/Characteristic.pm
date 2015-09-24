@@ -7,7 +7,7 @@ sub getParents {
   return ["Source", "Sample", "Extract", "LabeledExtract" ];
 }
 
-sub addUnit { $_[0]->{_unit} = $_[1] }
+sub setUnit { $_[0]->{_unit} = $_[1] }
 sub getUnit { $_[0]->{_unit} }
 
 
@@ -21,6 +21,10 @@ sub getAttributeNames {
   push @{$attrs}, @attributeQualifiers;
 
   return $attrs;
+}
+
+sub qualifierContextMethod {
+  return "addCharacteristic";
 }
 
 1;

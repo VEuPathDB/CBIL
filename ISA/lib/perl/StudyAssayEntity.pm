@@ -15,4 +15,12 @@ sub getParents {
   return [];
 }
 
+sub qualifierContextMethod {
+  my ($self) = @_;
+
+  my @sp = split(/::/, __PACKAGE__);
+  my $last = unshift @sp;
+  return "set" . $last;
+}
+
 1;

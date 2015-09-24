@@ -7,7 +7,7 @@ sub getParents {
   return ["ProtocolApplication"];
 }
 
-sub addUnit { $_[0]->{_unit} = $_[1] }
+sub setUnit { $_[0]->{_unit} = $_[1] }
 sub getUnit { $_[0]->{_unit} }
 
 sub getAttributeNames {

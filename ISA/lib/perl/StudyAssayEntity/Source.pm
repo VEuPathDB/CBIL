@@ -3,7 +3,7 @@ use base qw(CBIL::ISA::StudyAssayEntity::MaterialEntity)
 
 use strict;
 
-sub addProvider { $_[0]->{_provider} = $_[1] }
+sub setProvider { $_[0]->{_provider} = $_[1] }
 sub getProvider { $_[0]->{_provider} }
 
 sub getAttributeNames {
@@ -18,4 +18,4 @@ sub getAttributeNames {
   return $attrs;
 }
 
-1
+1;

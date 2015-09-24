@@ -14,5 +14,21 @@ sub new {
   return bless $args, $class;
 }
 
+sub qualifierContextMethod {
+  return "addComment";
+}
+
+sub isNode { return 0; }
+
+sub getAttributeNames {
+  return [];
+}
+
+# Comment Can apply to any Node in StudyAssay Context
+sub getParents {
+  return ["Source", "Sample", "Extract", "LabeledExtract", "Assay", "HybridizationAssay", "GelElectrophoresisAssay", "MSAssay", "NMRAssay", "Scan", "Normalization", "DataTransformation", "File", "DataFile"];
+}
+
+
 
 1;

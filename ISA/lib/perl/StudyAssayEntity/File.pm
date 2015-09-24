@@ -5,4 +5,9 @@ use strict;
 
 sub isNode { return 1; }
 
+sub qualifierContextMethod {
+  return "File";
+}
+
 1;
+
