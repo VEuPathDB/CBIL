@@ -1,4 +1,4 @@
-package CBIL::ISA::FactorValue;
+package CBIL::ISA::StudyAssayEntity::FactorValue;
 use base qw(CBIL::ISA::OntologyTerm);
 
 use strict;

@@ -1,4 +1,4 @@
-package CBIL::ISA::Characteristic;
+package CBIL::ISA::StudyAssayEntity::Characteristic;
 use base qw(CBIL::ISA::OntologyTerm);
 
 use strict;

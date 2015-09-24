@@ -1,4 +1,4 @@
-package CBIL::ISA::MaterialType;
+package CBIL::ISA::StudyAssayEntity::MaterialType;
 use base qw(CBIL::ISA::OntologyTerm);
 
 use strict;

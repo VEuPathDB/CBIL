@@ -1,5 +1,5 @@
 package CBIL::ISA::StudyAssayEntity::Fileable;
-use base qw(CBIL::ISA::StudyAssayEntity)
+use base qw(CBIL::ISA::StudyAssayEntity);
 
 use strict;
 

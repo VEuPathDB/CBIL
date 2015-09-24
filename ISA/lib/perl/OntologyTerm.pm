@@ -4,6 +4,7 @@ use base qw(CBIL::ISA::StudyAssayEntity);
 use strict;
 use Data::Dumper;
 
+
 sub setTerm { $_[0]->{_term} = $_[1] }
 sub getTerm { $_[0]->{_term} }
 
@@ -37,6 +38,7 @@ sub new {
     print STDERR Dumper $args;
     die "Unable to set term";
   }
+
   return $self;
 }
 
@@ -45,6 +47,8 @@ sub getAttributeNames {
   return ["TermAccessionNumber", "TermSourceRef"];
 }
 
+# @Override
+sub getValue { $_[0]->getTerm() }
 
 
 1;

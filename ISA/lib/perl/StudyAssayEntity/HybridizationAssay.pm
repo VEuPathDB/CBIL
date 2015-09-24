@@ -1,5 +1,5 @@
 package CBIL::ISA::StudyAssayEntity::HybridizationAssay;
-use base qw(CBIL::ISA::StudyAssayEntity::Fileable)
+use base qw(CBIL::ISA::StudyAssayEntity::Fileable);
 
 use strict;
 

@@ -1,4 +1,4 @@
-package CBIL::ISA::Label;
+package CBIL::ISA::StudyAssayEntity::Label;
 use base qw(CBIL::ISA::OntologyTerm);
 
 use strict;

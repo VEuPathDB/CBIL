@@ -1,5 +1,5 @@
 package CBIL::ISA::StudyAssayEntity::Extract;
-use base qw(CBIL::ISA::StudyAssayEntity::MaterialEntity)
+use base qw(CBIL::ISA::StudyAssayEntity::MaterialEntity);
 
 use strict;
 
