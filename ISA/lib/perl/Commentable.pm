@@ -1,7 +1,7 @@
 package CBIL::ISA::Commentable;
 
 use strict;
-use CBIL::ISA::Comment;
+use CBIL::ISA::StudyAssayEntity::Comment;
 
 sub getComments {
   my ($self) = @_;
@@ -29,7 +29,7 @@ sub new {
     next unless $commentValues;
 
     $ck =~ m/$commentString\[(.+)\]/;
-    my $comment = CBIL::ISA::Comment->new({qualifier => $1, values => $commentValues});
+    my $comment = CBIL::ISA::StudyAssayEntity::Comment->new({qualifier => $1, values => $commentValues});
     push @{$obj->{_comments}}, $comment;
   }
 

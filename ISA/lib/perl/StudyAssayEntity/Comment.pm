@@ -1,4 +1,4 @@
-package CBIL::ISA::Comment;
+package CBIL::ISA::StudyAssayEntity::Comment;
 use base qw(CBIL::ISA::StudyAssayEntity);
 
 use strict;
