@@ -109,6 +109,11 @@ sub getNodes { $_[0]->{_nodes} }
 sub addEdge { push @{$_[0]->{_edges}}, $_[1] }
 sub getEdges { $_[0]->{_edges} }
 
+
+# Handle a chunk of the Investigation File
+#  Each section is made into an object
+#    OntologyEntry objects are made based on the otRegex
+#    values which are semi-colon separated  are handled
 sub makeStudyObjectsFromHash {
   my ($self, $hash, $columnCount, $class, $otRegexs, $otAreLists) = @_;
 

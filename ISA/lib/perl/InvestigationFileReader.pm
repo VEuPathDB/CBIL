@@ -61,7 +61,7 @@ sub read {
   while(<FILE>) {
     chomp;
     # split and remove leading and trailing quotes
-    my @a = map {s/^"(.*)"$/$1/; $_;} split($delimiter, $_);
+    my @a = map { s/^"(.*)"$/$1/; $_; } split($delimiter, $_);
 
     $studyIdentifier = $a[1] if(uc $a[0] eq 'STUDY IDENTIFIER');
     if(&isContextSwitch($a[0])) {
@@ -88,6 +88,8 @@ sub read {
       push @{$columnCounts->{$lineContext}}, scalar @a;
     }
   }
+
+  close FILE;
 
   
 

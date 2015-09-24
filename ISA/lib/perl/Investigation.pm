@@ -4,6 +4,8 @@ use base qw(CBIL::ISA::Study);
 use strict;
 
 use CBIL::ISA::InvestigationFileReader;
+use CBIL::ISA::StudyAssayFileReader;
+
 use CBIL::ISA::OntologySource;
 use CBIL::ISA::Study;
 use CBIL::ISA::StudyDesign;
@@ -37,8 +39,13 @@ sub new {
   my $self = $class->SUPER::new(\%investigationHash);
 
   $self->setInvestigationReader($iReader);
+  $self->setDelimiter($delimiter);
+
   return $self;
 }
+
+sub setDelimiter { $_[0]->{_delimiter} = $_[1] }
+sub getDelimiter { $_[0]->{_delimiter} }
 
 sub setInvestigationReader { $_[0]->{_investigation_reader} = $_[1] }
 sub getInvestigationReader { $_[0]->{_investigation_reader} }
@@ -92,6 +99,8 @@ sub parse {
   my $iHash = $iReader->getInvestigationHash();
   my $iColumnCounts = $iReader->getColumnCounts();
 
+  my $delimiter = $self->getDelimiter();
+
   $self->setOntologySources($iHash->{$ONTOLOGY_SOURCE_REFERENCE}, 
                             $iColumnCounts->{$ONTOLOGY_SOURCE_REFERENCE});
 
@@ -109,6 +118,28 @@ sub parse {
 
     my $study = $self->makeStudy($studyHash, $studyColumnCounts);
     $self->addStudy($study);
+
+    my $studyFileName = $study->getFileName();
+    my $studyFileReader = CBIL::ISA::StudyAssayFileReader->new($studyFileName, $delimiter);
+    my $studyObjects = $studyFileReader->readLineToObjects();
+
+    print STDERR Dumper $studyObjects;
+    exit;
+
+    $study->addNodesAndEdges($studyObjects);
+
+    my $studyAssays = $study->getStudyAssays() or [];
+    foreach my $assay (@$studyAssays) {
+      my $assayFileName = $assay->getAssayFileName();
+      my $assayFileReader = CBIL::ISA::StudyAssayFileReader->new($assayFileName, $delimiter);
+
+      # TODO while readnext
+      #$assayFileReader->readLineToObjects();
+
+
+
+    }
+    
   }
 
 }
