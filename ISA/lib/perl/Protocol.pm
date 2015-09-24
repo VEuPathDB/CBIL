@@ -19,12 +19,10 @@ sub getProtocolUri { $_[0]->{_protocol_uri} }
 sub setProtocolVersion { $_[0]->{_protocol_version} = $_[1] }
 sub getProtocolVersion { $_[0]->{_protocol_version} }
 
-# TODO:  split by semicolon
-sub setProtocolParameters { $_[0]->{_protocol_Parameters} = $_[1] }
+sub addProtocolParameters { push @{$_[0]->{_protocol_Parameters}}, $_[1] }
 sub getProtocolParameters { $_[0]->{_protocol_parameters} }
 
-# TODO:  split by semicolon
-sub setProtocolComponentsType { $_[0]->{_protocol_components_type} = $_[1] }
+sub addProtocolComponentsType { push @{$_[0]->{_protocol_components_type}},  $_[1] }
 sub getProtocolComponentsType { $_[0]->{_protocol_components_type} }
 
 

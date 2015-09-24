@@ -42,15 +42,7 @@ sub new {
 
 # @OVERRIDE
 sub getAttributeNames {
-  my ($self) = @_;
-
-  my @attributeQualifiers = ("TermAccessionNumber", "TermSourceRef");
-
-  my $attrs = $self->SUPER::getAttributeNames();
-
-  push @{$attrs}, @attributeQualifiers;
-
-  return $attrs;
+  return ["TermAccessionNumber", "TermSourceRef"];
 }
 
 

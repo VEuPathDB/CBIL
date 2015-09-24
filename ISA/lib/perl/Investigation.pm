@@ -29,9 +29,12 @@ sub new {
   my $iReader = CBIL::ISA::InvestigationFileReader->new($investigationFile, $delimiter); 
   $iReader->read();
 
-  my $investigation = $iReader->getInvestigationHash()->{$INVESTIGATION};  
+  my $initInvestigationHash = $iReader->getInvestigationHash()->{$INVESTIGATION};  
 
-  my $self = $class->SUPER::new($investigation);
+  # the values of this hash are arrays.  Just want the first element for these
+  my %investigationHash = map { $_ => $initInvestigationHash->{$_}->[0] } keys %$initInvestigationHash;
+
+  my $self = $class->SUPER::new(\%investigationHash);
 
   $self->setInvestigationReader($iReader);
   return $self;
@@ -57,7 +60,9 @@ sub setOntologySources {
 sub makeStudy {
   my ($self, $hash, $columnCounts) = @_;
 
-  my $study = CBIL::ISA::Study->new($hash->{$STUDY});
+  my %studyHash = map { $_ => $hash->{$STUDY}->{$_}->[0] } keys %{$hash->{$STUDY}};
+
+  my $study = CBIL::ISA::Study->new(\%studyHash);
 
   $study->setContacts($hash->{$STUDY_CONTACTS}, 
                             $columnCounts->{$STUDY_CONTACTS});
@@ -77,11 +82,7 @@ sub makeStudy {
   $study->setProtocols($hash->{$STUDY_PROTOCOLS}, 
                          $columnCounts->{$STUDY_PROTOCOLS});
 
-
-  print Dumper $study;
-  exit;
-
-  
+  return $study;
 }
 
 sub parse {
@@ -109,9 +110,6 @@ sub parse {
     my $study = $self->makeStudy($studyHash, $studyColumnCounts);
     $self->addStudy($study);
   }
-
-
-
 
 }
 
