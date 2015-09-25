@@ -108,6 +108,7 @@ sub readLineToObjects {
     my $lineValue = $lineValues->[$i];
 
     my %hash = ( "_value" => $lineValue);
+
     eval "require $class";
     my $obj = eval {
       $class->new(\%hash);
@@ -116,23 +117,29 @@ sub readLineToObjects {
       die "Unable to create class $class: $@";
     }
 
+    if(my $qualifierName = $qualifierNames[$i]) {
+      $obj->setQualifier($qualifierName);
+    }
+
     my $found;
   OUTER:
     foreach my $possibleParent (reverse @rv) {
       foreach my $expectedParent (@{$obj->getParents()}) {
         $expectedParent = "CBIL::ISA::StudyAssayEntity::" . $expectedParent;
-        if($possibleParent->isa($expectedParent)) {
 
+        if($possibleParent->isa($expectedParent)) {
           my $qualifierContextMethod = $obj->qualifierContextMethod();
 
-          eval {
-            $possibleParent->$qualifierContextMethod($obj);
-          };
-          if ($@) {
-            my $parentClass = blessed($possibleParent);
-            die "Unable to call $qualifierContextMethod on $parentClass.  Trying to add or set $class: $@";
-          }
+          if($possibleParent->hasAttribute($entityNames[$i])) {
           
+            eval {
+              $possibleParent->$qualifierContextMethod($obj);
+            };
+            if ($@) {
+              my $parentClass = blessed($possibleParent);
+              die "Unable to call $qualifierContextMethod on $parentClass.  Trying to add or set $class: $@";
+            }
+          }
           $found = 1;
           last OUTER;
         }
@@ -143,7 +150,6 @@ sub readLineToObjects {
       push @rv, $obj;
     }
   }
-  print STDERR Dumper \@rv;
 
   return \@rv;
 }

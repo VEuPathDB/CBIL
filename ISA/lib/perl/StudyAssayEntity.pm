@@ -37,4 +37,14 @@ sub hasAttributes {
   return scalar @{$_[0]->getAttributeNames()};
 }
 
+
+sub hasAttribute {
+  my ($self, $attr) = @_;
+
+  my $attributes = $self->getAttributeNames();
+  foreach my $possible (@$attributes) {
+    return 1 if($attr eq $possible);
+  }
+  return 0;
+}
 1;
