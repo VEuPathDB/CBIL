@@ -59,9 +59,6 @@ sub getInvestigationDirectory { $_[0]->{_investigation_directory} }
 sub addStudy { push @{$_[0]->{_studies}}, $_[1] }
 sub getStudies { $_[0]->{_studies} }
 
-#sub addOntologyTerm { push @{$_[0]->{_ontology_terms}}, $_[1] }
-#sub getOntologyTerms { $_[0]->{_ontology_terms} }
-
 sub getOntologySources { $_[0]->{_ontology_sources} }
 sub setOntologySources { 
   my ($self, $hash, $columnCount) = @_;
@@ -134,7 +131,7 @@ sub parse {
 
     while($studyFileReader->hasNextLine()) {
       my $studyObjects = $studyFileReader->readLineToObjects();
-      $study->addFactorValuesNodesAndEdges($studyObjects, $studyFileName);
+      $study->addNodesAndEdges($studyObjects, $studyFileName);
     }
     $studyFileReader->closeFh();
 
@@ -147,13 +144,74 @@ sub parse {
 
       while($assayFileReader->hasNextLine()) {
         my $assayObjects = $assayFileReader->readLineToObjects();
-        $study->addFactorValuesNodesAndEdges($assayObjects, $assayFileName);
+        $study->addNodesAndEdges($assayObjects, $assayFileName);
       }
       $assayFileReader->closeFh();
     }
   }
 }
 
-
-
 1;
+
+=pod
+
+=head1 NAME
+
+CBIL::ISA::Investigation - module for parsing ISA Tab files
+
+=head1 SYNOPSIS
+
+    use CBIL::ISA::Investigation;
+    my $investigation = CBIL::ISA::Investigation->new($i_file, $directory, $delimiter);
+    $investigation->parse();
+
+    my $ontologySources = $investigation->getOntologySources();
+    my $publications = $investigation->getPublications();
+    my $title = $investigation->getTitle();
+    ....
+
+
+    my $studies = $investigation->getStudies();
+    foreach my $study (@$studies) {
+        my $studyTitle = $study->getTitle();
+        my $studyPublications = $study->getPublications();
+        ....
+        my $nodes = $study->getNodes();
+        my $edges = $study->getEdges();
+    }
+
+
+=head1 DESCRIPTION
+
+This module reads creates readers for an investigation, study, and assay files
+and translates into value objects.
+
+
+=head2 Composition
+
+    CBIL::ISA::Investigation
+        ISA CBIL::ISA::Study
+
+
+All methods and attributes not mentioned here are
+inherited from L<CBIL::ISA::Study>
+
+
+=head2 Methods
+
+=over 12
+
+=item C<getStudies>
+
+Returns an array of CBIL::ISA::Study objects
+
+=item C<getOntologySources>
+
+Returns an array of CBIL::ISA::OntologySource objects
+
+
+=back
+
+=cut 
+
+

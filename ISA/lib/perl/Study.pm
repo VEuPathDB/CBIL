@@ -44,6 +44,7 @@ sub setPublications {
   return $self->getPublications();
 }
 sub getPublications { $_[0]->{_publications} }
+sub addPublication { push @{$_[0]->{_publications}}, $_[1] }
 
 sub setContacts { 
   my ($self, $hash, $columnCount) = @_;
@@ -56,7 +57,7 @@ sub setContacts {
   return $self->getContacts();
 }
 sub getContacts { $_[0]->{_contacts} }
-
+sub addContact { push @{$_[0]->{_contacts}}, $_[1] }
 
 sub setProtocols { 
   my ($self, $hash, $columnCount) = @_;
@@ -68,6 +69,7 @@ sub setProtocols {
   return $self->getProtocols();
 }
 sub getProtocols { $_[0]->{_protocols} }
+sub addProtocol { push @{$_[0]->{_protocol}}, $_[1] }
 
 sub setStudyDesigns { 
   my ($self, $hash, $columnCount) = @_;
@@ -79,7 +81,7 @@ sub setStudyDesigns {
   return $self->getStudyDesigns();
 }
 sub getStudyDesigns { $_[0]->{_study_designs} }
-
+sub addStudyDesign { push @{$_[0]->{_study_design}}, $_[1] }
 
 sub setStudyFactors { 
   my ($self, $hash, $columnCount) = @_;
@@ -91,6 +93,7 @@ sub setStudyFactors {
   return $self->getStudyFactors();
 }
 sub getStudyFactors { $_[0]->{_study_factors} }
+sub addStudyFactor { push @{$_[0]->{_study_factors}}, $_[1] }
 
 sub setStudyAssays { 
   my ($self, $hash, $columnCount) = @_;
@@ -102,6 +105,7 @@ sub setStudyAssays {
   return $self->getStudyAssays();
 }
 sub getStudyAssays { $_[0]->{_study_assays} or [] }
+sub addStudyAssay { push @{$_[0]->{_study_assays}}, $_[1] }
 
 sub addNode { 
   my ($self, $node) = @_;
@@ -207,7 +211,7 @@ sub makeStudyObjectsFromHash {
 }
 
 
-sub addFactorValuesNodesAndEdges {
+sub addNodesAndEdges {
   my ($self, $saEntities, $fileName) = @_;
 
   my $wasNodeContext;
@@ -217,9 +221,6 @@ sub addFactorValuesNodesAndEdges {
 
   foreach my $entity (@$saEntities) {
     my $entityName = $entity->getEntityName();
-
-    
-
 
     next unless($entity->isNode() || $entityName eq 'ProtocolApplication');
 
@@ -251,3 +252,136 @@ sub addFactorValuesNodesAndEdges {
 
 
 1;
+
+=pod
+
+=head1 NAME
+
+CBIL::ISA::Study - module for storing object related to a Study
+
+=head1 SYNOPSIS
+
+    use CBIL::ISA::Study;
+    my $study = CBIL::ISA::Study->new();
+    $study->setIdentifier("ID:1234");
+    my $identifier = $study->getIdentifier();   
+
+
+=head1 DESCRIPTION
+
+Study Objects will be created by L<CBIL::ISA::Invstigation> module.
+
+
+=head2 Composition
+
+    CBIL::ISA::Study
+        ISA CBIL::ISA::Commentable
+
+
+All methods and attributes not mentioned here are
+inherited from L<CBIL::ISA::Commentable>
+
+
+=head2 Methods
+
+=over 12
+
+=item C<setIdentifier>
+
+=item C<getIdentifier>
+
+=item C<setTitle>
+
+=item C<getTitle>
+
+=item C<setSubmissionDate>
+
+=item C<getSubmissionDate>
+
+=item C<setPublicReleaseDate>
+
+=item C<getPublicReleaseDate>
+
+=item C<setDescription>
+
+=item C<getDescription>
+
+=item C<setFileName>
+
+=item C<getFileName>
+
+=item C<addPublication>
+
+@param L<CBIL::ISA::Publication>
+
+=item C<getPublications>
+
+@return array of L<CBIL::ISA::Publication>
+
+=item C<addContact>
+
+@param L<CBIL::ISA::Contact>
+
+=item C<getContacts>
+
+@return array of L<CBIL::ISA::Contact>
+
+=item C<addProtocol>
+
+@param L<CBIL::ISA::Protocol>
+
+=item C<getProtocols>
+
+@return array of L<CBIL::ISA::Protocol>
+
+=item C<addStudyDesign>
+
+@param L<CBIL::ISA::StudyDesign>
+
+=item C<getStudyDesigns>
+
+@return array of L<CBIL::ISA::StudyDesign>
+
+=item C<addStudyFactor>
+
+@param L<CBIL::ISA::StudyFactors>
+
+=item C<getStudyFactors>
+
+@return array of L<CBIL::ISA::StudyFactor>
+
+=item C<addStudyAssay>
+
+@param L<CBIL::ISA::StudyAssay>
+
+=item C<getStudyAssays>
+
+@return array of L<CBIL::ISA::StudyAssay>
+
+=item C<addNode>
+
+@param L<CBIL::ISA::StudyAssayEntity> object of type Node onto list of Nodes.  Will not add if another Node exists w/ same Name and Value
+
+=item C<getNodes>
+
+@return array of L<CBIL::ISA::StudyAssayEntity> (or subclass)
+
+=item C<addEdge>
+
+Makes a new L<CBIL::ISA::Edge> object from input L<CBIL::ISA::StudyAssayEntity> object(s) of type Node, output L<CBIL::ISA::StudyAssayEntity> object(s) of type Node AND L<CBIL::ISA::ProtocolApplication> objects.  Use existing Edges when appropriate and add input or output.  Push a L<CBIL::ISA::Edge> Object onto array unless already exists
+
+=item C<getEdges>
+
+@return array of L<CBIL::ISA::Edge>
+
+=item C<makeStudyObjectsFromHash>
+
+This method does most of the work when creating objects from the hash made from the "i_" / investigation file.
+
+=item C<addNodesAndEdges>
+
+Works on one array of objects from a Study/Assay File.  Adds L<CBIL::ISA::StudyAssayEntity> Nodes, L<CBIL::ISA::Edge>
+
+=back
+
+=cut 
