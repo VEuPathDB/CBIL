@@ -25,10 +25,12 @@ my $STUDY_PUBLICATIONS = "STUDY PUBLICATIONS";
 my $STUDY_ASSAYS = "STUDY ASSAYS";
 
 sub new {
-  my ($class, $investigationFile, $delimiter) = @_;
+  my ($class, $investigationFile, $investigationDirectory, $delimiter) = @_;
+
+  my $investigationFileFullPath = "$investigationDirectory/$investigationFile";
 
   # Reader makes a big hash of the investigation file only;  Used for making objects in the parse method
-  my $iReader = CBIL::ISA::InvestigationFileReader->new($investigationFile, $delimiter); 
+  my $iReader = CBIL::ISA::InvestigationFileReader->new($investigationFileFullPath, $delimiter); 
   $iReader->read();
 
   my $initInvestigationHash = $iReader->getInvestigationHash()->{$INVESTIGATION};  
@@ -39,6 +41,7 @@ sub new {
   my $self = $class->SUPER::new(\%investigationHash);
 
   $self->setInvestigationReader($iReader);
+  $self->setInvestigationDirectory($investigationDirectory);
   $self->setDelimiter($delimiter);
 
   return $self;
@@ -49,6 +52,9 @@ sub getDelimiter { $_[0]->{_delimiter} }
 
 sub setInvestigationReader { $_[0]->{_investigation_reader} = $_[1] }
 sub getInvestigationReader { $_[0]->{_investigation_reader} }
+
+sub setInvestigationDirectory { $_[0]->{_investigation_directory} = $_[1] }
+sub getInvestigationDirectory { $_[0]->{_investigation_directory} }
 
 sub addStudy { push @{$_[0]->{_studies}}, $_[1] }
 sub getStudies { $_[0]->{_studies} }
@@ -101,6 +107,8 @@ sub parse {
 
   my $delimiter = $self->getDelimiter();
 
+  my $investigationDirectory = $self->getInvestigationDirectory();
+
   $self->setOntologySources($iHash->{$ONTOLOGY_SOURCE_REFERENCE}, 
                             $iColumnCounts->{$ONTOLOGY_SOURCE_REFERENCE});
 
@@ -119,30 +127,33 @@ sub parse {
     my $study = $self->makeStudy($studyHash, $studyColumnCounts);
     $self->addStudy($study);
 
-    my $studyFileName = $study->getFileName();
+    my $studyFileName = $investigationDirectory . "/" . $study->getFileName();
+
     my $studyFileReader = CBIL::ISA::StudyAssayFileReader->new($studyFileName, $delimiter);
-    my $studyObjects = $studyFileReader->readLineToObjects();
 
-    print STDERR Dumper $studyObjects;
-    exit;
 
-    $study->addNodesAndEdges($studyObjects);
+    while($studyFileReader->hasNextLine()) {
+      my $studyObjects = $studyFileReader->readLineToObjects();
+      $study->addFactorValuesNodesAndEdges($studyObjects, $studyFileName);
+    }
+    $studyFileReader->closeFh();
 
-    my $studyAssays = $study->getStudyAssays() or [];
+
+    my $studyAssays = $study->getStudyAssays();
     foreach my $assay (@$studyAssays) {
-      my $assayFileName = $assay->getAssayFileName();
+      my $assayFileName = $investigationDirectory . "/" . $assay->getAssayFileName();
+      
       my $assayFileReader = CBIL::ISA::StudyAssayFileReader->new($assayFileName, $delimiter);
 
-      # TODO while readnext
-      #$assayFileReader->readLineToObjects();
-
-
-
+      while($assayFileReader->hasNextLine()) {
+        my $assayObjects = $assayFileReader->readLineToObjects();
+        $study->addFactorValuesNodesAndEdges($assayObjects, $assayFileName);
+      }
+      $assayFileReader->closeFh();
     }
-    
   }
-
 }
+
 
 
 1;

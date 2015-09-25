@@ -11,6 +11,12 @@ sub isNode { return 0; }
 
 # subclasses must consider these
 sub getAttributeNames {
+  my ($self) = @_;
+
+  if($self->isNode()) {
+    return ["Comment", "FactorValue"];
+  }
+
   return ["Comment"];
 }
 
@@ -21,14 +27,7 @@ sub getParents {
 sub qualifierContextMethod {
   my ($self) = @_;
 
-  my $className = blessed($self);
-  my @sp = split(/::/, $className);
-
-
-  my $last = pop @sp;
-
-  print STDERR "LAST=$last\n";
-  return "set" . $last;
+  return "set" . $self->getEntityName();
 }
 
 sub getValue { $_[0]->{_value} }
@@ -47,4 +46,40 @@ sub hasAttribute {
   }
   return 0;
 }
+
+sub getEntityName {
+  my ($self) = @_;
+
+  my $className = blessed($self);
+  my @sp = split(/::/, $className);
+
+  return pop @sp;
+}
+
+
+# For Node Entities do the simple check that the value is the same
+#  This requires the author of the isatab applied the Node Characteristics correctly
+#  All other entity types are attributes and should not be thought of as the same entity
+sub equals {
+  my ($self, $obj) = @_;
+
+  if($self->isNode() && $self->getEntityName() eq $obj->getEntityName() && $self->getValue() eq $obj->getValue()) {
+    return 1;
+  }
+  return 0;
+}
+
+
+sub addFactorValue {
+  my ($self, $factorValue) = @_;
+
+  if($self->isNode()) {
+    push @{$self->{_factor_values}}, $factorValue;
+  }
+  else {
+    die "Cannot apply factor value to non node entity";
+  }
+}
+sub getFactorValues { $_[0]->{_factor_values} }
+
 1;

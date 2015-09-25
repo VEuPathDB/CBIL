@@ -8,7 +8,7 @@ sub getComments {
 
   return $self->{_comments};
 }
-sub addComment { push @{$_[0]->{_commentss}}, $_[1] }
+sub addComment { push @{$_[0]->{_comments}}, $_[1] }
 
 
 sub new {

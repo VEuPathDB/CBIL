@@ -26,9 +26,12 @@ sub getAttributeNames {
 
 # Comment Can apply to any Node in StudyAssay Context
 sub getParents {
-  return ["Source", "Sample", "Extract", "LabeledExtract", "Assay", "HybridizationAssay", "GelElectrophoresisAssay", "MSAssay", "NMRAssay", "Scan", "Normalization", "DataTransformation", "File", "DataFile"];
+  return ["Source", "Sample", "Extract", "LabeledExtract", "Assay", "HybridizationAssay", "GelElectrophoresisAssay", "MsAssay", "NmrAssay", "Scan", "Normalization", "DataTransformation", "File", "DataFile"];
 }
 
+sub hasAttributes {
+  return 1;
+}
 
 
 1;

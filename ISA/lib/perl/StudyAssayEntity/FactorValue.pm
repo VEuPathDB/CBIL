@@ -25,5 +25,10 @@ sub qualifierContextMethod {
   return "addFactorValue";
 }
 
+# Comment Can apply to any Node in StudyAssay Context
+sub getParents {
+  return ["Source", "Sample", "Extract", "LabeledExtract", "Assay", "HybridizationAssay", "GelElectrophoresisAssay", "MsAssay", "NmrAssay", "Scan", "Normalization", "DataTransformation", "File", "DataFile"];
+}
+
 
 1;

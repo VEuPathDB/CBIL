@@ -25,4 +25,8 @@ sub getAttributeNames {
   return $attrs;
 }
 
+sub qualifierContextMethod {
+  return "addParameterValue";
+}
+
 1;

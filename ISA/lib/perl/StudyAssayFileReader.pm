@@ -55,10 +55,11 @@ sub new {
 
     # Map Header Values to objects
     $entity =~ s/Name$//;
+
     $entity = "Characteristic" if($entity eq "Characteristics");
     $entity = "ProtocolApplication" if($entity eq "ProtocolRef");
-    $entity = "ArrayDesignFile" if($entity eq "ArrayDesignFileRef");
-
+    $entity = "ArrayDesignFile" if($entity eq "ArrayDesignRef");
+    
     push @entityNames, $entity;
     push @qualifierNames, $qualifier;
   }
@@ -66,9 +67,15 @@ sub new {
   $self->setEntityNames(\@entityNames);
   $self->setQualifierNames(\@qualifierNames);
 
-
-
   return $self;
+}
+
+sub hasNextLine {
+  my ($self) =  @_;
+
+  my $fh = $self->getFh();
+
+  return !eof($fh);
 }
 
 
@@ -88,10 +95,17 @@ sub readNextLine {
     return(\@a);
   }
 
-  close $fh;
+  $self->closeFh();
   return(0);
 }
 
+
+sub closeFh {
+  my $self = shift;
+
+  my $fh = $self->getFh();
+  close $fh;
+}
 
 sub readLineToObjects {
   my ($self) = @_;
@@ -130,7 +144,9 @@ sub readLineToObjects {
         if($possibleParent->isa($expectedParent)) {
           my $qualifierContextMethod = $obj->qualifierContextMethod();
 
-          if($possibleParent->hasAttribute($entityNames[$i])) {
+          my $attribute = $entityNames[$i] =~ /File$/ ? "File" :$entityNames[$i];
+          
+          if($possibleParent->hasAttribute($attribute)) {
           
             eval {
               if($obj->hasAttributes()) {

@@ -4,7 +4,7 @@ use base qw(CBIL::ISA::StudyAssayEntity::FileAttribute);
 use strict;
 
 sub getParents {
-  return ["MSAssay"];
+  return ["MsAssay"];
 }
 
 1;

@@ -1,4 +1,4 @@
-package CBIL::ISA::StudyAssayEntity::MSAssay;
+package CBIL::ISA::StudyAssayEntity::MsAssay;
 use base qw(CBIL::ISA::StudyAssayEntity::Fileable);
 
 use strict;

@@ -1,4 +1,4 @@
-package CBIL::ISA::StudyAssayEntity::NMRAssay;
+package CBIL::ISA::StudyAssayEntity::NmrAssay;
 use base qw(CBIL::ISA::StudyAssayEntity::Fileable);
 
 use strict;

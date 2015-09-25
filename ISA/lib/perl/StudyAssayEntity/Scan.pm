@@ -7,4 +7,5 @@ sub getParents {
   return ["HybridizationAssay", "GelElectrophoresisAssay"];
 }
 
+
 1;

@@ -10,6 +10,9 @@ use CBIL::ISA::StudyDesign;
 use CBIL::ISA::StudyFactor;
 use CBIL::ISA::StudyAssay;
 use CBIL::ISA::Protocol;
+use CBIL::ISA::Edge;
+
+use CBIL::ISA::StudyAssayEntity::ProtocolApplication;
 
 use Data::Dumper;
 
@@ -98,16 +101,37 @@ sub setStudyAssays {
 
   return $self->getStudyAssays();
 }
-sub getStudyAssays { $_[0]->{_study_assays} }
+sub getStudyAssays { $_[0]->{_study_assays} or [] }
 
-sub addFactorValue { push @{$_[0]->{_factor_values}}, $_[1] }
-sub getFactorValues { $_[0]->{_factor_values} }
+sub addNode { 
+  my ($self, $node) = @_;
 
-sub addNode { push @{$_[0]->{_nodes}}, $_[1] }
-sub getNodes { $_[0]->{_nodes} }
+  foreach(@{$self->getNodes()}) {
+    return $_ if($node->equals($_));
+  }
+  
+  push @{$self->{_nodes}}, $node;
+  return $node;
+}
+sub getNodes { $_[0]->{_nodes} or [] }
 
-sub addEdge { push @{$_[0]->{_edges}}, $_[1] }
-sub getEdges { $_[0]->{_edges} }
+sub addEdge { 
+  my ($self, $input, $protocolApplications, $output, $fileName) = @_;
+
+  my $edge = CBIL::ISA::Edge->new($input, $protocolApplications, $output, $fileName);
+
+  foreach my $existingEdge (@{$self->getEdges()}) {
+    if($edge->equals($existingEdge)) {
+      $existingEdge->addInput($input);
+      $existingEdge->addOutput($output);
+      return $existingEdge;
+    }
+  }
+
+  push @{$self->{_edges}}, $edge; 
+  return $edge;
+}
+sub getEdges { $_[0]->{_edges} or [] }
 
 
 # Handle a chunk of the Investigation File
@@ -181,5 +205,49 @@ sub makeStudyObjectsFromHash {
 
   return \@rv;
 }
+
+
+sub addFactorValuesNodesAndEdges {
+  my ($self, $saEntities, $fileName) = @_;
+
+  my $wasNodeContext;
+  my @protocolApplications;
+  my $lastNode;
+  my $start;
+
+  foreach my $entity (@$saEntities) {
+    my $entityName = $entity->getEntityName();
+
+    
+
+
+    next unless($entity->isNode() || $entityName eq 'ProtocolApplication');
+
+    if($entity->isNode()) {
+      # add node unless it already exists.  If exists we get the ref to that object
+      $entity = $self->addNode($entity);
+
+      if($wasNodeContext) {
+        print STDERR "WARNING:  Study/Assay file contained consecutive Node Columns (" . $lastNode->getEntityName() . " and " . $entity->getEntityName() . ").  Creating Edge to connect these\n";
+        my $protocolApp = CBIL::ISA::StudyAssayEntity::ProtocolApplication->new({_value => 'IMPLICIT PROTOCOL'});
+        push @protocolApplications, $protocolApp;
+      }
+
+
+      my @edgeProtocolApplications = @protocolApplications;
+      $self->addEdge($lastNode, \@edgeProtocolApplications, $entity, $fileName) if($start);
+
+      $lastNode = $entity;
+      @protocolApplications = ();
+    }
+    else {
+      push @protocolApplications, $entity;
+    }
+
+    $start = 1;
+    $wasNodeContext = $entity->isNode();
+  }
+}
+
 
 1;

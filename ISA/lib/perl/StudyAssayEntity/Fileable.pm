@@ -8,10 +8,18 @@ sub isNode { return 1;}
 sub addFile { push @{$_[0]->{_files}}, $_[1] }
 sub getFiles { $_[0]->{_files} }
 
-
-# subclasses must consider these
 sub getAttributeNames {
-  return ["File"];
+  my ($self) = @_;
+
+  my @attributeQualifiers = ("File");
+
+  my $attrs = $self->SUPER::getAttributeNames();
+
+  push @{$attrs}, @attributeQualifiers;
+
+  return $attrs;
 }
+
+
 
 1;
