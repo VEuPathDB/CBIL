@@ -133,7 +133,12 @@ sub readLineToObjects {
           if($possibleParent->hasAttribute($entityNames[$i])) {
           
             eval {
-              $possibleParent->$qualifierContextMethod($obj);
+              if($obj->hasAttributes()) {
+                $possibleParent->$qualifierContextMethod($obj);
+              }
+              else {
+                $possibleParent->$qualifierContextMethod($obj->getValue());
+              }
             };
             if ($@) {
               my $parentClass = blessed($possibleParent);
