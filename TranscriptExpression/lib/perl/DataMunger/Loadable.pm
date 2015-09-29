@@ -104,22 +104,23 @@ sub createConfigFile {
 
      my $inputProtocolAppNodesString = join(";", @inputAppNodesWithProtocolSuffix);
 
+
+    my $profileSetName = $self->getProfileSetName();
      if(my $displaySuffix = $self->getDisplaySuffix()) {
        $name .= $displaySuffix;
-       my $profileSetName = $self->getProfileSetName() . $displaySuffix;
-       $self->setProfileSetName($profileSetName);
+       $profileSetName .= $displaySuffix;
      }
 
      $name .= " ($technologyType)";
 
-     $self->printConfigLine(\*CONFIG, $name, $fileName, $inputProtocolAppNodesString);
+     $self->printConfigLine(\*CONFIG, $profileSetName, $name, $fileName, $inputProtocolAppNodesString);
    }
 
    close CONFIG;
  }
 
  sub printConfigLine {
-   my ($self, $fh, $name, $fileName, $inputProtocolAppNodesString) = @_;
+   my ($self, $fh, $profileSetName, $name, $fileName, $inputProtocolAppNodesString) = @_;
 
    my $protocolParamsHash = $self->getProtocolParamsHash();
 
@@ -134,7 +135,7 @@ sub createConfigFile {
               $inputProtocolAppNodesString,
               $protocolName,
               $ppvString,
-              $self->getProfileSetName()
+              $profileSetName
       );
 
   print $fh join("\t", @line) . "\n";
