@@ -106,6 +106,8 @@ sub createConfigFile {
 
      if(my $displaySuffix = $self->getDisplaySuffix()) {
        $name .= $displaySuffix;
+       my $profileSetName = $self->getProfileSetName() . $displaySuffix;
+       $self->setProfileSetName($profileSetName);
      }
 
      $name .= " ($technologyType)";
