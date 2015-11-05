@@ -2,6 +2,8 @@ package CBIL::ISA::Edge;
 
 use strict;
 
+use Data::Dumper;
+
 sub new {
   my ($class, $inputs, $protocolApplications, $outputs, $fileName) = @_;
 
@@ -65,7 +67,7 @@ sub equals {
   my ($self, $obj) = @_;
 
   my $pas = $self->getProtocolApplications();
-  my $objPas = $self->getProtocolApplications();
+  my $objPas = $obj->getProtocolApplications();
 
   # Next check if the protocol applications are the same
 
@@ -75,7 +77,13 @@ sub equals {
   foreach (@$pas, @$objPas) {
     my $value = $_->getValue();
     $protocolValueCounts{$value}++;
+
+    foreach my $pv(@{$_->getParameterValues()}) {
+      my $key = $value . "|" . $pv->getQualifier() . "|" . $pv->getTerm();
+      $protocolValueCounts{$key}++;
+    }
   }
+
   foreach(keys %protocolValueCounts) {
     return 0 unless($protocolValueCounts{$_} == 2);
   }
