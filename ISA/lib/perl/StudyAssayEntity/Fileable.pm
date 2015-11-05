@@ -6,7 +6,7 @@ use strict;
 sub isNode { return 1;}
 
 sub addFile { push @{$_[0]->{_files}}, $_[1] }
-sub getFiles { $_[0]->{_files} }
+sub getFiles { $_[0]->{_files}  || [] }
 
 sub getAttributeNames {
   my ($self) = @_;

@@ -43,7 +43,7 @@ sub addInput {
   push @{$self->{_inputs}}, $node;
   return $node;
 }
-sub getInputs { $_[0]->{_inputs} }
+sub getInputs { $_[0]->{_inputs}  || [] }
 
 # Only add new outputs
 sub addOutput { 
@@ -56,7 +56,7 @@ sub addOutput {
   push @{$self->{_outputs}}, $node;
   return $node;
 }
-sub getOutputs { $_[0]->{_outputs} }
+sub getOutputs { $_[0]->{_outputs}  || [] }
 
 sub setProtocolApplications { $_[0]->{_protocol_applications} = $_[1] }
 sub getProtocolApplications { $_[0]->{_protocol_applications} }

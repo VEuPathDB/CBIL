@@ -6,7 +6,7 @@ use CBIL::ISA::StudyAssayEntity::Comment;
 sub getComments {
   my ($self) = @_;
 
-  return $self->{_comments};
+  return $self->{_comments} || [];
 }
 sub addComment { push @{$_[0]->{_comments}}, $_[1] }
 

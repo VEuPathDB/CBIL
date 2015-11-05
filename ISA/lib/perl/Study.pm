@@ -43,7 +43,7 @@ sub setPublications {
 
   return $self->getPublications();
 }
-sub getPublications { $_[0]->{_publications} }
+sub getPublications { $_[0]->{_publications} || [] }
 sub addPublication { push @{$_[0]->{_publications}}, $_[1] }
 
 sub setContacts { 
@@ -56,7 +56,7 @@ sub setContacts {
 
   return $self->getContacts();
 }
-sub getContacts { $_[0]->{_contacts} }
+sub getContacts { $_[0]->{_contacts}  || [] }
 sub addContact { push @{$_[0]->{_contacts}}, $_[1] }
 
 sub setProtocols { 
@@ -68,7 +68,7 @@ sub setProtocols {
 
   return $self->getProtocols();
 }
-sub getProtocols { $_[0]->{_protocols} }
+sub getProtocols { $_[0]->{_protocols}  || [] }
 sub addProtocol { push @{$_[0]->{_protocol}}, $_[1] }
 
 sub setStudyDesigns { 
@@ -80,7 +80,7 @@ sub setStudyDesigns {
 
   return $self->getStudyDesigns();
 }
-sub getStudyDesigns { $_[0]->{_study_designs} }
+sub getStudyDesigns { $_[0]->{_study_designs}  || [] }
 sub addStudyDesign { push @{$_[0]->{_study_design}}, $_[1] }
 
 sub setStudyFactors { 
@@ -92,7 +92,7 @@ sub setStudyFactors {
 
   return $self->getStudyFactors();
 }
-sub getStudyFactors { $_[0]->{_study_factors} }
+sub getStudyFactors { $_[0]->{_study_factors}  || [] }
 sub addStudyFactor { push @{$_[0]->{_study_factors}}, $_[1] }
 
 sub setStudyAssays { 

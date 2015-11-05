@@ -80,6 +80,6 @@ sub addFactorValue {
     die "Cannot apply factor value to non node entity";
   }
 }
-sub getFactorValues { $_[0]->{_factor_values} }
+sub getFactorValues { $_[0]->{_factor_values}  || [] }
 
 1;

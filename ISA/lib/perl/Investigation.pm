@@ -57,7 +57,7 @@ sub setInvestigationDirectory { $_[0]->{_investigation_directory} = $_[1] }
 sub getInvestigationDirectory { $_[0]->{_investigation_directory} }
 
 sub addStudy { push @{$_[0]->{_studies}}, $_[1] }
-sub getStudies { $_[0]->{_studies} }
+sub getStudies { $_[0]->{_studies}  || [] }
 
 sub getOntologySources { $_[0]->{_ontology_sources} }
 sub setOntologySources { 

@@ -5,7 +5,7 @@ use strict;
 
 # Person Roles is an ontologyterm
 sub addPersonRoles { push @{$_[0]->{_person_roles}}, $_[1] }
-sub getPersonRoles { $_[0]->{_person_roles} }
+sub getPersonRoles { $_[0]->{_person_roles}  || [] }
 
 sub setPersonLastName { $_[0]->{_person_last_name} = $_[1] }
 sub getPersonLastName { $_[0]->{_person_last_name} }
