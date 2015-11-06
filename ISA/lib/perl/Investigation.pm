@@ -10,6 +10,8 @@ use CBIL::ISA::OntologySource;
 use CBIL::ISA::Study;
 use CBIL::ISA::StudyDesign;
 
+use CBIL::ISA::OntologyTerm qw(@allOntologyTerms);
+
 use Data::Dumper;
 
 my $INVESTIGATION = "INVESTIGATION";
@@ -46,6 +48,9 @@ sub new {
 
   return $self;
 }
+
+sub setOntologyAccessionsHash { $_[0]->{_ontology_accessions} = $_[1] }
+sub getOntologyAccessionsHash { $_[0]->{_ontology_accessions} }
 
 sub setDelimiter { $_[0]->{_delimiter} = $_[1] }
 sub getDelimiter { $_[0]->{_delimiter} }
@@ -149,6 +154,14 @@ sub parse {
       $assayFileReader->closeFh();
     }
   }
+
+  my %ontologyTerms;
+  foreach my $ontologyTerm(@allOntologyTerms) {
+    next unless $ontologyTerm->getTermAccessionNumber();
+    $ontologyTerms{$ontologyTerm->getTermSourceRef()}->{$ontologyTerm->getTermAccessionNumber()}++;
+  }
+  $self->setOntologyAccessionsHash(\%ontologyTerms);
+
 }
 
 1;

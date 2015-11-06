@@ -1,9 +1,13 @@
 package CBIL::ISA::OntologyTerm;
-use base qw(CBIL::ISA::StudyAssayEntity);
+use base qw(CBIL::ISA::StudyAssayEntity Exporter);
 
 use strict;
+
 use Data::Dumper;
 
+our @EXPORT = qw(@allOntologyTerms);
+
+our @allOntologyTerms;
 
 sub setTerm { $_[0]->{_term} = $_[1] }
 sub getTerm { $_[0]->{_term} }
@@ -38,6 +42,8 @@ sub new {
     print STDERR Dumper $args;
     die "Unable to set term";
   }
+
+  push @allOntologyTerms, $self;
 
   return $self;
 }
