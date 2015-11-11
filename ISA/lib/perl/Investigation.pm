@@ -2,6 +2,7 @@ package CBIL::ISA::Investigation;
 use base qw(CBIL::ISA::Study);
 
 use strict;
+use Scalar::Util 'blessed';
 
 use CBIL::ISA::InvestigationFileReader;
 use CBIL::ISA::StudyAssayFileReader;
@@ -157,9 +158,19 @@ sub parse {
 
   my %ontologyTerms;
   foreach my $ontologyTerm(@allOntologyTerms) {
+    if(blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::Characteristic' || 
+       blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::ParameterValue' || 
+       blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::FactorValue' ) {
+
+      unless($ontologyTerm->getTermAccessionNumber()) {
+        $ontologyTerms{"QUALIFIER"}->{$ontologyTerm->getQualifier()}++;
+      }
+    }
+
     next unless $ontologyTerm->getTermAccessionNumber();
     $ontologyTerms{$ontologyTerm->getTermSourceRef()}->{$ontologyTerm->getTermAccessionNumber()}++;
   }
+
   $self->setOntologyAccessionsHash(\%ontologyTerms);
 
 }
