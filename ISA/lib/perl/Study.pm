@@ -132,6 +132,26 @@ sub addEdge {
     }
   }
 
+  foreach my $protocolApp (@$protocolApplications) {
+    my $protocolName = $protocolApp->getValue();
+    foreach my $studyProtocol (@{$self->getProtocols()}) {
+      if($studyProtocol->getProtocolName() eq $protocolName) {
+        $protocolApp->setProtocol($studyProtocol);
+      }
+    }
+    die "Protocol Not defined in the investigation file for [$protocolName]" unless($protocolApp->getProtocol());
+
+    foreach my $paramValue (@{$protocolApp->getParameterValues()}) {
+      my $paramName = $paramValue->getQualifier();
+      foreach my $protocolParam (@{$protocolApp->getProtocol()->getProtocolParameters()}) {
+        if($protocolParam->getTerm() eq $paramName) {
+          $paramValue->setProtocolParam($protocolParam);
+        }
+      }
+      die "ProtocolParam [$paramName] Not defined in the investigation file for protocol [$protocolName]" unless($paramValue->getProtocolParam());
+    }
+  }
+
   push @{$self->{_edges}}, $edge; 
   return $edge;
 }

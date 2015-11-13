@@ -29,7 +29,7 @@ sub new {
     next unless $commentValues;
 
     $ck =~ m/$commentString\[(.+)\]/;
-    my $comment = CBIL::ISA::StudyAssayEntity::Comment->new({qualifier => $1, values => $commentValues});
+    my $comment = CBIL::ISA::StudyAssayEntity::Comment->new({'_qualifier' => $1, '_value' => $commentValues});
     push @{$obj->{_comments}}, $comment;
   }
 

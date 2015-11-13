@@ -19,7 +19,7 @@ sub getProtocolUri { $_[0]->{_protocol_uri} }
 sub setProtocolVersion { $_[0]->{_protocol_version} = $_[1] }
 sub getProtocolVersion { $_[0]->{_protocol_version} }
 
-sub addProtocolParameters { push @{$_[0]->{_protocol_Parameters}}, $_[1] }
+sub addProtocolParameters { push @{$_[0]->{_protocol_parameters}}, $_[1] }
 sub getProtocolParameters { $_[0]->{_protocol_parameters}  || [] }
 
 sub addProtocolComponentsType { push @{$_[0]->{_protocol_components_type}},  $_[1] }

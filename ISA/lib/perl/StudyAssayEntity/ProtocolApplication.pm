@@ -12,6 +12,10 @@ sub getPerformer { $_[0]->{_performer} }
 sub setDate { $_[0]->{_date} = $_[1] }
 sub getDate { $_[0]->{_date} }
 
+# Reference to the protocol object
+sub setProtocol { $_[0]->{_protocol} = $_[1] }
+sub getProtocol { $_[0]->{_protocol} }
+
 
 sub getParents {
   return [];
