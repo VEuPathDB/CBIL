@@ -113,6 +113,9 @@ sub createConfigFile {
 
      $name .= " ($technologyType)";
 
+    # don't allow the something to be input to itself
+    $inputProtocolAppNodesString = undef if($inputProtocolAppNodesString eq $name);
+
      $self->printConfigLine(\*CONFIG, $profileSetName, $name, $fileName, $inputProtocolAppNodesString);
    }
 
