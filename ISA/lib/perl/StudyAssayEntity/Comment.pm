@@ -3,6 +3,7 @@ use base qw(CBIL::ISA::StudyAssayEntity);
 
 use strict;
 
+# This qualifier is not an ontology term
 sub setQualifier { $_[0]->{_qualifier} = $_[1] }
 sub getQualifier { $_[0]->{_qualifier} }
 

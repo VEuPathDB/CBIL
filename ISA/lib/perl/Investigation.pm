@@ -53,6 +53,10 @@ sub new {
 sub setOntologyAccessionsHash { $_[0]->{_ontology_accessions} = $_[1] }
 sub getOntologyAccessionsHash { $_[0]->{_ontology_accessions} }
 
+sub setOntologyTerms { $_[0]->{_ontology_terms} = $_[1] }
+sub getOntologyTerms { $_[0]->{_ontology_terms} }
+
+
 sub setDelimiter { $_[0]->{_delimiter} = $_[1] }
 sub getDelimiter { $_[0]->{_delimiter} }
 
@@ -158,21 +162,18 @@ sub parse {
 
   my %ontologyTerms;
   foreach my $ontologyTerm(@allOntologyTerms) {
-    if(blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::Characteristic' || 
-       blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::ParameterValue' || 
-       blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::FactorValue' ) {
+    my $hasAccession = defined $ontologyTerm->getTermAccessionNumber();
 
-      unless($ontologyTerm->getTermAccessionNumber()) {
-        $ontologyTerms{"QUALIFIER"}->{$ontologyTerm->getQualifier()}++;
-      }
+    $ontologyTerms{$ontologyTerm->getTermSourceRef()}->{$ontologyTerm->getTermAccessionNumber()}++ if($hasAccession);
+
+    # Characteristic Qualifiers are a special case.  Their term/accession/source is not defined in the investigation file
+    if(!$hasAccession && blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::Characteristic') {
+      $ontologyTerms{"CHARACTERISTIC_QUALIFIER"}->{$ontologyTerm->getQualifier()}++;
     }
-
-    next unless $ontologyTerm->getTermAccessionNumber();
-    $ontologyTerms{$ontologyTerm->getTermSourceRef()}->{$ontologyTerm->getTermAccessionNumber()}++;
   }
 
   $self->setOntologyAccessionsHash(\%ontologyTerms);
-
+  $self->setOntologyTerms(\@allOntologyTerms);
 }
 
 1;

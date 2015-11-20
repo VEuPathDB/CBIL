@@ -1,5 +1,5 @@
 package CBIL::ISA::StudyAssayEntity::Characteristic;
-use base qw(CBIL::ISA::OntologyTerm);
+use base qw(CBIL::ISA::OntologyTermWithQualifier);
 
 use strict;
 
@@ -9,9 +9,6 @@ sub getParents {
 
 sub setUnit { $_[0]->{_unit} = $_[1] }
 sub getUnit { $_[0]->{_unit} }
-
-sub setQualifier { $_[0]->{_qualifier} = $_[1] }
-sub getQualifier { $_[0]->{_qualifier} }
 
 sub getAttributeNames {
   my ($self) = @_;
