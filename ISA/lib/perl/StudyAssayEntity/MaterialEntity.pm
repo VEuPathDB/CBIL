@@ -18,7 +18,7 @@ sub isNode { return 1}
 sub getAttributeNames {
   my ($self) = @_;
 
-  my @attributeQualifiers = ("Characteristic", "Material Type", "Description");
+  my @attributeQualifiers = ("Characteristic", "MaterialType", "Description");
 
   my $attrs = $self->SUPER::getAttributeNames();
 
