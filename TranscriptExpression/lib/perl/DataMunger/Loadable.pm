@@ -85,6 +85,7 @@ sub createConfigFile {
   my $fileNames = $self->getFileNames();
   my $inputProtocolAppNodesHash = $self->getInputProtocolAppNodesHash();
 
+
   unless(scalar @$names == scalar @$fileNames && scalar @$names > 0) {
     CBIL::TranscriptExpression::Error->new("AppNode Names and/or file name not specified correctly")->throw();
   }

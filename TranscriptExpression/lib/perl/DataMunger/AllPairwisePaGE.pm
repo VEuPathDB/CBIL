@@ -22,6 +22,7 @@ sub new {
    my $conditionsHashRef = $self->groupListHashRef($self->getConditions());
    my @groupNames = keys %$conditionsHashRef;
    my $fullConditions = $self->getConditions();
+
     for (my $i = 0; $i < scalar @groupNames; $i++) {
       my $conditionAName = $groupNames[$i];
       for (my $j = 0; $j < scalar @groupNames; $j++)
@@ -29,18 +30,30 @@ sub new {
           if ($j>$i) 
             {
               my $conditionBName = $groupNames[$j];
-              my $analysisName = $self->generateAnalysisName($conditionAName,$conditionBName);
+              my $analysisName = $self->generateOutputFile($conditionAName,$conditionBName);
               my $outputFile = $self->generateOutputFile($conditionAName,$conditionBName, "PageOutput");
               my $aRef = $self->filterConditions($conditionAName);
               my $bRef = $self->filterConditions($conditionBName);
               my $avb = [@$bRef,@$aRef];
               my $clone = $self->clone();
               $clone->setConditions($avb);
+
               $clone->setOutputFile($outputFile);
-              $clone->setAnalysisName($analysisName);
+
+              # this is the protocol app node name
+              $clone->setNames([$analysisName]);
+              print STDERR "WHAT IS THE ANALYSIS NAME? $analysisName\n";
 
               my $profileElementsString = $conditionAName . ";" . $conditionBName;
-              $clone->setProfileElementsAsString($profileElementsString);
+
+              my $inputsHash = { $analysisName => [$conditionAName, $conditionBName] };
+
+              $clone->setInputProtocolAppNodesHash($inputsHash);
+
+              $clone->setSourceIdType("gene");
+
+              $clone->setProfileSetName($self->getProfileSetName() . " - PaGE");
+
               $clone->SUPER::munge();
             }
           }

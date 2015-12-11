@@ -46,7 +46,6 @@ sub new {
   my %requiredParams = ('inputFile', undef,
                         'outputFile', undef,
                         'samples', undef,
-                        'profileSetName', undef,
                         );
 
   if($subclassRequiredParams) {
@@ -56,6 +55,11 @@ sub new {
   }
 
   my @requiredParams = keys %requiredParams;
+
+  unless($args->{doNotLoad} == 1 ) {
+    push @requiredParams, 'profileSetName';
+  }
+
 
   unless ($args->{sourceIdType}) {
     $args->{sourceIdType} = $sourceIdTypeDefault;
