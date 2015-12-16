@@ -248,11 +248,11 @@ if($makePercentiles) {
 
    if($makePercentiles) {
      if($hasRedGreenFiles) {
-       redPctSample = as.matrix(reorderedRedSamples\$data[,i]);
+       redPctSample = as.matrix(reorderedRedSamples\$percentile[,i]);
        colnames(redPctSample)= c("percentile_channel1");
        sample = cbind(sample, redPctSample);
 
-       greenPctSample = as.matrix(reorderedGreenSamples\$data[,i]);
+       greenPctSample = as.matrix(reorderedGreenSamples\$percentile[,i]);
        colnames(greenPctSample)= c("percentile_channel2");
        sample = cbind(sample, greenPctSample);
 
