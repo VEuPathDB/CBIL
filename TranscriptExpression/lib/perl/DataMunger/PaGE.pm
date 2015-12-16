@@ -11,6 +11,8 @@ use GUS::Community::FileTranslator;
 use File::Basename;
 
 
+use Data::Dumper;
+
 my $PAGE_EXECUTABLE = "PaGE_5.1.6.1_modifiedConfOutput.pl";
 
 my $MISSING_VALUE = 'NA';
@@ -48,6 +50,8 @@ sub new {
                        ];
 
   my $self = $class->SUPER::new($args, $requiredParams);
+
+  $self->setNames([$args->{analysisName}]);
 
   unless(defined($args->{isDataLogged})) {
     CBIL::TranscriptExpression::Error->new("Parameter [isDataLogged] is missing in the config file")->throw();
@@ -104,8 +108,6 @@ sub munge {
   $self->setFileNames([$self->getOutputFile()]);
 
   $self->createConfigFile();
-
-  exit;
 }
 
 sub translatePageOutput {
