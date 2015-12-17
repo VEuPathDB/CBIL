@@ -207,7 +207,7 @@ my %organismCode = ("Standard" => 1,
 
 sub generateCodonHash {
 	my($index) = @_;
-	my $i = $index ? $index : 0;
+	my $i = $index ? $index : 1;
 	my @aa = split('',$AA[$i]);
 	my @b1 = split('',$B1[$i]);
 	my @b2 = split('',$B2[$i]);
