@@ -198,11 +198,11 @@ my %organismCode = ("Standard" => 1,
 										"Alternative Yeast Nuclear" => 12,
 										"Ascidian Mitochondrial" => 13,
 										"Alternative Flatworm Mitochondrial" => 14,
-										"Chlorophycean Mitochondria" => 16 
-										"Trematode Mitochondrial" => 21 
-                                                                                "Scenedesmus obliquus Mitochondrial" => 22 
-                                                                                "Thraustochytrium Mitochondrial" => 23 
-                                                                                "Pterobranchia Mitochondrial" => 24 
+										"Chlorophycean Mitochondria" => 16, 
+										"Trematode Mitochondrial" => 21, 
+                                                                                "Scenedesmus obliquus Mitochondrial" => 22, 
+                                                                                "Thraustochytrium Mitochondrial" => 23, 
+                                                                                "Pterobranchia Mitochondrial" => 24, 
                                                                                 "Candidate Division SR1 and Gracilibacteria" => 25 );
 
 sub generateCodonHash {
