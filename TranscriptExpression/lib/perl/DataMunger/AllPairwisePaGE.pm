@@ -3,6 +3,8 @@ use base qw(CBIL::TranscriptExpression::DataMunger::PaGE);
 
 use strict;
 
+use Data::Dumper;
+
 #-------------------------------------------------------------------------------
 
 sub setConditions            { $_[0]->{conditions} = $_[1] }
@@ -42,9 +44,8 @@ sub new {
 
               # this is the protocol app node name
               $clone->setNames([$analysisName]);
-              print STDERR "WHAT IS THE ANALYSIS NAME? $analysisName\n";
 
-              my $profileElementsString = $conditionAName . ";" . $conditionBName;
+              my $profileSetName = $conditionAName . " vs." . $conditionBName;
 
               my $inputsHash = { $analysisName => [$conditionAName, $conditionBName] };
 
@@ -52,7 +53,7 @@ sub new {
 
               $clone->setSourceIdType("gene");
 
-              $clone->setProfileSetName($self->getProfileSetName() . " - PaGE");
+              $clone->setProfileSetName($profileSetName . " - PaGE");
 
               $clone->SUPER::munge();
             }
@@ -60,10 +61,6 @@ sub new {
     }
  }
 
- sub generateAnalysisName {
-   my ($self,$conditionAName,$conditionBName) = @_;
-   return $conditionAName." vs ".$conditionBName;
- }
 
  sub filterConditions {
    my ($self, $conditionName) = @_;

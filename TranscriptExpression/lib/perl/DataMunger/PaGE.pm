@@ -46,7 +46,6 @@ sub new {
                         'levelConfidence',
                         'minPrescence',
                         'statistic',
-                        'profileSetName'
                        ];
 
   my $self = $class->SUPER::new($args, $requiredParams);
@@ -75,23 +74,18 @@ sub new {
 
   $self->setProtocolName($PROTOCOL_NAME);
 
-  my $profileElementsString = $self->createProfileElementName();
+  $self->setSourceIdType("gene");
+  $self->setProfileSetName($args->{analysisName});
 
+  my $conditions = $self->groupListHashRef($self->getConditions());
+  my @inputs = keys %$conditions;
+
+  my $inputsHash = { $args->{analysisName} => \@inputs };
+  $self->setInputProtocolAppNodesHash($inputsHash);
 
   return $self;
 }
 
-sub createProfileElementName {
-  my ($self) = @_;
-
-  my $conditionsHashRef = $self->groupListHashRef($self->getConditions());
-  my @groupNames = keys %$conditionsHashRef;
-
-  if($groupNames[1]) {
-    return $groupNames[1] . ';' . $groupNames[0];
-  }
-  return $groupNames[0];
-}
 
 
 sub munge {
@@ -185,6 +179,7 @@ sub makePageInput {
   chomp($header = <FILE>);
 
   my $headerIndexHash = CBIL::TranscriptExpression::Utils::headerIndexHashRef($header, qr/\t/);
+
 
   my $conditions = $self->groupListHashRef($self->getConditions());
 
