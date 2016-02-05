@@ -30,6 +30,8 @@ my $STUDY_ASSAYS = "STUDY ASSAYS";
 sub new {
   my ($class, $investigationFile, $investigationDirectory, $delimiter) = @_;
 
+  @allOntologyTerms = ();
+
   my $investigationFileFullPath = "$investigationDirectory/$investigationFile";
 
   # Reader makes a big hash of the investigation file only;  Used for making objects in the parse method
@@ -148,6 +150,8 @@ sub parse {
 
     my $studyAssays = $study->getStudyAssays();
     foreach my $assay (@$studyAssays) {
+      next unless($assay->getAssayFileName());
+
       my $assayFileName = $investigationDirectory . "/" . $assay->getAssayFileName();
       
       my $assayFileReader = CBIL::ISA::StudyAssayFileReader->new($assayFileName, $delimiter);

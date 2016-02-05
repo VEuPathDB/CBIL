@@ -139,7 +139,7 @@ sub addEdge {
         $protocolApp->setProtocol($studyProtocol);
       }
     }
-    die "Protocol Not defined in the investigation file for [$protocolName]" unless($protocolApp->getProtocol());
+    die "Protocol Not defined in the investigation file for [$protocolName]" if(!$protocolApp->getProtocol() && $protocolName ne 'IMPLICIT PROTOCOL');
 
     foreach my $paramValue (@{$protocolApp->getParameterValues()}) {
       my $paramName = $paramValue->getQualifier();
