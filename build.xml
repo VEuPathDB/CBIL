@@ -29,6 +29,7 @@
                                             CBIL/Cider-Installation,
                                             CBIL/HQ-Installation,
                                             CBIL/TranscriptExpression-Installation,
+                                            CBIL/ISA-Installation,
                                             CBIL/ObjectMapper-Installation" >
 
     <ant target="defaultProjectInstall"/>
@@ -102,6 +103,12 @@
     </ant>
   </target>  
 
+  <target name="CBIL/ISA-Installation">
+    <ant target="defaultComponentInstall">
+      <property name="project" value="CBIL"/>
+      <property name="component" value="ISA"/>
+    </ant>
+  </target>
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooo  Release  ooooooooooooooooooooooooooooo -->
