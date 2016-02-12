@@ -1,5 +1,5 @@
 package CBIL::TranscriptExpression::DataMunger::Profiles;
-use base qw(CBIL::TranscriptExpression::DataMunger);
+use base qw(CBIL::TranscriptExpression::DataMunger::Loadable);
 
 use strict;
 
@@ -11,10 +11,7 @@ use Data::Dumper;
 
 use File::Temp qw/ tempfile /;
 
-my $SKIP_SECOND_ROW = 0;
-my $LOAD_PROFILE_ELEMENT = 1;
-my $PROFILE_CONFIG_FILE_NAME = "expression_profile_config.txt";
-my $TIME_SERIES_CONFIG_FILE_NAME = "time_series_stats_config.txt";
+
 
 #-------------------------------------------------------------------------------
 
@@ -25,32 +22,15 @@ my $TIME_SERIES_CONFIG_FILE_NAME = "time_series_stats_config.txt";
  sub getFindMedian              { $_[0]->{findMedian} }
  sub getPercentileChannel       { $_[0]->{percentileChannel} }
 
- sub getIsLogged                { $_[0]->{isLogged} }
- sub setIsLogged                { $_[0]->{isLogged} = $_[1]}
-
- sub getBase                    { $_[0]->{Base} }
- sub setBase                    { $_[0]->{Base} = $_[1]}
-
  sub getHasRedGreenFiles        { $_[0]->{hasRedGreenFiles} }
  sub getMakePercentiles         { $_[0]->{makePercentiles} }
 
- sub getDoNotLoad               { $_[0]->{doNotLoad} }
-
  sub getIsTimeSeries            { $_[0]->{isTimeSeries} }
- sub getMappingFile             { $_[0]->{mappingFile} }
+ sub getIsLogged                { $_[0]->{isLogged} }
+ sub getBase                    { $_[0]->{base} }
 
- sub setPercentileSetPrefix      { $_[0]->{percentileSetPrefix} = $_[1]}
 
- sub getProfileSetName          { $_[0]->{profileSetName} }
- sub setProfileSetName          { $_[0]->{profileSetName} = $_[1]}
- sub getProfileSetDescription   { $_[0]->{profileSetDescription} }
-
- sub getSourceIdType            { $_[0]->{sourceIdType} }
- sub setSourceIdType            { $_[0]->{sourceIdType} = $_[1]}
-
- sub getLoadProfileElement      { $_[0]->{loadProfileElement} }
- 
- sub getIgnoreStdError          { $_[0]->{ignoreStdErrorEstimation} }
+sub getIgnoreStdError          { $_[0]->{ignoreStdErrorEstimation} }
 #-------------------------------------------------------------------------------
 
  # Standard Error is Set internally
@@ -60,10 +40,13 @@ my $TIME_SERIES_CONFIG_FILE_NAME = "time_series_stats_config.txt";
 
 sub new {
   my ($class, $args, $subclassRequiredParams) = @_;
+
   my $sourceIdTypeDefault = 'gene';
+
   my %requiredParams = ('inputFile', undef,
                         'outputFile', undef,
                         'samples', undef,
+                        'profileSetName', undef,
                         );
 
   if($subclassRequiredParams) {
@@ -74,28 +57,23 @@ sub new {
 
   my @requiredParams = keys %requiredParams;
 
-
-  unless($args->{doNotLoad}) {
-    push @requiredParams, 'profileSetName';
-    unless ($args->{sourceIdType}) {
-      $args->{sourceIdType} = $sourceIdTypeDefault;
-    }
-    my $sourceIdType = $args->{sourceIdType};
-    my $profileSetName = $args->{profileSetName};
-    if ($profileSetName=~m/,/) {
-      CBIL::TranscriptExpression::Error->new("The Profile Set Name  - $profileSetName - Contains the invalid character (,).\n Please replace the invalid character.")->throw();
-    }
-    if (!defined $args->{loadProfileElement}) {
-      $args->{loadProfileElement} = $LOAD_PROFILE_ELEMENT;
-    }
-    my $loadProfileElement = $args->{loadProfileElement}==0 ? '- Skip ApiDB.ProfileElement' :'';
-    unless($args->{profileSetDescription}) {
-      $args->{profileSetDescription} = "$profileSetName - $sourceIdType $loadProfileElement";
-    }
+  unless ($args->{sourceIdType}) {
+    $args->{sourceIdType} = $sourceIdTypeDefault;
   }
+
   if ($args->{isTimeSeries} && $args->{hasRedGreenFiles} && !$args->{percentileChannel}) {
     CBIL::TranscriptExpression::Error->new("Must specify percentileChannel for two channel time series experiments")->throw();
   }
+
+
+  unless (defined $args->{isLogged}){
+    $args->{isLogged} = 1;
+  }
+
+  unless (defined $args->{base}){
+    $args->{base} = 2;
+  }
+
   my $self = $class->SUPER::new($args, \@requiredParams);
 
   my $inputFile = $args->{inputFile};
@@ -104,12 +82,15 @@ sub new {
     CBIL::TranscriptExpression::Error->new("input file $inputFile does not exist")->throw();
   }
 
+
+
   return $self;
 }
 
 
 sub munge {
   my ($self) = @_;
+
 
   my $samplesRString = $self->makeSamplesRString();
 
@@ -125,13 +106,24 @@ sub munge {
 
   system("rm $rFile");
   my $doNotLoad = $self->getDoNotLoad(); 
-  unless($doNotLoad){
-    $self->createConfigFile();
-    if($self->getIsTimeSeries() ){
-      $self->createTimeSeriesConfigFile();
-    }
-  }
+
+
+  my $samplesHash = $self->groupListHashRef($self->getSamples());
+
+  my @names = keys %$samplesHash;
+  $self->setNames(\@names);
+
+  my $outputFile = $self->getOutputFile();
+
+  my @fileNames = map { my $n = $_;  $n =~ s/\s/_/g; $n=~ s/[\(\)]//g; ".$outputFile/$n";} @names;
+
+  $self->setFileNames(\@fileNames);
+
+  $self->setInputProtocolAppNodesHash($samplesHash);
+
+  $self->createConfigFile();
 }
+
 
 sub checkMakeStandardError {
   my ($self) = @_;
@@ -166,6 +158,17 @@ sub writeRScript {
   my $makeStandardError = $self->getMakeStandardError() ? "TRUE" : "FALSE";
   my $findMedian = $self->getFindMedian() ? "TRUE" : "FALSE";
 
+  my $statistic = $self->getFindMedian() ? 'median' : 'average';
+  my $isTimeSeries = $self->getIsTimeSeries() ? "TRUE" : "FALSE";
+  my $isLogged = $self->getIsLogged() ? "TRUE" : "FALSE";
+
+  $self->addProtocolParamValue("isTwoChannel", $hasRedGreenFiles);
+  $self->addProtocolParamValue("statistic", $statistic);
+  $self->addProtocolParamValue("isTimeSeries", $isTimeSeries);
+  $self->addProtocolParamValue("percentileChannel", $self->getPercentileChannel()) if($self->getHasRedGreenFiles());
+  $self->addProtocolParamValue("isLogged", $isLogged);
+  $self->addProtocolParamValue("baseX", $self->getBase()) if($isLogged eq "TRUE");
+
   my $rString = <<RString;
 
 source("$ENV{GUS_HOME}/lib/R/TranscriptExpression/profile_functions.R");
@@ -182,13 +185,11 @@ if($hasDyeSwaps) {
 }
 
 reorderedSamples = reorderAndGetColCentralVal(pl=dat.samples, df=dat, computeMedian=$findMedian);
-
-
-write.table(reorderedSamples\$data, file="$outputFile",quote=F,sep="\\t",row.names=reorderedSamples\$id);
+write.table(reorderedSamples\$data, file="$outputFile",quote=F,sep="\\t",row.names=reorderedSamples\$id, col.names=NA);
 
 if($makeStandardError) {
-  write.table(reorderedSamples\$stdErr, file="$stdErrOutputFile",quote=F,sep="\\t",row.names=reorderedSamples\$id);
-   }
+  write.table(reorderedSamples\$stdErr, file="$stdErrOutputFile",quote=F,sep="\\t",row.names=reorderedSamples\$id, col.names=NA);
+}
 if($hasRedGreenFiles) {
   redDat = read.table(paste("$inputFile", ".red", sep=""), header=T, sep="\\t", check.names=FALSE);
   greenDat = read.table(paste("$inputFile", ".green", sep=""), header=T, sep="\\t", check.names=FALSE);
@@ -204,8 +205,8 @@ if($hasRedGreenFiles) {
   reorderedRedSamples = reorderAndGetColCentralVal(pl=dat.samples, df=newRedDat);
   reorderedGreenSamples = reorderAndGetColCentralVal(pl=dat.samples, df=newGreenDat);
 
-  write.table(reorderedRedSamples\$data, file=paste("$outputFile", ".red", sep=""), quote=F,sep="\\t",row.names=reorderedRedSamples\$id);
-  write.table(reorderedGreenSamples\$data, file=paste("$outputFile", ".green", sep=""), quote=F,sep="\\t",row.names=reorderedGreenSamples\$id);
+  write.table(reorderedRedSamples\$data, file=paste("$outputFile", ".red", sep=""), quote=F,sep="\\t",row.names=reorderedRedSamples\$id, col.names=NA);
+  write.table(reorderedGreenSamples\$data, file=paste("$outputFile", ".green", sep=""), quote=F,sep="\\t",row.names=reorderedGreenSamples\$id, col.names=NA);
 }
 
 if($makePercentiles) {
@@ -213,13 +214,60 @@ if($makePercentiles) {
     reorderedRedSamples\$percentile = percentileMatrix(m=reorderedRedSamples\$data);
     reorderedGreenSamples\$percentile = percentileMatrix(m=reorderedGreenSamples\$data);
 
-    write.table(reorderedRedSamples\$percentile, file=paste("$outputFile", ".redPct", sep=""), quote=F,sep="\\t",row.names=reorderedRedSamples\$id);
-    write.table(reorderedGreenSamples\$percentile, file=paste("$outputFile", ".greenPct", sep=""), quote=F,sep="\\t",row.names=reorderedGreenSamples\$id);
+    write.table(reorderedRedSamples\$percentile, file=paste("$outputFile", ".redPct", sep=""), quote=F,sep="\\t",row.names=reorderedRedSamples\$id, col.names=NA);
+    write.table(reorderedGreenSamples\$percentile, file=paste("$outputFile", ".greenPct", sep=""), quote=F,sep="\\t",row.names=reorderedGreenSamples\$id, col.names=NA);
   } else {
     reorderedSamples\$percentile = percentileMatrix(m=reorderedSamples\$data);
-    write.table(reorderedSamples\$percentile, file="$pctOutputFile",quote=F,sep="\\t",row.names=reorderedSamples\$id);
+    write.table(reorderedSamples\$percentile, file="$pctOutputFile",quote=F,sep="\\t",row.names=reorderedSamples\$id, col.names=NA);
   }
 }
+
+### Here we make individual files
+### Header names match gus4 results tables
+
+  samplesDir = ".$outputFile";
+  dir.create(samplesDir);
+
+ for(i in 1:ncol(reorderedSamples\$data)) {
+   sampleId = colnames(reorderedSamples\$data)[i];
+
+   sample = as.matrix(reorderedSamples\$data[,i]);
+   colnames(sample)= c("value");
+
+   if($makeStandardError) {
+     stdErrSample = as.matrix(reorderedSamples\$stdErr[,i]);
+     colnames(stdErrSample)= c("standard_error");
+     
+     sample = cbind(sample, stdErrSample);
+   }
+
+
+   if($makePercentiles) {
+     if($hasRedGreenFiles) {
+       redPctSample = as.matrix(reorderedRedSamples\$data[,i]);
+       colnames(redPctSample)= c("percentile_channel1");
+       sample = cbind(sample, redPctSample);
+
+       greenPctSample = as.matrix(reorderedGreenSamples\$data[,i]);
+       colnames(greenPctSample)= c("percentile_channel2");
+       sample = cbind(sample, greenPctSample);
+
+     } else {
+
+       pctSample = as.matrix(reorderedSamples\$percentile[,i]);
+       colnames(pctSample)= c("percentile_channel1");
+       sample = cbind(sample, pctSample);
+     }
+   }
+
+   # simply replace spaces w/ underscore
+   sampleFile = gsub(\" \", \"_\", sampleId, fixed=TRUE);
+   sampleFile = gsub(\"(\", \"\", sampleFile, fixed=TRUE);
+   sampleFile = gsub(\")\", \"\", sampleFile, fixed=TRUE);
+
+   write.table(sample, file=paste(samplesDir, "/", sampleFile, sep=""),quote=F,sep="\\t",row.names=reorderedSamples\$id, col.names=NA);
+ }
+
 
 quit("no");
 RString
@@ -254,120 +302,6 @@ sub makeSamplesRString {
   }
 
   return $rv;
-}
-
-sub createConfigFile{
-  my ($self) = @_;
-  my $profileString = '';
-  my $percentileString = '';
-  my $standardErrorString = '';
-  my $redPercentileString = '';
-  my $greenPercentileString = '';
-  my $isLogged = 1;
-  my $base = 2;
-  if (defined $self->getIsLogged()){
-    $isLogged = $self->getIsLogged();
-  }
-  if ($isLogged && defined $self->getBase() ) {
-      $base= $self->getBase();
-    }
-  if (!$isLogged) {
-    $base = undef;
-  }
-  
-  my $sourceIdType = $self->getSourceIdType;
-  my $loadProfileElement = $self->getLoadProfileElement();
-  my $baseCols = [$sourceIdType,$SKIP_SECOND_ROW,$loadProfileElement];
-  my $mainDir = $self->getMainDirectory();
-  my $PROFILE_CONFIG_FILE_LOCATION = $mainDir. "/" . $PROFILE_CONFIG_FILE_NAME;
-  unless(-e $PROFILE_CONFIG_FILE_LOCATION){
-   open(PCFH, "> $PROFILE_CONFIG_FILE_LOCATION") or die "Cannot open file $PROFILE_CONFIG_FILE_NAME for writing: $!"; 
-  }
-  else {
-   open(PCFH, ">> $PROFILE_CONFIG_FILE_LOCATION") or die "Cannot open file $PROFILE_CONFIG_FILE_NAME for writing: $!";
-   }
-  $profileString = $self->createConfigLine('',$baseCols, $isLogged, $base );
-  print PCFH "$profileString\n" ;
-  if ($self->getMakePercentiles() && !$self->getHasRedGreenFiles()) {
-    $percentileString = $self->createConfigLine('pct',$baseCols, 0, undef );
-    print PCFH "$percentileString\n";
-  }
-  if ($self->getMakeStandardError()) {
-    $standardErrorString = $self->createConfigLine('stderr',$baseCols, 0, undef );
-    print PCFH "$standardErrorString\n";
-  }
-  if ($self->getMakePercentiles() && $self->getHasRedGreenFiles()) {
-    $greenPercentileString = $self->createConfigLine('greenPct',$baseCols, 0, undef );
-    $redPercentileString = $self->createConfigLine('redPct',$baseCols, 0, undef );
-    print PCFH "$greenPercentileString\n$redPercentileString\n";
-  close PCFH;
-  }
-}
-
-sub createConfigLine {
-  my ($self,$type,$baseCols, $logged, $baseX) = @_;
-  my $dataFileBase = $self->getOutputFile();
-  my $profileSetName = $self->getProfileSetName();
-  my $profileSetDescription = $self->getProfileSetDescription();
-  my @base = (@$baseCols, $logged, $baseX);
-  my $prefix = '';
-  if ($type eq 'pct') {
-    $prefix = 'percentile - ';
-    if (!$self->getHasRedGreenFiles()) {
-      $self->setPercentileSetPrefix($prefix);
-    }
-  }
-  elsif ($type eq 'stderr') {
-    $prefix = 'standard error - ';}
-  elsif ($type eq 'greenPct') {
-    $prefix = 'green percentile - ';
-    if ($self->getPercentileChannel() =='green') {
-      $self->setPercentileSetPrefix($prefix);
-    }
-  }
-  elsif ($type eq 'redPct') {
-    $prefix = 'red percentile - ';
-      if ($self->getPercentileChannel()=='red') {
-      $self->setPercentileSetPrefix($prefix);
-    }
-  }
-  else { $prefix = '';}
-  if ($prefix) {
-    $type = '.' . $type;
-  }
-  my $dataFile = $dataFileBase . $type; 
-  my $profileSetName = $prefix . $profileSetName;
-  my $profileSetDescription = $prefix . $profileSetDescription;
-  my @cols = ("$dataFile", "$profileSetName",  "$profileSetDescription",);
-  push(@cols, @base);
-  my $configString = join("\t", @cols);
-  
-  return $configString;
-}
-
-sub createTimeSeriesConfigFile {
-  my($self) = @_;
-  my $mappingFile = $self->getMappingFile();
-  my $profileSetName = $self->getProfileSetName();
-  my $percentileSetName = $self->{percentileSetPrefix}.$profileSetName;
-  my $profileSetSpec = $profileSetName.'|'.$percentileSetName;
-  my $mainDir = $self->getMainDirectory();
-  my $TIME_SERIES_CONFIG_FILE_LOCATION = $mainDir. "/" . $TIME_SERIES_CONFIG_FILE_NAME;
-  unless(-e $TIME_SERIES_CONFIG_FILE_LOCATION){
-    open(TSFH, "> $TIME_SERIES_CONFIG_FILE_LOCATION") or die "Cannot open file $TIME_SERIES_CONFIG_FILE_NAME for writing: $!";
-    if($mappingFile) {
-      print TSFH "$mappingFile\n$profileSetSpec";
-    }
-    else {
-      print TSFH "NO_MAPPING_FILE\n$profileSetSpec";
-    }
-    close TSFH;
-  }
-  else {
-      open(TSFH, ">> $TIME_SERIES_CONFIG_FILE_LOCATION") or die "Cannot open file $TIME_SERIES_CONFIG_FILE_NAME for writing: $!";
-      print TSFH ",$profileSetSpec";
-    close TSFH;
-  }
 }
 
 

@@ -1,8 +1,8 @@
 package CBIL::Util::Sra;
 
-use LWP::Simple; 
-use XML::Simple; 
-use Data::Dumper; 
+use LWP::Simple;
+use XML::Simple;
+use Data::Dumper;
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -73,7 +73,7 @@ sub getFastqForSampleIds {
       $singleEnd = 1;
       die "ERROR: this sample '$a->[0]' contains both single and double end reads\n" if $singleEnd && $doubleEnd;
     }
-  } 
+  }
   print "input: (",join(", ",@{$sids}),") ", scalar(keys%tsid), " samples, ", scalar(@rids) , " runs, $readCount spots: " , (scalar(@rids) == 0 ? "ERROR: unable to retrieve runIds\n" : "(",join(", ",@out),")\n");
   ##now mv the files to a final filename ...
 #  rename("$fid.fastq","reads.fastq") if (-e "$fid.fastq");
@@ -140,7 +140,7 @@ sub getCsForSampleIds {
       $singleEnd = 1;
       die "ERROR: this sample '$a->[0]' contains both single and double end reads\n" if $singleEnd && $doubleEnd;
     }
-  } 
+  }
   print "input: (",join(", ",@{$sids}),") ", scalar(keys%tsid), " samples, ", scalar(@rids) , " runs, $readCount spots: " , (scalar(@rids) == 0 ? "ERROR: unable to retrieve runIds\n" : "(",join(", ",@out),")\n");
   ##now mv the files to a final filename ...
 
@@ -151,35 +151,35 @@ sub getCsForSampleIds {
 }
 
 
-sub getRunIdsFromSraSampleId { 
- my ($sid) = @_; 
+sub getRunIdsFromSraSampleId {
+ my ($sid) = @_;
 
- my $utils = "http://www.ncbi.nlm.nih.gov/entrez/eutils"; 
+ my $utils = "http://www.ncbi.nlm.nih.gov/entrez/eutils";
 
- my $db     = "sra"; 
- my $report = "xml"; 
+ my $db     = "sra";
+ my $report = "xml";
 
- my $esearch = "$utils/esearch.fcgi?db=$db&retmax=1&usehistory=y&term="; 
- my $esearch_result = get($esearch . $sid); 
+ my $esearch = "$utils/esearch.fcgi?db=$db&retmax=1&usehistory=y&term=";
+ my $esearch_result = get($esearch . $sid);
 
 # print $esearch_result;
 
- $esearch_result =~ 
-m|<Count>(\d+)</Count>.*<QueryKey>(\d+)</QueryKey>.*<WebEnv>(\S+)</WebEnv>|s; 
+ $esearch_result =~
+m|<Count>(\d+)</Count>.*<QueryKey>(\d+)</QueryKey>.*<WebEnv>(\S+)</WebEnv>|s;
 
- my $Count    = $1; 
- my $QueryKey = $2; 
- my $WebEnv   = $3; 
+ my $Count    = $1;
+ my $QueryKey = $2;
+ my $WebEnv   = $3;
 
- my $efetch = "$utils/efetch.fcgi?rettype=$report&retmode=text&retmax=$Count&db=$db&query_key=$QueryKey&WebEnv=$WebEnv"; 
+ my $efetch = "$utils/efetch.fcgi?rettype=$report&retmode=text&retmax=$Count&db=$db&query_key=$QueryKey&WebEnv=$WebEnv";
 
 # print "\n--------------\n$efetch\n--------------\n";
 
- my $efetch_result = get($efetch); 
+ my $efetch_result = get($efetch);
 
- my $root = XMLin($efetch_result); 
+ my $root = XMLin($efetch_result);
 
-# print Dumper $root; 
+# print Dumper $root;
 # exit;
  
  my @ids;
@@ -267,3 +267,4 @@ sub getCsForSraRunId {
 }
 
 1;
+  

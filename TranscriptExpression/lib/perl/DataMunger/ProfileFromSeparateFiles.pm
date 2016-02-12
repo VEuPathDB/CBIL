@@ -16,6 +16,7 @@ sub setHasHeader     {$_[0]->{hasHeader} = $_[1]}
 
 sub setSamples       {$_[0]->{samples} = $_[1]}
 
+
 sub new {
   my ($class, $args) = @_;
 
@@ -60,6 +61,7 @@ sub readDataHash {
     # if only one value in $file.. it must be the file name
     if(scalar @options == 1) {
       $fn = $options[0];
+      $display = $fn;
     } 
     elsif(scalar @options == 2) {
       $display = $options[0];

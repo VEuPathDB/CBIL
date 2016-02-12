@@ -14,7 +14,6 @@ sub new {
   my ($class, $args) = @_;
 
   my $requiredParams = ['outputFile',
-                        'profileSetName',
                         'profileFile'
                        ];
 
@@ -29,8 +28,6 @@ sub new {
   unless(-e $self->getProfileFile() && -e $self->getScalingFactorsFile()) {
     CBIL::TranscriptExpression::Error->new("BOTH profileFile and scaling factor file are required.")->throw();
   }
-
-  $self->{profileSetDescription} = $self->getProfileSetName();
 
   return $self;
 }
@@ -82,9 +79,17 @@ RString
 
   $self->runR($tempFn);
 
-  $self->createConfigFile();
+  my $samples = $self->readFileHeaderAsSamples($outputFile);
+
+  $self->setSamples($samples);
+  $self->setInputFile($outputFile);
+
+  $self->SUPER::munge();
 
   unlink($tempFn);
 }
+
+
+
 
 1;
