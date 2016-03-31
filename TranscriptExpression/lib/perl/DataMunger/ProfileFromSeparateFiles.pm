@@ -14,8 +14,8 @@ use CBIL::TranscriptExpression::Error;
 sub getHasHeader     {$_[0]->{hasHeader}}
 sub setHasHeader     {$_[0]->{hasHeader} = $_[1]}
 
-sub setSamples       {$_[0]->{samples} = $_[1]}
-
+sub getHeaders     {$_[0]->{headers}}
+sub setHeaders     {$_[0]->{headers} = $_[1]}
 
 sub new {
   my ($class, $args) = @_;
@@ -48,11 +48,14 @@ sub readDataHash {
   my ($self) = @_;
 
   my $files = $self->getSamples();
+
   my $fileSuffix = $self->getFileSuffix();
 
   my $hasHeader = $self->getHasHeader();
 
-  my @headers; # these are the output headers
+  my @headers; # these are the input headers
+  my @samples;
+
   foreach my $file (@$files) {
     my ($fn, $display, $selectedColumn);
 
@@ -73,14 +76,15 @@ sub readDataHash {
       $fn = $options[2];
     }
 
-    $fn = $fn . $fileSuffix if($fileSuffix);
+    push @headers, $fn;
+    push @samples, "$display|$fn";
 
-    push @headers, $display;
+    my $fullFileName = defined($fileSuffix) ? $fn . $fileSuffix : $fn;
 
-    open(FILE, $fn) or CBIL::TranscriptExpression::Error->new("Cannot open File $fn for reading: $!")->throw();
+    open(FILE, $fullFileName) or CBIL::TranscriptExpression::Error->new("Cannot open File $fullFileName for reading: $!")->throw();
 
     if($selectedColumn && !$hasHeader) {
-      CBIL::TranscriptExpression::Error->new("Trying to select a specific column $selectedColumn from file $fn but hasHeader flag was set to false")->throw();
+      CBIL::TranscriptExpression::Error->new("Trying to select a specific column $selectedColumn from file $fullFileName but hasHeader flag was set to false")->throw();
     }
 
     my $inputHeader;
@@ -111,23 +115,24 @@ sub readDataHash {
         $value = $rest[$index - 1];
       }
 
-      if($self->{dataHash}->{$uId}->{$display}) {
-        CBIL::TranscriptExpression::Error->new("ID $uId is not unique for $display")->throw();
+      if($self->{dataHash}->{$uId}->{$fn}) {
+        CBIL::TranscriptExpression::Error->new("ID $uId is not unique for $fn")->throw();
       }
 
-      $self->{dataHash}->{$uId}->{$display} = $value;
+      $self->{dataHash}->{$uId}->{$fn} = $value;
     }
     close FILE;
   }
 
-  $self->setSamples(\@headers);
+  $self->setHeaders(\@headers);
+  $self->setSamples(\@samples);
 }
 
 sub writeDataHash {
   my ($self) =  @_;
 
   my $dataHash = $self->{dataHash};
-  my $headers = $self->getSamples();
+  my $headers = $self->getHeaders();
 
   my ($fh, $file) = tempfile();
 
