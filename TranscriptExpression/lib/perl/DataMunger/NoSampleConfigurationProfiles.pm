@@ -12,7 +12,7 @@ use Data::Dumper;
 
 use File::Basename;
 
-use File::Temp qw/ tempfile /;
+use File::Temp;
 
 
 sub new {
