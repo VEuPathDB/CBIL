@@ -49,7 +49,6 @@ sub new {
     die "sample names must be unique, average samples with the profiles step class before calling this step class";
   }
   $args->{samples} = \@samples;
-  $args->{doNotLoad} = 1;
 
 
   my $self = $class->SUPER::new($args, $requiredParams);
