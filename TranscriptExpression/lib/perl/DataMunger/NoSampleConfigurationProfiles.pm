@@ -51,6 +51,9 @@ sub new {
   $args->{samples} = \@samples;
 
 
+
+
+
   my $self = $class->SUPER::new($args, $requiredParams);
 
   return $self;
@@ -59,52 +62,10 @@ sub new {
 sub munge {
   my ($self) = @_;
   
-  $self->{mappingFile} = $self->getMappingFile();
   $self->SUPER::munge();
 
 }
 
-sub getMappingFile {
-  my ($self) = @_;
-  
-  my $inputFile = $self->{inputFile};
-
-  if($self->inputFileIsMappingFile()) {
-    return $inputFile;
-  }
-  
-  if (defined $self->{mappingFile}) {
-    return $self->{mappingFile};
-  }
-  my $mappingFile = $self->makeSelfMappingFile();
-  return $mappingFile;
-  
-}
-
-
-sub makeSelfMappingFile {
-  my ($self) = @_;
-  my $inputFile = $self->{inputFile};
-  my $mappingFileHandle = File::Temp->new();
-  my $mappingFile = $mappingFileHandle->filename;
-  print STDERR $mappingFile;
-  open (INPUT, "<$inputFile") or die "unable to open input file $inputFile : $!";
-  open (MAPPING, ">$mappingFile") or die "unable to open input file $inputFile : $!";
-  my $isHeader = 1;
-  while(<INPUT>) {
-    unless ($isHeader) {
-      my ($id) = split(/\t/,$_);
-      print MAPPING "$id\t$id\n";
-    }
-    else {
-      $isHeader = 0;
-      next;
-    }
-  }
-  close INPUT;
-  close MAPPING;
-  return $mappingFile;
-}
 
 1;
  
