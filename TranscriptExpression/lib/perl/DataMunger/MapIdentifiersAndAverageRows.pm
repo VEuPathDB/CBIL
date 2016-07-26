@@ -150,7 +150,7 @@ v = as.vector(idMap[,2]);
 
 
 dat = read.table("$dataFile", sep="\\t", header=TRUE);
-dataMatrix = dat[,2:ncol(dat)];
+dataMatrix = as.matrix(dat[,2:ncol(dat)]);
 
 # Avg Rows
 avg.data = averageSpottedReplicates(m=dataMatrix, nm=v, nameIsList=TRUE);
