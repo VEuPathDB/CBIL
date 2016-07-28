@@ -1,0 +1,129 @@
+package CBIL::TranscriptExpression::SplitBamUniqueNonUnique;
+use strict;
+use warnings;
+use CBIL::Util::Utils;
+use Exporter qw(import);
+our @EXPORT_OK = qw(splitBamUniqueNonUnique);
+use CBIL::Util::DnaSeqMetrics;
+sub splitBamUniqueNonUnique {
+    my @filesToDelete; 
+    my ($expDir, $isStrandSpecific, $isPairedEnd) = @_;
+    my $file_to_open  = "$expDir/results_sorted.bam";
+    my $filebase = $file_to_open;
+    $filebase=~ s/$expDir\///;
+    my $unique = "$expDir/unique_".$filebase;
+    my $nonunique = "$expDir/non_unique_".$filebase;
+    &runCmd("samtools view -h  $file_to_open | grep '\@SQ\\\|NH:i:[2-9]' |samtools view -h -bS - > $nonunique");
+    &runCmd("samtools view -h  $file_to_open | grep -v 'NH:i:[2-9]' |samtools view -h -bS - > $unique");
+    open (M, ">$expDir/mappingStats.txt") or die "Cannot open mapping stat file file $expDir/mappingStats.txt for writing\n";
+    print M "file\tcoverage\tmapped\tnumber_reads_mapped\n";    
+  #  print "starting on unique strand bit\n\n\n\n";
+    my @mapstat = &mapStats($expDir, $file_to_open);
+    print M join("\t", @mapstat); 
+    push @filesToDelete, $unique;
+    push @filesToDelete, $nonunique;
+    &dealWithStrand($expDir, $unique, $isStrandSpecific, $isPairedEnd);
+    print "starting on non_unique strand bit \n\n\n\n";
+    &dealWithStrand($expDir, $nonunique, $isStrandSpecific, $isPairedEnd);
+    &deleteIntermediateFiles(\@filesToDelete);
+}
+
+
+
+sub dealWithStrand {	
+    my ($mainResultsDir, $file, $isStrandSpecific, $isPairedEnd) = @_;
+    my $baseName = $file;
+    my @filesToDelete;
+    $baseName =~ s/_sorted.bam//;
+    open (M, ">>$mainResultsDir/mappingStats.txt") or die "Cannot open mapping stat file file $mainResultsDir/mappingStats.txt for writing\n";
+    if($isStrandSpecific && !$isPairedEnd) {
+	print "dataset is strand spec and not paired end\n\n\n\n";
+	&runCmd("bamutils tobedgraph -plus $file >${baseName}.firststrand.bed");
+	&runCmd("bamutils tobedgraph -minus $file >${baseName}.secondstrand.bed");
+#need to split this file anyway to do stats: looking at https://www.biostars.org/p/14378/ unmapped reads are ignored
+	&runCmd("samtools view -b -F 20 $file >${baseName}.firststrand.bam");
+	&runCmd("samtools view -b -f 16 $file >${baseName}.secondstrand.bam");
+	my $forward = $baseName.".firststrand.bam";
+	my $reverse = $baseName.".secondstrand.bam";
+	push @filesToDelete , $forward;
+	push @filesToDelete, $reverse;
+	my @mapstat = &mapStats($mainResultsDir, $forward);
+	print M join("\t", @mapstat);
+	@mapstat = &mapStats($mainResultsDir, $reverse);
+	print M join("\t", @mapstat);
+    }
+    
+    elsif($isStrandSpecific && $isPairedEnd) {
+	# modified bash script from Istvan Albert to get for.bam and rev.bam
+	# https://www.biostars.org/p/92935/
+	print "dataset is strand spec and paired end\n\n\n\n";
+	
+	# 1. alignments of the second in pair if they map to the forward strand
+	# 2. alignments of the first in pair if they map to the reverse strand
+	&runCmd("samtools view -b -f 128 -F 16 $file >${baseName}_fwd1.bam");
+	&runCmd("samtools index ${baseName}_fwd1.bam");
+	
+	&runCmd("samtools view -b -f 80 $file >${baseName}_fwd2.bam");
+	&runCmd("samtools index ${baseName}_fwd2.bam");
+	
+	&runCmd("samtools merge -f ${baseName}_fwd.bam ${baseName}_fwd1.bam ${baseName}_fwd2.bam");
+	&runCmd("samtools index ${baseName}_firststrand.bam");
+	
+	# 1. alignments of the second in pair if they map to the reverse strand
+	# 2. alignments of the first in pair if they map to the forward strand
+	&runCmd("samtools view -b -f 144 $file > ${baseName}_rev1.bam");
+	&runCmd("samtools index ${baseName}_rev1.bam");
+	
+	&runCmd("samtools view -b -f 64 -F 16 $file > ${baseName}_rev2.bam");
+	&runCmd("samtools index ${baseName}_rev2.bam");
+	
+	&runCmd("samtools merge -f ${baseName}_rev.bam ${baseName}_rev1.bam ${baseName}_rev2.bam");
+	&runCmd("samtools index ${baseName}_secondstrand.bam");
+	
+	&runCmd("bamutils tobedgraph ${baseName}_firststrand.bam >${baseName}.firststrand.bed");
+	&runCmd("bamutils tobedgraph -minus ${baseName}_secondstrand.bam >${baseName}.secondstrand.bed");
+	my $fwd = ${baseName}."_firststrand.bam";
+	my $rev = ${baseName}."_secondstrand.bam";
+	push @filesToDelete, $fwd;
+	push @filesToDelete, $rev;
+	my@mapstat = &mapStats($mainResultsDir, $fwd);
+	print M join("\t", @mapstat);
+        @mapstat = &mapStats($mainResultsDir, $rev);
+	print M join("\t", @mapstat);
+	
+    }
+    else {
+	print "dataset is not strand spec and not paired end\n\n\n\n";
+	&runCmd("samtools index $file");
+	&runCmd("bamutils tobedgraph $file >${baseName}_sorted.bed");
+	my @mapstat = &mapStats($mainResultsDir, $file);
+	print M join("\t", @mapstat);
+    }
+    &deleteIntermediateFiles(\@filesToDelete);
+}
+
+
+sub mapStats {
+    my ($directory, $bamfile) = @_;
+#    print "file running mapping stats on is $bamfile\n";
+    my $coverage = CBIL::Util::DnaSeqMetrics::getCoverage($directory, $bamfile);
+    my $mapped = CBIL::Util::DnaSeqMetrics::getMappedReads($bamfile);
+    my $number = CBIL::Util::DnaSeqMetrics::getNumberMappedReads($bamfile);
+    return ($bamfile, $coverage, $mapped, $number);
+}
+
+
+sub deleteIntermediateFiles {
+    my $array_ref =shift;
+    foreach my $element (@$array_ref) {
+	if (-e $element) {
+	    my $cmd = "rm $element*";
+#	    print "$cmd\n";
+	    &runCmd($cmd);
+	}
+	else {
+	    next;
+	}
+	
+    }
+}
