@@ -5,6 +5,7 @@ use CBIL::Util::Utils;
 use Exporter qw(import);
 our @EXPORT_OK = qw(splitBamUniqueNonUnique);
 use CBIL::Util::DnaSeqMetrics;
+use Data::Dumper;
 sub splitBamUniqueNonUnique {
     my @filesToDelete; 
     my ($expDir, $isStrandSpecific, $isPairedEnd) = @_;
@@ -22,8 +23,9 @@ sub splitBamUniqueNonUnique {
     print M join("\t", @mapstat); 
     push @filesToDelete, $unique;
     push @filesToDelete, $nonunique;
+ #   print Dumper @filesToDelete;
     &dealWithStrand($expDir, $unique, $isStrandSpecific, $isPairedEnd);
-    print "starting on non_unique strand bit \n\n\n\n";
+   # print "starting on non_unique strand bit \n\n\n\n";
     &dealWithStrand($expDir, $nonunique, $isStrandSpecific, $isPairedEnd);
     &deleteIntermediateFiles(\@filesToDelete);
 }
@@ -35,7 +37,7 @@ sub dealWithStrand {
     my $baseName = $file;
     my @filesToDelete;
     $baseName =~ s/_sorted.bam//;
-    open (M, ">>$mainResultsDir/mappingStats.txt") or die "Cannot open mapping stat file file $mainResultsDir/mappingStats.txt for writing\n";
+   open (M, ">>$mainResultsDir/mappingStats.txt") or die "Cannot open mapping stat file file $mainResultsDir/mappingStats.txt for writing\n";
     if($isStrandSpecific && !$isPairedEnd) {
 	print "dataset is strand spec and not paired end\n\n\n\n";
 	&runCmd("bamutils tobedgraph -plus $file >${baseName}.firststrand.bed");
@@ -66,8 +68,8 @@ sub dealWithStrand {
 	&runCmd("samtools view -b -f 80 $file >${baseName}_fwd2.bam");
 	&runCmd("samtools index ${baseName}_fwd2.bam");
 	
-	&runCmd("samtools merge -f ${baseName}_fwd.bam ${baseName}_fwd1.bam ${baseName}_fwd2.bam");
-	&runCmd("samtools index ${baseName}_firststrand.bam");
+	&runCmd("samtools merge -f ${baseName}.firststrand.bam ${baseName}_fwd1.bam ${baseName}_fwd2.bam");
+	&runCmd("samtools index ${baseName}.firststrand.bam");
 	
 	# 1. alignments of the second in pair if they map to the reverse strand
 	# 2. alignments of the first in pair if they map to the forward strand
@@ -77,15 +79,20 @@ sub dealWithStrand {
 	&runCmd("samtools view -b -f 64 -F 16 $file > ${baseName}_rev2.bam");
 	&runCmd("samtools index ${baseName}_rev2.bam");
 	
-	&runCmd("samtools merge -f ${baseName}_rev.bam ${baseName}_rev1.bam ${baseName}_rev2.bam");
-	&runCmd("samtools index ${baseName}_secondstrand.bam");
+	&runCmd("samtools merge -f ${baseName}.secondstrand.bam ${baseName}_rev1.bam ${baseName}_rev2.bam");
+	&runCmd("samtools index ${baseName}.secondstrand.bam");
 	
-	&runCmd("bamutils tobedgraph ${baseName}_firststrand.bam >${baseName}.firststrand.bed");
-	&runCmd("bamutils tobedgraph -minus ${baseName}_secondstrand.bam >${baseName}.secondstrand.bed");
-	my $fwd = ${baseName}."_firststrand.bam";
-	my $rev = ${baseName}."_secondstrand.bam";
-	push @filesToDelete, $fwd;
-	push @filesToDelete, $rev;
+	&runCmd("bamutils tobedgraph ${baseName}.firststrand.bam >${baseName}.firststrand.bed");
+	&runCmd("bamutils tobedgraph -minus ${baseName}.secondstrand.bam >${baseName}.secondstrand.bed");
+	my $fwd = ${baseName}.".firststrand.bam";
+	my $rev = ${baseName}.".secondstrand.bam";
+	my $rev1 = ${baseName}."_rev1.bam";
+	my $rev2 = ${baseName}."_rev2.bam";
+	my $fwd1 = ${baseName}."_fwd1.bam";
+	my $fwd2 = ${baseName}."_fwd2.bam";
+	push @filesToDelete, ($fwd,$rev, $fwd1, $fwd2, $rev1, $rev2);
+#	print "the long array is \n\n\n ";
+#	print Dumper @filesToDelete;
 	my@mapstat = &mapStats($mainResultsDir, $fwd);
 	print M join("\t", @mapstat);
         @mapstat = &mapStats($mainResultsDir, $rev);
@@ -118,7 +125,7 @@ sub deleteIntermediateFiles {
     foreach my $element (@$array_ref) {
 	if (-e $element) {
 	    my $cmd = "rm $element*";
-#	    print "$cmd\n";
+	    print "$cmd\n";
 	    &runCmd($cmd);
 	}
 	else {
