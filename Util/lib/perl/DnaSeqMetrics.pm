@@ -9,6 +9,7 @@ use warnings;
 use CBIL::Util::Utils;
 use Data::Dumper;
 
+# leave this sub - we will calc coverage separately as we don't want to use samtools
 sub getCoverage {
     my ($analysisDir, $bamFile) = @_;
     my $genomeFile = &getGenomeFile($bamFile, $analysisDir);
@@ -23,6 +24,22 @@ sub getCoverage {
         }
     }
     return ($genomeCoverage/$count);
+}
+
+sub runSamtoolsStats {
+    my $bamFile = shift;
+    #if we are making an object, we don't need to store the stats file
+    my $statsHash = {};
+    foreach my $line (split(/\n/, &runCmd("samtools stats $bamFile | grep ^SN | cut -f 2-"))) {
+       # print Dumper $line;
+       # remove ' from attr and value as they are created - the below should work.  Could also remove : from attr here
+        my ($attr, $value) = split(/\t/, $line);
+        if ($attr eq "raw total sequences:" || $attr eq "reads mapped:" || $attr eq "average length:") {
+            $statsHash->{$attr} = $value;
+        }
+    }
+    print Dumper $statsHash;
+    return $statsHash;
 }
 
 sub getMappedReads {
