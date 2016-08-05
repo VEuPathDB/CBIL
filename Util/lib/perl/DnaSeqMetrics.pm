@@ -32,7 +32,7 @@ sub runSamtoolsStats {
     my $statsHash = {};
     foreach my $line (split(/\n/, &runCmd("samtools stats $bamFile | grep ^SN | cut -f 2-"))) {
        # print Dumper $line;
-       # remove ' from attr and value as they are created - the below should work.  Could also remove : from attr here
+       # Could remove : from attr here
         my ($attr, $value) = split(/\t/, $line);
         if ($attr eq "raw total sequences:" || $attr eq "reads mapped:" || $attr eq "average length:") {
             $statsHash->{$attr} = $value;
