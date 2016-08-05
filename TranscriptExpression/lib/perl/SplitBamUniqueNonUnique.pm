@@ -8,8 +8,8 @@ use CBIL::Util::DnaSeqMetrics;
 use Data::Dumper;
 sub splitBamUniqueNonUnique {
     my @filesToDelete; 
-    my ($expDir, $isStrandSpecific, $isPairedEnd) = @_;
-    my $file_to_open  = "$expDir/results_sorted.bam";
+    my ($expDir, $isStrandSpecific, $isPairedEnd, $file_to_open) = @_;
+
     my $filebase = $file_to_open;
     $filebase=~ s/$expDir\///;
     my $unique = "$expDir/unique_".$filebase;
@@ -28,6 +28,8 @@ sub splitBamUniqueNonUnique {
    # print "starting on non_unique strand bit \n\n\n\n";
     &dealWithStrand($expDir, $nonunique, $isStrandSpecific, $isPairedEnd);
     &deleteIntermediateFiles(\@filesToDelete);
+
+    print M "DONE STATS\n";
 }
 
 
