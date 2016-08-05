@@ -10,6 +10,8 @@ sub splitBamUniqueNonUnique {
     my @filesToDelete; 
     my ($expDir, $isStrandSpecific, $isPairedEnd, $file_to_open) = @_;
 
+    die "missing bam file" unless($file_to_open);
+
     my $filebase = $file_to_open;
     $filebase=~ s/$expDir\///;
     my $unique = "$expDir/unique_".$filebase;
@@ -17,7 +19,7 @@ sub splitBamUniqueNonUnique {
     &runCmd("samtools view -h  $file_to_open | grep '\@SQ\\\|NH:i:[2-9]' |samtools view -h -bS - > $nonunique");
     &runCmd("samtools view -h  $file_to_open | grep -v 'NH:i:[2-9]' |samtools view -h -bS - > $unique");
     open (M, ">$expDir/mappingStats.txt") or die "Cannot open mapping stat file file $expDir/mappingStats.txt for writing\n";
-    print M "file\tcoverage\tmapped\tnumber_reads_mapped\n";    
+    print M "file\tcoverage\tpercentage_mapped\tnumber_reads_mapped\taverage_read_length\n";    
   #  print "starting on unique strand bit\n\n\n\n";
     my @mapstat = &mapStats($expDir, $file_to_open);
     print M join("\t", @mapstat); 
@@ -115,10 +117,17 @@ sub dealWithStrand {
 sub mapStats {
     my ($directory, $bamfile) = @_;
 #    print "file running mapping stats on is $bamfile\n";
+
     my $coverage = CBIL::Util::DnaSeqMetrics::getCoverage($directory, $bamfile);
-    my $mapped = CBIL::Util::DnaSeqMetrics::getMappedReads($bamfile);
-    my $number = CBIL::Util::DnaSeqMetrics::getNumberMappedReads($bamfile);
-    return ($bamfile, $coverage, $mapped, $number);
+
+    my $statsHash = CBIL::Util::DnaSeqMetrics::runSamtoolsStats($bamfile);
+
+    my $numberMapped = $statsHash->{'reads mapped'};
+    my $totalReads = $statsHash->{'raw total sequences'};
+    my $percentMapped = ($numberMapped / $totalReads) * 100;
+    my $averageReadLength = $statsHash->{'average length'};
+
+    return ($bamfile, $coverage, $percentMapped, $numberMapped, $averageReadLength);
 }
 
 
