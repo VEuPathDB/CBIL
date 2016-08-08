@@ -2,7 +2,7 @@ package CBIL::Util::DnaSeqMetrics;
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT= qw(getCoverage getMappedReads getNumberMappedReads getGenomeFile);
+@EXPORT= qw(getCoverage getMappedReads getNumberMappedReads getGenomeFile runSamtoolsStats);
 
 use strict;
 use warnings;
@@ -35,10 +35,11 @@ sub runSamtoolsStats {
        # Could remove : from attr here
         my ($attr, $value) = split(/\t/, $line);
         if ($attr eq "raw total sequences:" || $attr eq "reads mapped:" || $attr eq "average length:") {
+          $attr =~ s/\:$//;
             $statsHash->{$attr} = $value;
         }
     }
-    print Dumper $statsHash;
+
     return $statsHash;
 }
 
