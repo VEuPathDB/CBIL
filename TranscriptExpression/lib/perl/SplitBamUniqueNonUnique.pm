@@ -31,7 +31,7 @@ sub splitBamUniqueNonUnique {
     &dealWithStrand($expDir, $nonunique, $isStrandSpecific, $isPairedEnd);
     &deleteIntermediateFiles(\@filesToDelete);
 
-    print M "DONE STATS\n";
+    print M "\nDONE STATS\n";
 }
 
 
@@ -41,9 +41,10 @@ sub dealWithStrand {
     my $baseName = $file;
     my @filesToDelete;
     $baseName =~ s/_sorted.bam//;
-   open (M, ">>$mainResultsDir/mappingStats.txt") or die "Cannot open mapping stat file file $mainResultsDir/mappingStats.txt for writing\n";
+    open (M, ">>$mainResultsDir/mappingStats.txt") or die "Cannot open mapping stat file file $mainResultsDir/mappingStats.txt for writing\n";
     if($isStrandSpecific && !$isPairedEnd) {
 	print "dataset is strand spec and not paired end\n\n\n\n";
+	&runCmd("samtools index $file");
 	&runCmd("bamutils tobedgraph -plus $file >${baseName}.firststrand.bed");
 	&runCmd("bamutils tobedgraph -minus $file >${baseName}.secondstrand.bed");
 #need to split this file anyway to do stats: looking at https://www.biostars.org/p/14378/ unmapped reads are ignored
@@ -54,8 +55,10 @@ sub dealWithStrand {
 	push @filesToDelete , $forward;
 	push @filesToDelete, $reverse;
 	my @mapstat = &mapStats($mainResultsDir, $forward);
+	print M "\n";
 	print M join("\t", @mapstat);
 	@mapstat = &mapStats($mainResultsDir, $reverse);
+	print M "\n";
 	print M join("\t", @mapstat);
     }
     
@@ -98,17 +101,21 @@ sub dealWithStrand {
 #	print "the long array is \n\n\n ";
 #	print Dumper @filesToDelete;
 	my@mapstat = &mapStats($mainResultsDir, $fwd);
+	print M "\n";
 	print M join("\t", @mapstat);
         @mapstat = &mapStats($mainResultsDir, $rev);
+	print M "\n";
 	print M join("\t", @mapstat);
 	
     }
     else {
-	print "dataset is not strand spec and not paired end\n\n\n\n";
+	print "dataset is not strand specific";
 	&runCmd("samtools index $file");
 	&runCmd("bamutils tobedgraph $file >${baseName}_sorted.bed");
 	my @mapstat = &mapStats($mainResultsDir, $file);
+	print M "\n";
 	print M join("\t", @mapstat);
+	print "the file I am trying to print to M is $file\n";
     }
     &deleteIntermediateFiles(\@filesToDelete);
 }
