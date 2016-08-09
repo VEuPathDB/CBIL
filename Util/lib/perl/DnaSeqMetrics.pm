@@ -9,7 +9,7 @@ use warnings;
 use CBIL::Util::Utils;
 use Data::Dumper;
 
-# leave this sub - we will calc coverage separately as we don't want to use samtools
+#calc coverage separately as samtools coverage is screwy
 sub getCoverage {
     my ($analysisDir, $bamFile) = @_;
     my $genomeFile = &getGenomeFile($bamFile, $analysisDir);
@@ -28,34 +28,18 @@ sub getCoverage {
 
 sub runSamtoolsStats {
     my $bamFile = shift;
-    #if we are making an object, we don't need to store the stats file
     my $statsHash = {};
     foreach my $line (split(/\n/, &runCmd("samtools stats $bamFile | grep ^SN | cut -f 2-"))) {
-       # print Dumper $line;
-       # Could remove : from attr here
         my ($attr, $value) = split(/\t/, $line);
-        if ($attr eq "raw total sequences:" || $attr eq "reads mapped:" || $attr eq "average length:") {
-          $attr =~ s/\:$//;
+        $attr =~ s/\:$//;
+        if ($attr eq "raw total sequences" || $attr eq "reads mapped" || $attr eq "average length") {
             $statsHash->{$attr} = $value;
         }
     }
-
     return $statsHash;
 }
 
-sub getMappedReads {
-    my $bamFile = shift;
-    my $mappedReads = &getNumberMappedReads($bamFile);
-    my $totalReads = &runCmd("samtools view $bamFile | wc -l");
-    return ($mappedReads/$totalReads);
-}
-
-sub getNumberMappedReads {
-    my $bamFile = shift;
-    my $mappedReads = &runCmd("samtools view -F 0x04 -c $bamFile");
-    return ($mappedReads);
-}
-
+#required for coverage
 sub getGenomeFile {
     my ($bamFile, $workingDir) = @_;
     open (G, ">$workingDir/genome.txt") or die "Cannot open genome file $workingDir/genome.txt for writing\n";
