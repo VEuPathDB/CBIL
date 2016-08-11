@@ -6,6 +6,8 @@ use Exporter qw(import);
 our @EXPORT_OK = qw(splitBamUniqueNonUnique);
 use CBIL::Util::DnaSeqMetrics;
 use Data::Dumper;
+
+
 sub splitBamUniqueNonUnique {
     my @filesToDelete; 
     my ($expDir, $isStrandSpecific, $isPairedEnd, $file_to_open) = @_;
@@ -16,13 +18,16 @@ sub splitBamUniqueNonUnique {
     $filebase=~ s/$expDir\///;
     my $unique = "$expDir/unique_".$filebase;
     my $nonunique = "$expDir/non_unique_".$filebase;
-    &runCmd("samtools view -h  $file_to_open | grep '\@SQ\\\|NH:i:[2-9]' |samtools view -h -bS - > $nonunique");
+
+
+    &runCmd("samtools view -h  $file_to_open  | grep '\@SQ\\\|NH:i:[2-9]' |samtools view -h -bS - > $nonunique");
     &runCmd("samtools view -h  $file_to_open | grep -v 'NH:i:[2-9]' |samtools view -h -bS - > $unique");
+
     open (M, ">$expDir/mappingStats.txt") or die "Cannot open mapping stat file file $expDir/mappingStats.txt for writing\n";
     print M "file\tcoverage\tmapped\tnumber_reads_mapped\taverage_read_length\n";    
   #  print "starting on unique strand bit\n\n\n\n";
     my @mapstat = &mapStats($expDir, $file_to_open);
-    print M join("\t", @mapstat); 
+    print M join("\t", @mapstat) .  "\n"; 
     push @filesToDelete, $unique;
     push @filesToDelete, $nonunique;
  #   print Dumper @filesToDelete;
@@ -55,11 +60,9 @@ sub dealWithStrand {
 	push @filesToDelete , $forward;
 	push @filesToDelete, $reverse;
 	my @mapstat = &mapStats($mainResultsDir, $forward);
-	print M "\n";
-	print M join("\t", @mapstat);
+	print M join("\t", @mapstat) . "\n";
 	@mapstat = &mapStats($mainResultsDir, $reverse);
-	print M "\n";
-	print M join("\t", @mapstat);
+	print M join("\t", @mapstat) . "\n";
     }
     
     elsif($isStrandSpecific && $isPairedEnd) {
@@ -101,11 +104,9 @@ sub dealWithStrand {
 #	print "the long array is \n\n\n ";
 #	print Dumper @filesToDelete;
 	my@mapstat = &mapStats($mainResultsDir, $fwd);
-	print M "\n";
-	print M join("\t", @mapstat);
+	print M join("\t", @mapstat) . "\n";
         @mapstat = &mapStats($mainResultsDir, $rev);
-	print M "\n";
-	print M join("\t", @mapstat);
+	print M join("\t", @mapstat) . "\n";
 	
     }
     else {
@@ -113,8 +114,7 @@ sub dealWithStrand {
 	&runCmd("samtools index $file");
 	&runCmd("bamutils tobedgraph $file >${baseName}_sorted.bed");
 	my @mapstat = &mapStats($mainResultsDir, $file);
-	print M "\n";
-	print M join("\t", @mapstat);
+	print M join("\t", @mapstat) . "\n";
 	print "the file I am trying to print to M is $file\n";
     }
     &deleteIntermediateFiles(\@filesToDelete);
