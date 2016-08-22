@@ -3,6 +3,8 @@ use base qw(CBIL::TranscriptExpression::DataMunger::Profiles);
 
 use strict;
 
+use Data::Dumper;
+
 use File::Temp qw/ tempfile /;
 
 use CBIL::TranscriptExpression::Error;
@@ -35,7 +37,7 @@ sub munge {
 
   my ($splinesFile, $interpFile, $rFile) = $self->writeRFile();
 
-  my $splineSamples = $self->readFileHeaderAsSamples($splinesFile);
+  my $splineSamples = $self->readFileHeaderAsSamplesWithSuffix($splinesFile, "spline smoothed");
 
   $self->setSamples($splineSamples);
   $self->setInputFile($splinesFile);
@@ -44,16 +46,17 @@ sub munge {
 
   my $interpN = $self->getInterpolationN();
   if(defined $interpN) {
+    $self->addProtocolParamValue("interpolationN", $interpN);
+
     my $interpSamples = $self->readFileHeaderAsSamples($interpFile);
 
     $self->setSamples($interpSamples);
     $self->setInputFile($interpFile);
 
-    my $profileSetName = $self->getProfileSetName() . " - Interpolated";
-    $self->setProfileSetName($profileSetName);
-
     my $outputFile = $self->getOutputFile() . "_" . $interpN;
     $self->setOutputFile($outputFile);
+
+    $self->setProtocolName($self->getProtocolName() . " - Interpolation");
 
     $self->SUPER::munge();
 
@@ -65,23 +68,14 @@ sub munge {
 
 #-------------------------------------------------------------------------------
 
-sub readFileHeaderAsSamples {
-  my ($self, $fn) = @_;
+sub readFileHeaderAsSamplesWithSuffix {
+  my ($self, $fn, $append) = @_;
 
-  open(FILE, $fn) or die "Cannot open file $fn for reading: $!";
+  my $samples = $self->readFileHeaderAsSamples($fn);
 
-  my $header = <FILE>;
-  chomp $header;
-  close FILE;
-
-  my @vals = split(/\t/, $header);
-  
-  # remove the row header column;
-  shift @vals;
-
-  return \@vals;
+    my @rv = map { $_ . " - $append|$_" } @$samples;
+    return \@rv;
 }
-
 
 #-------------------------------------------------------------------------------
 
@@ -167,14 +161,10 @@ for(i in 1:nrow(newDat)) {
 colnames(splines) = as.character(newHeader);
 colnames(interpolatedSplines) = as.character(predictX);
 
-colnames(splines)[1] = paste("ID\t", colnames(splines)[1], sep="");
-colnames(interpolatedSplines)[1] = paste("ID\t", colnames(interpolatedSplines)[1], sep="");
-
-
-write.table(splines, file="$outputFile", quote=FALSE,sep="\\t", row.names=ids);
+write.table(splines, file="$outputFile", quote=FALSE,sep="\\t", row.names=ids, col.names=NA);
 
 if($doInterp) {
-  write.table(interpolatedSplines, file="$interpFile", quote=FALSE, sep="\\t", row.names=ids);
+  write.table(interpolatedSplines, file="$interpFile", quote=FALSE, sep="\\t", row.names=ids, col.names=NA);
 }
 
 RString

@@ -9,13 +9,14 @@ use CBIL::TranscriptExpression::Error;
 
 use Data::Dumper;
 
-my ($help, $xmlFile, $mainDirectory, $inputFile, @executableDirectory);
+my ($help, $xmlFile, $mainDirectory, $inputFile, @executableDirectory, $technologyType);
 
 &GetOptions('help|h' => \$help,
             'xml_file=s' => \$xmlFile,
             'main_directory=s' => \$mainDirectory,
             'input_file=s' => \$inputFile,
             'executable_path=s' => \@executableDirectory,
+            'technology_type=s' => \$technologyType,
            );
 
 
@@ -61,6 +62,7 @@ foreach my $node (@$nodes) {
 
   CBIL::TranscriptExpression::Error->new($@)->throw() if $@;
 
+  $dataMunger->setTechnologyType($technologyType);
   $dataMunger->munge();
 }
 

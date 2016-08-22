@@ -1,5 +1,5 @@
 package CBIL::TranscriptExpression::DataMunger::PaGE;
-use base qw(CBIL::TranscriptExpression::DataMunger::RadAnalysis);
+use base qw(CBIL::TranscriptExpression::DataMunger::TwoStateComparison);
 
 use strict;
 
@@ -11,13 +11,13 @@ use GUS::Community::FileTranslator;
 use File::Basename;
 
 
+use Data::Dumper;
+
 my $PAGE_EXECUTABLE = "PaGE_5.1.6.1_modifiedConfOutput.pl";
 
 my $MISSING_VALUE = 'NA';
 my $USE_LOGGED_DATA = 1;
 my $PROTOCOL_NAME = 'PaGE';
-my $PROTOCOL_TYPE = 'unknown_protocol_type';
-my $CONFIG_FILE = 'analysis_result_config.txt';
 
 #-------------------------------------------------------------------------------
 
@@ -46,10 +46,11 @@ sub new {
                         'levelConfidence',
                         'minPrescence',
                         'statistic',
-                        'profileSetName'
                        ];
 
   my $self = $class->SUPER::new($args, $requiredParams);
+
+  $self->setNames([$args->{analysisName}]);
 
   unless(defined($args->{isDataLogged})) {
     CBIL::TranscriptExpression::Error->new("Parameter [isDataLogged] is missing in the config file")->throw();
@@ -72,26 +73,19 @@ sub new {
   }
 
   $self->setProtocolName($PROTOCOL_NAME);
-  $self->setProtocolType($PROTOCOL_TYPE);
-  $self->setConfigFile($CONFIG_FILE);
 
-  my $profileElementsString = $self->createProfileElementName();
-  $self->setProfileElementsAsString($profileElementsString);
+  $self->setSourceIdType("gene");
+  $self->setProfileSetName($args->{analysisName});
+
+  my $conditions = $self->groupListHashRef($self->getConditions());
+  my @inputs = keys %$conditions;
+
+  my $inputsHash = { $args->{analysisName} => \@inputs };
+  $self->setInputProtocolAppNodesHash($inputsHash);
 
   return $self;
 }
 
-sub createProfileElementName {
-  my ($self) = @_;
-
-  my $conditionsHashRef = $self->groupListHashRef($self->getConditions());
-  my @groupNames = keys %$conditionsHashRef;
-
-  if($groupNames[1]) {
-    return $groupNames[1] . ';' . $groupNames[0];
-  }
-  return $groupNames[0];
-}
 
 
 sub munge {
@@ -101,11 +95,13 @@ sub munge {
 
   $self->runPage($pageInputFile);
 
-  $self->createConfigFile();
-
   my $baseX = $self->getBaseX();
 
   $self->translatePageOutput($baseX, $pageGeneConfFile);
+
+  $self->setFileNames([$self->getOutputFile()]);
+
+  $self->createConfigFile();
 }
 
 sub translatePageOutput {
@@ -160,6 +156,17 @@ sub runPage {
   unless($systemResult / 256 == 0) {
     die "Error while attempting to run PaGE:\n$pageCommand";
   }
+
+  $self->addProtocolParamValue("numChannels", $channels);
+  $self->addProtocolParamValue("isLogged", $isLogged);
+  $self->addProtocolParamValue("isPaired", $isPaired);
+  $self->addProtocolParamValue("useLogged", $USE_LOGGED_DATA);
+  $self->addProtocolParamValue("levelConfidence", $levelConfidence);
+  $self->addProtocolParamValue("statistic", $self->getStatistic());
+  $self->addProtocolParamValue("minPresence", $minPrescence);
+  $self->addProtocolParamValue("missingValue", $MISSING_VALUE);
+  $self->addProtocolParamValue("design", $self->getDesign) if($self->getDesign());
+
 }
 
 sub makePageInput {
@@ -173,6 +180,7 @@ sub makePageInput {
 
   my $headerIndexHash = CBIL::TranscriptExpression::Utils::headerIndexHashRef($header, qr/\t/);
 
+
   my $conditions = $self->groupListHashRef($self->getConditions());
 
   unless(scalar keys %$conditions <= 2) {
@@ -181,8 +189,9 @@ sub makePageInput {
 
   my $logDir = $self->getMainDirectory();
 
-  my $analysisName = $self->getAnalysisName;
+  my $analysisName = $self->getNames()->[0];
   $analysisName =~ s/\s/_/g;
+
 
   my $pageInputFile = $logDir . "/" . $analysisName;
   my $pageGeneConfFile = "PaGE-results-for-" . $analysisName . "-gene_conf_list.txt";

@@ -16,7 +16,6 @@ sub new {
   my $requiredParams = ['outputFile',
                         'minuendFile',
                         'subtrahendFile',
-                        'profileSetName'
                        ];
 
   $args->{inputFile} = '.';
@@ -28,7 +27,6 @@ sub new {
     CBIL::TranscriptExpression::Error->("Missing subtrahend or minuend File")->throw();
   }
 
-  $self->{profileSetDescription} = $self->getProfileSetName();
 
   return $self;
 }
@@ -74,7 +72,12 @@ RString
 
   $self->runR($tempFn);
 
-  $self->createConfigFile();
+
+  my $samples = $self->readFileHeaderAsSamples($outputFile);
+  $self->setSamples($samples);
+  $self->setInputFile($outputFile);
+
+  $self->SUPER::munge();
 
   unlink($tempFn);
 }

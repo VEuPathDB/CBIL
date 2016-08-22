@@ -45,6 +45,9 @@ sub setMappingFileGeneColumn   { $_[0]->{mappingFileGeneColumn} = $_[1] }
 sub getMappingFileHasHeader    { $_[0]->{mappingFileHasHeader} }
 sub setMappingFileHasHeader    { $_[0]->{mappingFileHasHeader} = $_[1] }
 
+sub getTechnologyType          { $_[0]->{_technology_type} }
+sub setTechnologyType          { $_[0]->{_technology_type} = $_[1] }
+
 #--------------------------------------------------------------------------------
 
 my $MAP_HAS_HEADER = 0;
@@ -214,6 +217,12 @@ sub readInputFileHeaderAsSamples {
 
   my $fn = $self->getInputFile();
 
+  return $self->readFileHeaderAsSamples($fn);
+}
+
+sub readFileHeaderAsSamples {
+  my ($self, $fn) = @_;
+
   open(FILE, $fn) or die "Cannot open file $fn for reading: $!";
 
   my $header = <FILE>;
@@ -227,6 +236,7 @@ sub readInputFileHeaderAsSamples {
 
   return \@vals;
 }
+
 
 
 
