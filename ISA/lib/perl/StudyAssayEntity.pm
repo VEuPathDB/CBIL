@@ -31,6 +31,7 @@ sub qualifierContextMethod {
 }
 
 sub getValue { $_[0]->{_value} }
+sub setValue { $_[0]->{_value} = $_[1]}
 
 sub hasAttributes {
   return scalar @{$_[0]->getAttributeNames()};

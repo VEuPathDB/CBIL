@@ -164,6 +164,13 @@ sub parse {
     }
   }
 
+  $self->dealWithAllOntologies();
+}
+
+
+sub dealWithAllOntologies {
+  my ($self) = @_;
+
   my %ontologyTerms;
   foreach my $ontologyTerm(@allOntologyTerms) {
     my $hasAccession = defined $ontologyTerm->getTermAccessionNumber();

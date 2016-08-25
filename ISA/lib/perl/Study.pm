@@ -69,7 +69,7 @@ sub setProtocols {
   return $self->getProtocols();
 }
 sub getProtocols { $_[0]->{_protocols}  || [] }
-sub addProtocol { push @{$_[0]->{_protocol}}, $_[1] }
+sub addProtocol { push @{$_[0]->{_protocols}}, $_[1] }
 
 sub setStudyDesigns { 
   my ($self, $hash, $columnCount) = @_;

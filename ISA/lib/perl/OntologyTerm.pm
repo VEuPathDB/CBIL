@@ -55,6 +55,7 @@ sub getAttributeNames {
 
 # @Override
 sub getValue { $_[0]->getTerm() }
+sub setValue { $_[0]->setTerm($_[1]) }
 
 
 1;
