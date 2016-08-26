@@ -101,7 +101,8 @@ sub makeIdentifier {
   return $rv;
 }
 
-sub parse {
+#@override
+sub parseInvestigation {
   my ($self) = @_;
 
   my $xml = $self->getSimpleXml();
@@ -116,6 +117,10 @@ sub parse {
     my $metaDataFileFullPath = "$investigationDirectory/$metaDataFile";
 
     my $study = CBIL::ISA::Study->new({});
+
+    $study->{_SIMPLE_XML} = $studyXml;
+
+    $study->setFileName($metaDataFileFullPath);
 
     my %protocols;
 
@@ -137,13 +142,29 @@ sub parse {
     my $studyAssay = CBIL::ISA::StudyAssay->new({'_comment[dataset_names]' => $datasets});
     $study->addStudyAssay($studyAssay);
 
-    $self->addNodesAndEdgesToStudy($study, $metaDataFileFullPath, $studyXml);
     $self->addStudy($study);
+  }
+}
+
+
+#@override
+sub parseStudies {
+  my ($self) = @_;
+
+  foreach my $study (@{$self->getStudies()}) {
+
+    my $studyXml = $study->{_SIMPLE_XML};
+    my $fileName = $study->getFileName();
+
+    $self->addNodesAndEdgesToStudy($study, $fileName, $studyXml);
   }
 
   # get from Investigation.pm
   $self->dealWithAllOntologies();
 }
+
+
+
 
 sub addNodesAndEdgesToStudy {
   my ($self, $study, $metaDataTabFile, $studyXml) = @_;

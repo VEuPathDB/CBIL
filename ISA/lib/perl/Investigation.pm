@@ -107,14 +107,15 @@ sub makeStudy {
   return $study;
 }
 
-sub parse {
+
+sub parseInvestigation {
   my ($self) = @_;
 
   my $iReader = $self->getInvestigationReader();
   my $iHash = $iReader->getInvestigationHash();
   my $iColumnCounts = $iReader->getColumnCounts();
 
-  my $delimiter = $self->getDelimiter();
+
 
   my $investigationDirectory = $self->getInvestigationDirectory();
 
@@ -134,9 +135,25 @@ sub parse {
     my $studyColumnCounts = $iColumnCounts->{"_studies"}->{$studyId};
 
     my $study = $self->makeStudy($studyHash, $studyColumnCounts);
+
     $self->addStudy($study);
 
     my $studyFileName = $investigationDirectory . "/" . $study->getFileName();
+    $study->setFileName($studyFileName);
+  }
+}
+
+
+
+sub parseStudies {
+  my ($self) = @_;
+
+  my $delimiter = $self->getDelimiter();
+  my $investigationDirectory = $self->getInvestigationDirectory();
+
+  foreach my $study (@{$self->getStudies()}) {
+    my $studyFileName = $study->getFileName();
+
 
     my $studyFileReader = CBIL::ISA::StudyAssayFileReader->new($studyFileName, $delimiter);
 
@@ -163,8 +180,17 @@ sub parse {
       $assayFileReader->closeFh();
     }
   }
-
   $self->dealWithAllOntologies();
+}
+
+
+
+sub parse {
+  my ($self) = @_;
+
+  # split these out so we can get some information before processing nodes and edges
+  $self->parseInvestigation();
+  $self->parseStudies();
 }
 
 
