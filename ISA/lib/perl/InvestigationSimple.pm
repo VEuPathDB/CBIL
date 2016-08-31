@@ -45,7 +45,7 @@ sub new {
     }
   }
 
-  if($ontologyMappingOverrideFile) {
+  if(-e $ontologyMappingOverrideFile) {
     my $ontologyMappingOverride = XMLin($ontologyMappingOverrideFile, ForceArray => 1);
     foreach my $ot (@{$ontologyMappingOverride->{ontologyTerm}}) {
       my $type = $ot->{type};
