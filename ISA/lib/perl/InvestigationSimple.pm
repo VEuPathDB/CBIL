@@ -403,6 +403,8 @@ sub makeProtocols {
   my $ontologyMapping = $self->getOntologyMapping();
   my %protocolParams;
 
+  my %seenPPs;
+
   my @rv;
 
   foreach my $termName (keys %$ontologyMapping) {
@@ -414,8 +416,11 @@ sub makeProtocols {
     my $sourceId = $ontologyMapping->{$termName}->{source_id};
 
     if($type eq 'protocolParameter' && $protocols->{$parent}) {
-      my $pp = &makeOntologyTerm($sourceId, $termName, undef);
-      push @{$protocolParams{$parent}}, $pp;
+      unless($seenPPs{$parent}{$sourceId}) {
+        my $pp = &makeOntologyTerm($sourceId, $sourceId, undef);
+        push(@{$protocolParams{$parent}}, $pp) ;
+      }
+      $seenPPs{$parent}{$sourceId} = 1;
     }
 
     if($type eq 'protocol'  && $protocols->{$termName}) {
