@@ -25,7 +25,7 @@ sub valueIsOntologyTerm {
 
   my $om = $self->getOntologyMapping();
 
-  if(my $hash = $om->{$value}) {
+  if(my $hash = $om->{lc($value)}) {
     my $sourceId = $hash->{source_id};
     my ($termSource) = $sourceId =~ /^(\w+)_|:/;
 
@@ -33,7 +33,7 @@ sub valueIsOntologyTerm {
     $obj->setTermSourceRef($termSource);
   }
   else {
-    die "No Mapping found for value: $value";
+    die "No Mapping found for value: {$value}";
   }
 }
 
@@ -49,13 +49,18 @@ sub splitUnitFromValue {
   my $class = "CBIL::ISA::StudyAssayEntity::Unit";
 
   my $unitSourceId = $om->{lc($unitString)}->{source_id};
-  unless($unitSourceId) {
-    die "Could not find onotlogyTerm for Unit:  $unitString";
-  }
+  if (defined $value) {
+    unless($unitSourceId) {
+      die "Could not find onotlogyTerm for Unit:  $unitString";
+    }
 
-  my $unit = &makeOntologyTerm($unitSourceId, $unitString, $class);
-  
-  $obj->setUnit($unit);
+    my $unit = &makeOntologyTerm($unitSourceId, $unitString, $class);
+
+    $obj->setUnit($unit);
+  }
+  else {
+    $obj->setUnit(undef);
+  }
 }
 
 
