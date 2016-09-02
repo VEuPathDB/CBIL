@@ -149,7 +149,7 @@ idMap = read.table("$mappingFile", sep="\\t", header=TRUE, na.strings=c(""));
 v = as.vector(idMap[,2]);
 
 
-dat = read.table("$dataFile", sep="\\t", header=TRUE);
+dat = read.table("$dataFile", sep="\\t", header=TRUE, check.names=FALSE);
 dataMatrix = as.matrix(dat[,2:ncol(dat)]);
 
 # Avg Rows
