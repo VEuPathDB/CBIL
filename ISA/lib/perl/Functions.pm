@@ -9,9 +9,12 @@ use strict;
 use CBIL::ISA::OntologyTerm;
 use Date::Parse qw/strptime/;
 
+use File::Basename;
+
 use Data::Dumper;
 
 sub getOntologyMapping {$_[0]->{_ontology_mapping} }
+sub getOntologySources {$_[0]->{_ontology_sources} }
 
 sub new {
   my ($class, $args) = @_;
@@ -23,9 +26,17 @@ sub valueIsOntologyTerm {
 
   my $value = $obj->getValue();
 
-  my $om = $self->getOntologyMapping();
+  $value = basename $value; # strip prefix if IRI
+  my ($valuePrefix) = $value =~ /^(\w+)_|:/;
 
-  if(my $hash = $om->{lc($value)}) {
+  my $om = $self->getOntologyMapping();
+  my $os = $self->getOntologySources();
+
+  if($os->{lc($valuePrefix)}) {
+    $obj->setTermAccessionNumber($value);
+    $obj->setTermSourceRef($valuePrefix);
+  }
+  elsif(my $hash = $om->{lc($value)}) {
     my $sourceId = $hash->{source_id};
     my ($termSource) = $sourceId =~ /^(\w+)_|:/;
 
@@ -33,7 +44,7 @@ sub valueIsOntologyTerm {
     $obj->setTermSourceRef($termSource);
   }
   else {
-    die "No Mapping found for value: {$value}";
+    die "Could not determine Accession Number for: [$value]";
   }
 }
 

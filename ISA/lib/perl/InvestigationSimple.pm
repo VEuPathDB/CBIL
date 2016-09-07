@@ -21,6 +21,9 @@ sub getSimpleXml {$_[0]->{_simple_xml} }
 sub setOntologyMapping {$_[0]->{_ontology_mapping} = $_[1]}
 sub getOntologyMapping {$_[0]->{_ontology_mapping} }
 
+sub setOntologySources {$_[0]->{_ontology_sources} = $_[1]}
+sub getOntologySources {$_[0]->{_ontology_sources} }
+
 sub setRegexMatch {$_[0]->{_regex_match} = $_[1]}
 sub getRegexMatch {$_[0]->{_regex_match} }
 
@@ -38,17 +41,35 @@ sub new {
   my $ontologyMapping = XMLin($ontologyMappingFile, ForceArray => 1);
 
   my %ontologyMapping;
+  my %ontologySources;
+
+
+  foreach my $os (@{$ontologyMapping->{ontologySource}}) {
+    $ontologySources{lc($os)} = 1;
+  }
+
+
   foreach my $ot (@{$ontologyMapping->{ontologyTerm}}) {
-    my $type = $ot->{type};
+    my $sourceId = $ot->{source_id};
+    $ontologyMapping{lc($sourceId)} = $ot;
+
     foreach my $name (@{$ot->{name}}) {
       $ontologyMapping{lc($name)} = $ot;
     }
+
   }
 
   if(-e $ontologyMappingOverrideFile) {
     my $ontologyMappingOverride = XMLin($ontologyMappingOverrideFile, ForceArray => 1);
+
+    foreach my $os (@{$ontologyMappingOverride->{ontologySource}}) {
+      $ontologySources{lc($os)} = 1;
+    }
+
     foreach my $ot (@{$ontologyMappingOverride->{ontologyTerm}}) {
-      my $type = $ot->{type};
+      my $sourceId = $ot->{source_id};
+      $ontologyMapping{lc($sourceId)} = $ot;
+      
       foreach my $name (@{$ot->{name}}) {
         $ontologyMapping{lc($name)} = $ot;
       }
@@ -61,7 +82,7 @@ sub new {
   $self->setOntologyMapping(\%ontologyMapping);
   $self->setSimpleXml($investigationXml);
 
-  my $functions = CBIL::ISA::Functions->new({_ontology_mapping => \%ontologyMapping});
+  my $functions = CBIL::ISA::Functions->new({_ontology_mapping => \%ontologyMapping, _ontology_sources => \%ontologySources});
   $self->setFunctions($functions);
 
   return $self;
@@ -220,6 +241,11 @@ sub addProtocolParametersToEdges {
     my $value = $values->[$i];
     my $header = $headers->[$i];
 
+    if($header =~ /Parameter Value\s*\[(.+)\]/i) {
+      $header = $1;
+    }
+
+
     if($ontologyMapping->{lc($header)} && $ontologyMapping->{lc($header)}->{type} eq 'protocolParameter') {    
       my $qualifier = $ontologyMapping->{lc($header)}->{source_id};
       my $functions = $ontologyMapping->{lc($header)}->{function};
@@ -307,6 +333,11 @@ sub addCharacteristicsToNodes {
     my $header = $headers->[$i];
     my $value = $values->[$i];
 
+    if($header =~ /Characteristics\s*\[(.+)\]/i) {
+      $header = $1;
+    }
+
+
     if($ontologyMapping->{lc($header)} && $ontologyMapping->{lc($header)}->{type} eq 'characteristicQualifier') {
       my $qualifier = $ontologyMapping->{lc($header)}->{source_id};
       my $functions = $ontologyMapping->{lc($header)}->{function};
@@ -372,7 +403,7 @@ sub makeNodes {
 
       my $sourceId = $ontologyMapping->{lc($materialType)}->{source_id};
       unless($sourceId) {
-        die "Could not find onotlogyTerm for material type $materialType";
+        die "Could not find onotlogyTerm for material type [$materialType]";
       }
 
       my $mt = &makeOntologyTerm($sourceId, $materialType, $mtClass);      
