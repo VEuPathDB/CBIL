@@ -4,6 +4,8 @@ require Exporter;
 
 @EXPORT_OK = qw(makeObjectFromHash makeOntologyTerm);
 
+use Scalar::Util 'blessed';
+
 use strict;
 
 use CBIL::ISA::OntologyTerm;
@@ -24,7 +26,11 @@ sub new {
 sub valueIsOntologyTerm {
   my ($self, $obj) = @_;
 
+
+
   my $value = $obj->getValue();
+
+  my $omType = blessed($obj) eq 'CBIL::ISA::StudyAssayEntity::Characteristic' ? 'characteristicValue' : 'protocolParameterValue';
 
   $value = basename $value; # strip prefix if IRI
   my ($valuePrefix) = $value =~ /^(\w+)_|:/;
@@ -36,7 +42,7 @@ sub valueIsOntologyTerm {
     $obj->setTermAccessionNumber($value);
     $obj->setTermSourceRef($valuePrefix);
   }
-  elsif(my $hash = $om->{lc($value)}) {
+  elsif(my $hash = $om->{lc($value)}->{$omType}) {
     my $sourceId = $hash->{source_id};
     my ($termSource) = $sourceId =~ /^(\w+)_|:/;
 
@@ -59,7 +65,7 @@ sub splitUnitFromValue {
 
   my $class = "CBIL::ISA::StudyAssayEntity::Unit";
 
-  my $unitSourceId = $om->{lc($unitString)}->{source_id};
+  my $unitSourceId = $om->{lc($unitString)}->{unit}->{source_id};
   if (defined $value) {
     unless($unitSourceId) {
       die "Could not find onotlogyTerm for Unit:  $unitString";

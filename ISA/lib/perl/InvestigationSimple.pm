@@ -51,10 +51,10 @@ sub new {
 
   foreach my $ot (@{$ontologyMapping->{ontologyTerm}}) {
     my $sourceId = $ot->{source_id};
-    $ontologyMapping{lc($sourceId)} = $ot;
+    $ontologyMapping{lc($sourceId)}->{$ot->{type}} = $ot;
 
     foreach my $name (@{$ot->{name}}) {
-      $ontologyMapping{lc($name)} = $ot;
+      $ontologyMapping{lc($name)}->{$ot->{type}} = $ot;
     }
 
   }
@@ -68,10 +68,10 @@ sub new {
 
     foreach my $ot (@{$ontologyMappingOverride->{ontologyTerm}}) {
       my $sourceId = $ot->{source_id};
-      $ontologyMapping{lc($sourceId)} = $ot;
+      $ontologyMapping{lc($sourceId)}->{$ot->{type}} = $ot;
       
       foreach my $name (@{$ot->{name}}) {
-        $ontologyMapping{lc($name)} = $ot;
+        $ontologyMapping{lc($name)}->{$ot->{type}} = $ot;
       }
     }
   }
@@ -159,8 +159,17 @@ sub parseInvestigation {
       $study->addProtocol($_);
     }
 
-    my $datasets = join(';', @{$studyXml->{dataset}});
-    my $studyAssay = CBIL::ISA::StudyAssay->new({'_comment[dataset_names]' => $datasets});
+
+    my $studyAssay;
+    if($studyXml->{dataset}) {
+      my $datasets = join(';', @{$studyXml->{dataset}});
+      $studyAssay = CBIL::ISA::StudyAssay->new({'_comment[dataset_names]' => $datasets});
+    }
+    else {
+      $studyAssay = CBIL::ISA::StudyAssay->new();
+    }
+
+
     $study->addStudyAssay($studyAssay);
 
     $self->addStudy($study);
@@ -245,11 +254,11 @@ sub addProtocolParametersToEdges {
       $header = $1;
     }
 
-
-    if($ontologyMapping->{lc($header)} && $ontologyMapping->{lc($header)}->{type} eq 'protocolParameter') {    
-      my $qualifier = $ontologyMapping->{lc($header)}->{source_id};
-      my $functions = $ontologyMapping->{lc($header)}->{function};
-      my $parent = $ontologyMapping->{lc($header)}->{parent};
+    my $omType = "protocolParameter";
+    if($ontologyMapping->{lc($header)} && $ontologyMapping->{lc($header)}->{$omType}) {    
+      my $qualifier = $ontologyMapping->{lc($header)}->{$omType}->{source_id};
+      my $functions = $ontologyMapping->{lc($header)}->{$omType}->{function};
+      my $parent = $ontologyMapping->{lc($header)}->{$omType}->{parent};
 
       my $protocolApp = $protocolAppHash->{$parent};
 
@@ -338,10 +347,14 @@ sub addCharacteristicsToNodes {
     }
 
 
-    if($ontologyMapping->{lc($header)} && $ontologyMapping->{lc($header)}->{type} eq 'characteristicQualifier') {
-      my $qualifier = $ontologyMapping->{lc($header)}->{source_id};
-      my $functions = $ontologyMapping->{lc($header)}->{function};
-      my $parent = $ontologyMapping->{lc($header)}->{parent};
+    my $omType = "characteristicQualifier";
+    if($ontologyMapping->{lc($header)} && $ontologyMapping->{lc($header)}->{$omType}) {
+      
+      next unless $value; # put this here because I still wanna check the headers
+
+      my $qualifier = $ontologyMapping->{lc($header)}->{$omType}->{source_id};
+      my $functions = $ontologyMapping->{lc($header)}->{$omType}->{function};
+      my $parent = $ontologyMapping->{lc($header)}->{$omType}->{parent};
 
       my $node = $nodesHash->{$parent};
 
@@ -401,7 +414,8 @@ sub makeNodes {
     if($materialType) {
       my $mtClass = "CBIL::ISA::StudyAssayEntity::MaterialType";
 
-      my $sourceId = $ontologyMapping->{lc($materialType)}->{source_id};
+
+      my $sourceId = $ontologyMapping->{lc($materialType)}->{materialType}->{source_id};
       unless($sourceId) {
         die "Could not find onotlogyTerm for material type [$materialType]";
       }
@@ -438,29 +452,32 @@ sub makeProtocols {
 
   my @rv;
 
+  my $omType = "protocol";
+  foreach my $protocolName (keys %$protocols) {
+    my $sourceId = $ontologyMapping->{lc($protocolName)}->{$omType}->{source_id};
+
+    my $pt = &makeOntologyTerm($sourceId, $protocolName, undef);
+
+    my $protocol = CBIL::ISA::Protocol->new();
+    $protocol->setProtocolType($pt);
+    $protocol->setProtocolName($protocolName);
+    push @rv, $protocol;
+  }
+
+  $omType = "protocolParameter";
+
   foreach my $termName (keys %$ontologyMapping) {
+    if($ontologyMapping->{$termName}->{$omType}) {
+      my $parent = $ontologyMapping->{$termName}->{$omType}->{parent};
+      my $sourceId = $ontologyMapping->{$termName}->{$omType}->{source_id};
 
+      next unless($protocols->{$parent});
 
-    my $type = $ontologyMapping->{$termName}->{type};
-    my $parent = $ontologyMapping->{$termName}->{parent};
-
-    my $sourceId = $ontologyMapping->{$termName}->{source_id};
-
-    if($type eq 'protocolParameter' && $protocols->{$parent}) {
       unless($seenPPs{$parent}{$sourceId}) {
         my $pp = &makeOntologyTerm($sourceId, $sourceId, undef);
         push(@{$protocolParams{$parent}}, $pp) ;
       }
       $seenPPs{$parent}{$sourceId} = 1;
-    }
-
-    if($type eq 'protocol'  && $protocols->{$termName}) {
-      my $pt = &makeOntologyTerm($sourceId, $termName, undef);
-
-      my $protocol = CBIL::ISA::Protocol->new();
-      $protocol->setProtocolType($pt);
-      $protocol->setProtocolName($termName);
-      push @rv, $protocol;
     }
   }
 
