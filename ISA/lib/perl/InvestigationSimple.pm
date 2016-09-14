@@ -240,7 +240,7 @@ sub addNodesAndEdgesToStudy {
 sub addProtocolParametersToEdges {
   my ($self, $protocolAppHash, $values, $headers, $leftoverIndexes) = @_;
 
-  &checkArrayRefLengths($values, $headers);
+#  &checkArrayRefLengths($values, $headers);
 
   my $ontologyMapping = $self->getOntologyMapping();
 
