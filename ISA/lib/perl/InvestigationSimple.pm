@@ -335,7 +335,7 @@ sub addCharacteristicsToNodes {
 
   my @rv;
 
-  &checkArrayRefLengths($values, $headers);
+#  &checkArrayRefLengths($values, $headers);
   my $ontologyMapping = $self->getOntologyMapping();
 
   for(my $i = 0; $i < scalar @$headers; $i++) {
