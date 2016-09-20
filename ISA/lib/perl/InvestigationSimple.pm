@@ -40,6 +40,7 @@ sub new {
   my $investigationXml = XMLin($investigationFile, ForceArray => 1);
   my $ontologyMapping = XMLin($ontologyMappingFile, ForceArray => 1);
 
+
   my %ontologyMapping;
   my %ontologySources;
 
@@ -218,6 +219,7 @@ sub addNodesAndEdgesToStudy {
     my $sourceMtOverride = shift @a;
     my $sampleMtOverride = shift @a;
 
+
     my $nodesHash = $self->makeNodes($name, $description, $sourceMtOverride, $sampleMtOverride, $count, $studyXml, $study);
     my $leftoverIndexes = $self->addCharacteristicsToNodes($nodesHash, \@a, \@headersSlice);
 
@@ -291,6 +293,7 @@ sub makeEdges {
   my ($self, $studyXml, $study, $nodesHash) = @_;
 
   my %rv;
+
 
   foreach my $edge (@{$studyXml->{edge}}) {
     my $input = $edge->{input};
@@ -395,19 +398,28 @@ sub makeNodes {
   my $ontologyMapping = $self->getOntologyMapping();
 
   my %nodes;
-  foreach my $isaType (keys %{$studyXml->{node}}) {
+
+  foreach my $nodeName (keys %{$studyXml->{node}}) {
+
+    my $isaType = defined($studyXml->{node}->{$nodeName}->{isaObject}) ? $studyXml->{node}->{$nodeName}->{isaObject} : $nodeName;
     my $class = "CBIL::ISA::StudyAssayEntity::$isaType";
 
     my $name = $prefix;
 
-    if(my $suffix = $studyXml->{node}->{$isaType}->{suffix}) {
-      $name .= " ($suffix)";
+    if(my $suffix = $studyXml->{node}->{$nodeName}->{suffix}) {
+
+      if(my $useExactSuffix = $studyXml->{node}->{$nodeName}->{useExactSuffix}) {
+        $name .= $suffix;
+      }
+      else {
+        $name .= " ($suffix)";
+      }
     }
 
     my $hash = { _value => $name };
     my $node = &makeObjectFromHash($class, $hash);
 
-    my $materialType = $studyXml->{node}->{$isaType}->{type};
+    my $materialType = $studyXml->{node}->{$nodeName}->{type};
     $materialType = $sourceMtOverride if($sourceMtOverride && $isaType eq 'Source');
     $materialType = $sampleMtOverride if($sampleMtOverride && $isaType eq 'Sample');
 
@@ -435,7 +447,7 @@ sub makeNodes {
       }
     }
 
-    $nodes{$isaType} = $node;
+    $nodes{$nodeName} = $node;
     $study->addNode($node);
   }
 
