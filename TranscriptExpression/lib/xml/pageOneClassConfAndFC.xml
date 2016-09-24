@@ -21,7 +21,7 @@
 
     <idmap function='maxConfAndFoldChange'
            output_header="confidence\tfold_change"
-           mapkey='$confUp\t$confDown\tmean0'  >
+           mapkey='$confUp\t$confDown\t$mean0'  >
       <in name='confUp'/>
       <in name='confDown'/>
       <in name='mean0'/>
