@@ -26,8 +26,6 @@ sub new {
 sub valueIsOntologyTerm {
   my ($self, $obj) = @_;
 
-
-
   my $value = $obj->getValue();
 
   my $omType = blessed($obj) eq 'CBIL::ISA::StudyAssayEntity::Characteristic' ? 'characteristicValue' : 'protocolParameterValue';
@@ -50,6 +48,8 @@ sub valueIsOntologyTerm {
     $obj->setTermSourceRef($termSource);
   }
   else {
+    print STDERR Dumper $obj;
+
     die "Could not determine Accession Number for: [$value]";
   }
 }
