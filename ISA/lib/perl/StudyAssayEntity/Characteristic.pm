@@ -7,6 +7,31 @@ sub getParents {
   return ["Source", "Sample", "Extract", "LabeledExtract" ];
 }
 
+# @override
+sub setTerm {
+  my ($self, $value) = @_;
+
+  my %commonTerms = ('no', 1,
+                     'yes', 1,
+                     'negative', 1,
+                     'positive', 1,
+                     'not done', 1,
+                     'not applicable', 1,
+                     'not known', 1,
+      );
+
+
+  my $lcValue = lc($value);
+  my $ucfirstValue = ucfirst($value);
+  if($commonTerms{$lcValue}) {
+    $self->{_term} = $ucfirstValue;
+  }
+  else {
+    $self->{_term} = $value;
+  }
+
+}
+
 sub setUnit { $_[0]->{_unit} = $_[1] }
 sub getUnit { $_[0]->{_unit} }
 
