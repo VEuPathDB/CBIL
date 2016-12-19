@@ -30,8 +30,9 @@ sub getRegexMatch {$_[0]->{_regex_match} }
 sub setFunctions {$_[0]->{_functions} = $_[1]}
 sub getFunctions {$_[0]->{_functions} }
 
+
 sub new {
-  my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile) = @_;
+  my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile, $debug) = @_;
 
   @allOntologyTerms = ();
 
@@ -82,6 +83,8 @@ sub new {
 
   $self->setOntologyMapping(\%ontologyMapping);
   $self->setSimpleXml($investigationXml);
+
+  $self->setDebug($debug);
 
   my $functions = CBIL::ISA::Functions->new({_ontology_mapping => \%ontologyMapping, _ontology_sources => \%ontologySources});
   $self->setFunctions($functions);
@@ -226,11 +229,10 @@ sub addNodesAndEdgesToStudy {
     my $protocolAppHash = $self->makeEdges($studyXml, $study, $nodesHash);
     my $missingIndexes = $self->addProtocolParametersToEdges($protocolAppHash, \@a, \@headersSlice, $leftoverIndexes);
 
-    if(scalar @$missingIndexes > 0) {
+    if(scalar @$missingIndexes > 0 && $count == 1) {
       foreach my $i (@$missingIndexes) {
-        print STDERR "Unmapped Column Header:  $headersSlice[$i]\n";
+        $self->handleError("Unmapped Column Header:  $headersSlice[$i]");
       }
-      die "Please fix unmapped Columns!";
     }
 
     $count++;
@@ -273,11 +275,16 @@ sub addProtocolParametersToEdges {
           $functionsObj->$function($pv);
         };
         if ($@) {
-          die "problem w/ function $function: $@";
+          $self->handleError("problem w/ function $function: $@");
         }
       }
 
-      $protocolApp->addParameterValue($pv);
+      if(!$protocolApp) {
+        $self->handleError("Protocol [$parent] not defined for paramValue [$header]");
+      }
+      else {
+        $protocolApp->addParameterValue($pv);
+      }
     }
     else {
       push @rv, $i;
@@ -287,6 +294,21 @@ sub addProtocolParametersToEdges {
   return \@rv;
 }
 
+
+sub handleError {
+  my ($self, $error) = @_;
+
+  my $debug = $self->getDebug();
+  $self->setHasErrors(1);
+
+  if($debug) {
+    print STDERR $error . "\n";
+  }
+  else {
+    die $error;
+  }
+
+}
 
 
 sub makeEdges {
@@ -370,7 +392,7 @@ sub addCharacteristicsToNodes {
           $functionsObj->$function($char);
         };
         if ($@) {
-          die "Problem with function $function: $@";
+          $self->handleError("problem w/ function $function: $@");
         }
       }
 
@@ -429,7 +451,7 @@ sub makeNodes {
 
       my $sourceId = $ontologyMapping->{lc($materialType)}->{materialType}->{source_id};
       unless($sourceId) {
-        die "Could not find onotlogyTerm for material type [$materialType]";
+        $self->handleError("Could not find onotlogyTerm for material type [$materialType]");
       }
 
       my $mt = &makeOntologyTerm($sourceId, $materialType, $mtClass);      

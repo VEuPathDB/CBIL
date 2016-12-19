@@ -27,6 +27,14 @@ my $STUDY_FACTORS = "STUDY FACTORS";
 my $STUDY_PUBLICATIONS = "STUDY PUBLICATIONS";
 my $STUDY_ASSAYS = "STUDY ASSAYS";
 
+
+sub setDebug {$_[0]->{_debug} = $_[1]}
+sub getDebug {$_[0]->{_debug} }
+
+sub setHasErrors {$_[0]->{_has_errors} = $_[1]}
+sub getHasErrors {$_[0]->{_has_errors} }
+
+
 sub new {
   my ($class, $investigationFile, $investigationDirectory, $delimiter) = @_;
 
@@ -191,6 +199,12 @@ sub parse {
   # split these out so we can get some information before processing nodes and edges
   $self->parseInvestigation();
   $self->parseStudies();
+
+  if($self->getHasErrors()) {
+    die "___Errors Found.  Please fix and try again.";
+  }
+
+
 }
 
 

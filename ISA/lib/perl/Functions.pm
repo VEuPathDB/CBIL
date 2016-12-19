@@ -48,8 +48,6 @@ sub valueIsOntologyTerm {
     $obj->setTermSourceRef($termSource);
   }
   else {
-    print STDERR Dumper $obj;
-
     die "Could not determine Accession Number for: [$value]";
   }
 }
