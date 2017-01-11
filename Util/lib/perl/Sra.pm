@@ -154,7 +154,7 @@ sub getCsForSampleIds {
 sub getRunIdsFromSraSampleId { 
  my ($sid) = @_; 
 
- my $utils = "http://www.ncbi.nlm.nih.gov/entrez/eutils"; 
+ my $utils = "https://www.ncbi.nlm.nih.gov/entrez/eutils"; 
 
  my $db     = "sra"; 
  my $report = "xml"; 
@@ -228,7 +228,7 @@ m|<Count>(\d+)</Count>.*<QueryKey>(\d+)</QueryKey>.*<WebEnv>(\S+)</WebEnv>|s;
 
 ##do wget, then split files with fastq-dump, delete .sra when complete and also the barcode if relevant
 ## wget ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/SRR340/SRR340131/SRR340131.sra
-## http://ftp-private.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/SRR016/SRR016080/SRR016080.sra
+## https://ftp-private.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/SRR016/SRR016080/SRR016080.sra
 ## looks like a problem to construct .. look for full path in sample.xml
 ## fastq-dump --split-files SRR340224.sra
 
@@ -236,7 +236,7 @@ sub getFastqForSraRunId {
   my($runId,$pe) = @_;
   my $file = "$runId.sra";
   unlink("$runId.sra") if -e "$runId.sra";
-  my $cmd = "wget http://ftp-private.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/".substr($runId,0,3)."/".substr($runId,0,6)."/$runId/$file";
+  my $cmd = "wget https://ftp-private.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/".substr($runId,0,3)."/".substr($runId,0,6)."/$runId/$file";
   print STDERR "retrieving $runId with $cmd\n";
   system($cmd);
   if($?){
@@ -253,7 +253,7 @@ sub getCsForSraRunId {
   my($runId,$pe) = @_;
   my $file = "$runId.sra";
   unlink("$runId.sra") if -e "$runId.sra";
-  my $cmd = "wget http://ftp-private.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/".substr($runId,0,3)."/".substr($runId,0,6)."/$runId/$file";
+  my $cmd = "wget https://ftp-private.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/".substr($runId,0,3)."/".substr($runId,0,6)."/$runId/$file";
   print STDERR "retrieving $runId with $cmd\n";
   system($cmd);
   if($?){
