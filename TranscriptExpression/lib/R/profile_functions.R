@@ -104,7 +104,7 @@ findIndex <- function (array=NULL, value=NULL) {
 
 #--------------------------------------------------------------------------------
 
-percentileMatrix <- function(m=NULL, ties="average") {
+percentileMatrix <- function(m=NULL, ties="min") {
 
   if (is.null(m)) {
     stop("Matrix m must be passed to findIndex function");
