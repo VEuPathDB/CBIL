@@ -243,7 +243,7 @@ sub getFastqForSraRunId {
     die "ERROR ($?): Unable to fetch sra file for $runId\n";
   }
   print STDERR "extracting fastq file(s)...";
-  system("fastq-dump --split-files ./$file");
+  system("fastq-dump -B --split-files ./$file");
   my @files = glob("$runId*.fastq");
   print STDERR "DONE: ".scalar(@files)." files (".join(", ",@files).")\n";
   unlink($file);
