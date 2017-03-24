@@ -32,7 +32,7 @@ sub getFunctions {$_[0]->{_functions} }
 
 
 sub new {
-  my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile, $debug) = @_;
+  my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile, $valueMappingFile, $debug) = @_;
 
   @allOntologyTerms = ();
 
@@ -86,7 +86,7 @@ sub new {
 
   $self->setDebug($debug);
 
-  my $functions = CBIL::ISA::Functions->new({_ontology_mapping => \%ontologyMapping, _ontology_sources => \%ontologySources});
+  my $functions = CBIL::ISA::Functions->new({_ontology_mapping => \%ontologyMapping, _ontology_sources => \%ontologySources, _valueMappingFile => $valueMappingFile});
   $self->setFunctions($functions);
 
   return $self;
@@ -269,6 +269,8 @@ sub addProtocolParametersToEdges {
       my $pv = CBIL::ISA::StudyAssayEntity::ParameterValue->new({_value => $value});
       $pv->setQualifier($qualifier);
 
+      push @$functions, "valueIsMappedValue";
+
       my $functionsObj = $self->getFunctions();
       foreach my $function (@$functions) {
         eval {
@@ -385,6 +387,8 @@ sub addCharacteristicsToNodes {
 
       my $char = CBIL::ISA::StudyAssayEntity::Characteristic->new({_value => $value});
       $char->setQualifier($qualifier);
+
+      push @$functions, "valueIsMappedValue";
 
       my $functionsObj = $self->getFunctions();
       foreach my $function (@$functions) {

@@ -17,11 +17,54 @@ use Data::Dumper;
 
 sub getOntologyMapping {$_[0]->{_ontology_mapping} }
 sub getOntologySources {$_[0]->{_ontology_sources} }
+sub getValueMappingFile {$_[0]->{_valueMappingFile} }
+
+sub getValueMapping {$_[0]->{_valueMapping} }
+sub setValueMapping {$_[0]->{_valueMapping} = $_[1] }
 
 sub new {
   my ($class, $args) = @_;
-  return bless $args, $class;
+
+  my $self = bless $args, $class;
+
+  my $valueMappingFile = $self->getValueMappingFile();
+
+  my $valueMapping = {};
+  if($valueMappingFile) {
+    open(FILE, $valueMappingFile) or die "Cannot open file $valueMappingFile for reading: $!";
+
+    while(<FILE>) {
+      chomp;
+
+      my ($qualName, $qualSourceId, $in, $out) = split(/\t/, $_);
+      $valueMapping->{$qualSourceId}->{$in} = $out;
+    }
+  }
+  $self->setValueMapping($valueMapping);
+
+  return $self;
 }
+
+
+sub valueIsMappedValue {
+  my ($self, $obj) = @_;
+
+  my $value = $obj->getValue();
+  my $qualSourceId = $obj->getQualifier();
+
+  my $valueMapping = $self->getValueMapping();
+
+  my $qualifierValues = $valueMapping->{$qualSourceId};
+
+  if($qualifierValues) {
+    my $newValue = $qualifierValues->{$value};
+
+    if($newValue) {
+      $obj->setValue($newValue);
+    }
+  }
+}
+
 
 sub valueIsOntologyTerm {
   my ($self, $obj) = @_;

@@ -18,6 +18,7 @@ sub setTerm {
                      'not done', 1,
                      'not applicable', 1,
                      'not known', 1,
+                     'none', 1,
       );
 
 
