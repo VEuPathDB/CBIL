@@ -19,6 +19,8 @@ sub splitBamUniqueNonUnique {
     my $unique = "$expDir/unique_".$filebase;
     my $nonunique = "$expDir/non_unique_".$filebase;
 
+    my $statsHash = CBIL::Util::DnaSeqMetrics::runSamtoolsStats($file_to_open);
+    my $totalReads = $statsHash->{'raw total sequences'};
 
     &runCmd("samtools view -h  $file_to_open  | grep '\@SQ\\\|NH:i:[2-9]' |samtools view -h -bS - > $nonunique");
     &runCmd("samtools view -h  $file_to_open | grep -v 'NH:i:[2-9]' |samtools view -h -bS - > $unique");
@@ -26,14 +28,14 @@ sub splitBamUniqueNonUnique {
     open (M, ">$expDir/mappingStats.txt") or die "Cannot open mapping stat file file $expDir/mappingStats.txt for writing\n";
     print M "file\tcoverage\tmapped\tnumber_reads_mapped\taverage_read_length\n";    
   #  print "starting on unique strand bit\n\n\n\n";
-    my @mapstat = &mapStats($expDir, $file_to_open);
+    my @mapstat = &mapStats($expDir, $file_to_open, $totalReads);
     print M join("\t", @mapstat) .  "\n"; 
     push @filesToDelete, $unique;
     push @filesToDelete, $nonunique;
  #   print Dumper @filesToDelete;
-    &dealWithStrand($expDir, $unique, $isStrandSpecific, $isPairedEnd);
+    &dealWithStrand($expDir, $unique, $isStrandSpecific, $isPairedEnd, $totalReads);
    # print "starting on non_unique strand bit \n\n\n\n";
-    &dealWithStrand($expDir, $nonunique, $isStrandSpecific, $isPairedEnd);
+    &dealWithStrand($expDir, $nonunique, $isStrandSpecific, $isPairedEnd, $totalReads);
     &deleteIntermediateFiles(\@filesToDelete);
 
     print M "\nDONE STATS\n";
@@ -42,7 +44,7 @@ sub splitBamUniqueNonUnique {
 
 
 sub dealWithStrand {	
-    my ($mainResultsDir, $file, $isStrandSpecific, $isPairedEnd) = @_;
+    my ($mainResultsDir, $file, $isStrandSpecific, $isPairedEnd, $totalReads) = @_;
     my $baseName = $file;
     my @filesToDelete;
     $baseName =~ s/_sorted.bam//;
@@ -59,9 +61,9 @@ sub dealWithStrand {
 	my $reverse = $baseName.".secondstrand.bam";
 	push @filesToDelete , $forward;
 	push @filesToDelete, $reverse;
-	my @mapstat = &mapStats($mainResultsDir, $forward);
+	my @mapstat = &mapStats($mainResultsDir, $forward, $totalReads);
 	print M join("\t", @mapstat) . "\n";
-	@mapstat = &mapStats($mainResultsDir, $reverse);
+	@mapstat = &mapStats($mainResultsDir, $reverse, $totalReads);
 	print M join("\t", @mapstat) . "\n";
     }
     
@@ -103,9 +105,9 @@ sub dealWithStrand {
 	push @filesToDelete, ($fwd,$rev, $fwd1, $fwd2, $rev1, $rev2);
 #	print "the long array is \n\n\n ";
 #	print Dumper @filesToDelete;
-	my@mapstat = &mapStats($mainResultsDir, $fwd);
+	my@mapstat = &mapStats($mainResultsDir, $fwd, $totalReads);
 	print M join("\t", @mapstat) . "\n";
-        @mapstat = &mapStats($mainResultsDir, $rev);
+        @mapstat = &mapStats($mainResultsDir, $rev, $totalReads);
 	print M join("\t", @mapstat) . "\n";
 	
     }
@@ -113,7 +115,7 @@ sub dealWithStrand {
 	print "dataset is not strand specific";
 	&runCmd("samtools index $file");
 	&runCmd("bamutils tobedgraph $file >${baseName}_sorted.bed");
-	my @mapstat = &mapStats($mainResultsDir, $file);
+	my @mapstat = &mapStats($mainResultsDir, $file, $totalReads);
 	print M join("\t", @mapstat) . "\n";
 	print "the file I am trying to print to M is $file\n";
     }
@@ -122,7 +124,7 @@ sub dealWithStrand {
 
 
 sub mapStats {
-    my ($directory, $bamfile) = @_;
+    my ($directory, $bamfile, $totalReads) = @_;
 #    print "file running mapping stats on is $bamfile\n";
 
     my $coverage = CBIL::Util::DnaSeqMetrics::getCoverage($directory, $bamfile);
@@ -130,7 +132,6 @@ sub mapStats {
     my $statsHash = CBIL::Util::DnaSeqMetrics::runSamtoolsStats($bamfile);
 
     my $numberMapped = $statsHash->{'reads mapped'};
-    my $totalReads = $statsHash->{'raw total sequences'};
     my $percentMapped = $numberMapped / $totalReads;
     my $averageReadLength = $statsHash->{'average length'};
 
