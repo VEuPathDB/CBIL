@@ -121,7 +121,9 @@ sub initParser {
 sub new {
     my($class, $str) = @_;
     chomp($str);
-    my $self = \$str;
+    my @vals = split("\t", $str);
+
+    my $self = \@vals;
     bless $self, $class;
     return $self;
 }
@@ -134,8 +136,8 @@ sub new {
 #
 sub _getByInd {
     my($self, $ind) = @_;
-    my @vals = split("\t", $$self);
-    return $vals[$ind];
+
+    return $self->[$ind];
 }
 
 # Get a raw column value by name
@@ -178,7 +180,7 @@ sub getSpans {
 
 sub toString {
     my $self = shift;
-    return $$self;
+    return join("\t", @$self);
 }
 
 # Debug version of toString; exercises the get method
