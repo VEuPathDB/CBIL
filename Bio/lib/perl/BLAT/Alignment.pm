@@ -134,6 +134,7 @@ sub new {
     }
 
     my $self = bless { _values => \@vals }, $class;
+
     return $self;
 }
 
@@ -613,12 +614,51 @@ sub isPolyA {
 
 sub getScore {
   my $self = shift;
+
+  if($self->{score}) {
+    return $self->{score};
+  }
+  return $self->score();
+}
+
+sub score {
+  my $self = shift;
+
   my $alignedBases = $self->get('matches') + $self->get('mismatches') + $self->get('num_ns');
   my $alignedQueryBases =  $self->get('matches') + $self->get('rep_matches') + $self->get('num_ns');
   my $alignPct = ($alignedBases / $self->get('q_size')) * 100.0;
   my $pctId = ($alignedQueryBases / $alignedBases) * 100.0;
-  return  sprintf("%3.3f", sqrt($pctId * $alignPct));
+  my $score = sprintf("%3.3f", sqrt($pctId * $alignPct));
+
+  $self->{score} = $score;
+
+  return $score;
 }
+
+sub getAlignedBases {
+  my $self = shift;
+
+  if($self->{alignedBases}) {
+    return $self->{alignedBases};
+  }
+  return $self->alignedBases();
+}
+
+
+sub alignedBases {
+  my $self = shift;
+
+  my $matches      = $align->get('matches');
+  my $mismatches   = $align->get('mismatches');
+  my $repmatches   = $align->get('rep_matches');
+  my $ns           = $align->get('num_ns');
+  my $alignedBases = ($matches + $mismatches + $repmatches + $ns);
+
+  $align->{alignedBases} = $alignedBases;
+
+  return $alignedBases;
+}
+
 
 1;
 
