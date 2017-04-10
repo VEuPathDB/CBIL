@@ -122,9 +122,16 @@ sub initParser {
 # ------------------------------------------------------------------------
 
 sub new {
-    my($class, $str) = @_;
-    chomp($str);
-    my @vals = split("\t", $str);
+    my($class, $arg) = @_;
+
+    my @vals;
+    if(ref($arg) eq 'ARRAY') {
+      @vals = @$arg;
+    }
+    else {
+      chomp($arg);
+      @vals = split("\t", $arg);
+    }
 
     my $self = bless { _values => \@vals }, $class;
     return $self;
