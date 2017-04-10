@@ -88,6 +88,9 @@ my $PSL_PARSER = {
     }
 };
 
+sub getValues { $_[0]->{_values} }
+
+
 # ------------------------------------------------------------------------
 # Module 
 # ------------------------------------------------------------------------
@@ -123,8 +126,7 @@ sub new {
     chomp($str);
     my @vals = split("\t", $str);
 
-    my $self = \@vals;
-    bless $self, $class;
+    my $self = bless { _values => \@vals }, $class;
     return $self;
 }
 
@@ -137,7 +139,9 @@ sub new {
 sub _getByInd {
     my($self, $ind) = @_;
 
-    return $self->[$ind];
+    my $values = $self->getValues();
+
+    return $values->[$ind];
 }
 
 # Get a raw column value by name
@@ -180,7 +184,9 @@ sub getSpans {
 
 sub toString {
     my $self = shift;
-    return join("\t", @$self);
+
+    my $values = $self->getValues();
+    return join("\t", @$values);
 }
 
 # Debug version of toString; exercises the get method
