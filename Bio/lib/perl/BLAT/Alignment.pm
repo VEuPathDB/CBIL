@@ -648,13 +648,13 @@ sub getAlignedBases {
 sub alignedBases {
   my $self = shift;
 
-  my $matches      = $align->get('matches');
-  my $mismatches   = $align->get('mismatches');
-  my $repmatches   = $align->get('rep_matches');
-  my $ns           = $align->get('num_ns');
+  my $matches      = $self->get('matches');
+  my $mismatches   = $self->get('mismatches');
+  my $repmatches   = $self->get('rep_matches');
+  my $ns           = $self->get('num_ns');
   my $alignedBases = ($matches + $mismatches + $repmatches + $ns);
 
-  $align->{alignedBases} = $alignedBases;
+  $self->{alignedBases} = $alignedBases;
 
   return $alignedBases;
 }
