@@ -46,6 +46,15 @@ sub new {
 }
 
 
+sub formatEuroDate {
+  return "TODO";
+}
+
+
+sub formatHouseholdId {
+  return "TODO";
+}
+
 sub valueIsMappedValue {
   my ($self, $obj) = @_;
 
