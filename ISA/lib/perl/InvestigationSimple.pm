@@ -253,7 +253,6 @@ sub addNodesAndEdgesToStudy {
         $self->handleError("Unmapped Column Header:  $mc") unless($isSpecial);
       }
     }
-
     $count++;
   }
 
@@ -450,12 +449,12 @@ sub makeNodes {
     my $class = "CBIL::ISA::StudyAssayEntity::$isaType";
 
     my $idColumn = lc($studyXml->{node}->{$nodeName}->{idColumn}) || "name";
-    my $name = $valuesHash->{$idColumn};
+    my $name = $valuesHash->{$idColumn}->[0];
     $self->addStudySpecialColumn($idColumn); # housekeeping
 
-    my $description = $valuesHash->{description};
-    my $sourceMtOverride = $valuesHash->{sourcemtoverride};
-    my $sampleMtOverride = $valuesHash->{samplemtoverride};
+    my $description = $valuesHash->{description}->[0];
+    my $sourceMtOverride = $valuesHash->{sourcemtoverride}->[0];
+    my $sampleMtOverride = $valuesHash->{samplemtoverride}->[0];
 
     if(my $suffix = $studyXml->{node}->{$nodeName}->{suffix}) {
 
