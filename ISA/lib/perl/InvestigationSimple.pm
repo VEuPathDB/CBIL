@@ -30,10 +30,18 @@ sub getRegexMatch {$_[0]->{_regex_match} }
 sub setFunctions {$_[0]->{_functions} = $_[1]}
 sub getFunctions {$_[0]->{_functions} }
 
+sub setRowLimit {$_[0]->{_row_limit} = $_[1]}
+sub getRowLimit {$_[0]->{_row_limit} }
+
+
 sub setStudySpecialColumns {$_[0]->{_study_special_columns} = $_[1]}
 sub getStudySpecialColumns {$_[0]->{_study_special_columns} }
 sub addStudySpecialColumn {
   my ($self, $col) = @_;
+
+  foreach(@{$self->{_study_special_columns}}) {
+    return if($_ eq $col);
+  }
 
   push @{$self->{_study_special_columns}}, $col;
 }
@@ -97,6 +105,7 @@ sub new {
   $self->setFunctions($functions);
 
   $self->setStudySpecialColumns(['name', 'description', 'sourcemtoverride', 'samplemtoverride', 'parent']);
+  $self->setRowLimit(500);
 
   return $self;
 }
@@ -153,12 +162,18 @@ sub parseInvestigation {
     my $study = CBIL::ISA::Study->new({});
 
     $study->{_SIMPLE_XML} = $studyXml;
+    $study->setHasMoreData(1);
 
     $study->setFileName($metaDataFileFullPath);
 
     my %protocols;
 
     $studyXml->{identifier} = $identifier;
+
+    if(lc $studyXml->{disallowEdgeLookup} eq 'true') {
+      $study->setDisallowEdgeLookup(1);
+    }
+
 
     my $studyIdentifier = $self->makeIdentifier($studyXml);
     $study->setIdentifier($studyIdentifier);    
@@ -191,45 +206,59 @@ sub parseInvestigation {
 
 
 #@override
-sub parseStudies {
-  my ($self) = @_;
+sub parseStudy {
+  my ($self, $study) = @_;
 
-  foreach my $study (@{$self->getStudies()}) {
+  my $studyXml = $study->{_SIMPLE_XML};
+  my $fileName = $study->getFileName();
+  my $fileHandle = $study->getFileHandle();
 
-    my $studyXml = $study->{_SIMPLE_XML};
-    my $fileName = $study->getFileName();
+  unless($fileHandle) {
+    open($fileHandle,  $fileName) or "Cannot open file $fileName for reading: $!";    
+    $study->setFileHandle($fileHandle);
 
-    $self->addNodesAndEdgesToStudy($study, $fileName, $studyXml);
+    my $header = <$fileHandle>;
+    chomp $header;
+    my @headers = split(/\t/, $header);
+    $study->{_simple_study_headers} = \@headers;
+    $study->{_simple_study_count} = 1;
   }
 
-  # get from Investigation.pm
-  $self->dealWithAllOntologies();
+  @allOntologyTerms = ();
+  $study->{_nodes} = [];
+  $study->{_edges} = [];
+
+  $self->addNodesAndEdgesToStudy($study, $fileHandle, $studyXml);
+
+#  my %nodeType;
+#  foreach(@{$study->getNodes()}) {
+#    my $type = $_->getMaterialType()->getTerm();
+#    $nodeType{$type}++;
+#  }
+
+#  print STDERR Dumper \%nodeType;
+#  print STDERR "Edge Count:  " . scalar @{$study->getEdges()};
 }
 
 
-
-
 sub addNodesAndEdgesToStudy {
-  my ($self, $study, $metaDataTabFile, $studyXml) = @_;
+  my ($self, $study, $fileHandle, $studyXml) = @_;
 
-  open(FILE, $metaDataTabFile) or "Cannot open file $metaDataTabFile for reading: $!";
+  my $headers = $study->{_simple_study_headers};
+  my $count = $study->{_simple_study_count};
 
-  my $header = <FILE>;
-  chomp $header;
-  my @headers = split(/\t/, $header);
+  my $rowLimit = $self->getRowLimit();
+  my $rowCount = 0;
 
-#  my @headersSlice = @headers[4..$#headers];
-
-  my $count = 1;;
-  while(my $line = <FILE>) {
+  while(my $line = <$fileHandle>) {
     chomp $line;
 
     my @a = split(/\t/, $line);
 
     my %valuesHash;
 
-    for(my $i = 0; $i < scalar @headers; $i++) {
-      my $lcHeader = lc $headers[$i];
+    for(my $i = 0; $i < scalar @$headers; $i++) {
+      my $lcHeader = lc $headers->[$i];
 
       push @{$valuesHash{$lcHeader}}, $a[$i];
     }
@@ -254,9 +283,20 @@ sub addNodesAndEdgesToStudy {
       }
     }
     $count++;
+    $rowCount++;
+
+    $study->{_simple_study_count} = $count;
+
+    if($rowCount == $rowLimit) {
+      print STDERR "Processed $count lines\n";
+
+      return;
+    }
+
   }
 
-  close FILE;
+  $study->setHasMoreData(0);
+  close $fileHandle;
 }
 
 sub addProtocolParametersToEdges {
@@ -458,7 +498,7 @@ sub makeNodes {
 
     if(my $suffix = $studyXml->{node}->{$nodeName}->{suffix}) {
 
-      if(my $useExactSuffix = $studyXml->{node}->{$nodeName}->{useExactSuffix}) {
+      if(lc $studyXml->{node}->{$nodeName}->{useExactSuffix} eq 'true') {
         $name .= $suffix;
       }
       else {

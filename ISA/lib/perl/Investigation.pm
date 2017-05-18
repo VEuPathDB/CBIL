@@ -144,6 +144,8 @@ sub parseInvestigation {
 
     my $study = $self->makeStudy($studyHash, $studyColumnCounts);
 
+    $study->setHasMoreData(1);
+
     $self->addStudy($study);
 
     my $studyFileName = $investigationDirectory . "/" . $study->getFileName();
@@ -152,43 +154,43 @@ sub parseInvestigation {
 }
 
 
+sub parseStudy {
+  my ($self, $study) = @_;
 
-sub parseStudies {
-  my ($self) = @_;
+  @allOntologyTerms = ();
 
   my $delimiter = $self->getDelimiter();
   my $investigationDirectory = $self->getInvestigationDirectory();
 
-  foreach my $study (@{$self->getStudies()}) {
-    my $studyFileName = $study->getFileName();
+  my $studyFileName = $study->getFileName();
 
 
-    my $studyFileReader = CBIL::ISA::StudyAssayFileReader->new($studyFileName, $delimiter);
+  my $studyFileReader = CBIL::ISA::StudyAssayFileReader->new($studyFileName, $delimiter);
 
 
-    while($studyFileReader->hasNextLine()) {
-      my $studyObjects = $studyFileReader->readLineToObjects();
-      $study->addNodesAndEdges($studyObjects, $studyFileName);
-    }
-    $studyFileReader->closeFh();
-
-
-    my $studyAssays = $study->getStudyAssays();
-    foreach my $assay (@$studyAssays) {
-      next unless($assay->getAssayFileName());
-
-      my $assayFileName = $investigationDirectory . "/" . $assay->getAssayFileName();
-      
-      my $assayFileReader = CBIL::ISA::StudyAssayFileReader->new($assayFileName, $delimiter);
-
-      while($assayFileReader->hasNextLine()) {
-        my $assayObjects = $assayFileReader->readLineToObjects();
-        $study->addNodesAndEdges($assayObjects, $assayFileName);
-      }
-      $assayFileReader->closeFh();
-    }
+  while($studyFileReader->hasNextLine()) {
+    my $studyObjects = $studyFileReader->readLineToObjects();
+    $study->addNodesAndEdges($studyObjects, $studyFileName);
   }
-  $self->dealWithAllOntologies();
+  $studyFileReader->closeFh();
+  
+
+  my $studyAssays = $study->getStudyAssays();
+  foreach my $assay (@$studyAssays) {
+    next unless($assay->getAssayFileName());
+
+    my $assayFileName = $investigationDirectory . "/" . $assay->getAssayFileName();
+    
+    my $assayFileReader = CBIL::ISA::StudyAssayFileReader->new($assayFileName, $delimiter);
+
+    while($assayFileReader->hasNextLine()) {
+      my $assayObjects = $assayFileReader->readLineToObjects();
+      $study->addNodesAndEdges($assayObjects, $assayFileName);
+    }
+    $assayFileReader->closeFh();
+  }
+
+  $study->setHasMoreData(0);
 }
 
 
@@ -198,7 +200,15 @@ sub parse {
 
   # split these out so we can get some information before processing nodes and edges
   $self->parseInvestigation();
-  $self->parseStudies();
+
+  foreach my $study (@{$self->getStudies()}) {
+    while($study->hasMoreData()) {
+      $self->parseStudy($study);
+      $self->dealWithAllOntologies();
+    }
+  }
+
+
 
   if($self->getHasErrors()) {
     die "___Errors Found.  Please fix and try again.";
