@@ -57,15 +57,13 @@ sub new {
   $self->setInvestigationDirectory($investigationDirectory);
   $self->setDelimiter($delimiter);
 
+  $self->setOntologyAccessionsHash({});
+
   return $self;
 }
 
 sub setOntologyAccessionsHash { $_[0]->{_ontology_accessions} = $_[1] }
 sub getOntologyAccessionsHash { $_[0]->{_ontology_accessions} }
-
-sub setOntologyTerms { $_[0]->{_ontology_terms} = $_[1] }
-sub getOntologyTerms { $_[0]->{_ontology_terms} }
-
 
 sub setDelimiter { $_[0]->{_delimiter} = $_[1] }
 sub getDelimiter { $_[0]->{_delimiter} }
@@ -157,8 +155,6 @@ sub parseInvestigation {
 sub parseStudy {
   my ($self, $study) = @_;
 
-  @allOntologyTerms = ();
-
   my $delimiter = $self->getDelimiter();
   my $investigationDirectory = $self->getInvestigationDirectory();
 
@@ -218,23 +214,47 @@ sub parse {
 }
 
 
+sub handleError {
+  my ($self, $error) = @_;
+
+  my $debug = $self->getDebug();
+  $self->setHasErrors(1);
+
+  if($debug) {
+    print STDERR $error . "\n";
+  }
+  else {
+    die $error;
+  }
+
+}
+
+
 sub dealWithAllOntologies {
   my ($self) = @_;
 
-  my %ontologyTerms;
+  my $ontologyTerms = $self->getOntologyAccessionsHash();
+
+
   foreach my $ontologyTerm(@allOntologyTerms) {
     my $hasAccession = defined $ontologyTerm->getTermAccessionNumber();
 
-    $ontologyTerms{$ontologyTerm->getTermSourceRef()}->{$ontologyTerm->getTermAccessionNumber()}++ if($hasAccession);
+    $ontologyTerms->{$ontologyTerm->getTermSourceRef()}->{$ontologyTerm->getTermAccessionNumber()}++ if($hasAccession);
 
     # Characteristic Qualifiers are a special case.  Their term/accession/source is not defined in the investigation file
     if(blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::Characteristic') {
-      $ontologyTerms{"CHARACTERISTIC_QUALIFIER"}->{$ontologyTerm->getQualifier()}++;
+      $ontologyTerms->{"CHARACTERISTIC_QUALIFIER"}->{$ontologyTerm->getQualifier()}++;
+    }
+
+    my $accession = $ontologyTerm->getTermAccessionNumber();
+    my $source = $ontologyTerm->getTermSourceRef();
+    my $term = $ontologyTerm->getTerm();
+
+
+    unless(($accession && $source) || blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::Characteristic' || blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::ParameterValue') {
+      $self->handleError("OntologyTerm $term is required to have accession and source.");
     }
   }
-
-  $self->setOntologyAccessionsHash(\%ontologyTerms);
-  $self->setOntologyTerms(\@allOntologyTerms);
 }
 
 1;

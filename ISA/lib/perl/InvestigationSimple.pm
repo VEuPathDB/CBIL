@@ -107,6 +107,8 @@ sub new {
   $self->setStudySpecialColumns(['name', 'description', 'sourcemtoverride', 'samplemtoverride', 'parent']);
   $self->setRowLimit(500);
 
+  $self->setOntologyAccessionsHash({});
+
   return $self;
 }
 
@@ -224,6 +226,7 @@ sub parseStudy {
     $study->{_simple_study_count} = 1;
   }
 
+  $self->dealWithAllOntologies();
   @allOntologyTerms = ();
   $study->{_nodes} = [];
   $study->{_edges} = [];
@@ -356,20 +359,6 @@ sub addProtocolParametersToEdges {
 }
 
 
-sub handleError {
-  my ($self, $error) = @_;
-
-  my $debug = $self->getDebug();
-  $self->setHasErrors(1);
-
-  if($debug) {
-    print STDERR $error . "\n";
-  }
-  else {
-    die $error;
-  }
-
-}
 
 
 sub makeEdges {
