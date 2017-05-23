@@ -16,6 +16,12 @@ use CBIL::ISA::StudyAssayEntity::ProtocolApplication;
 
 use Data::Dumper;
 
+sub disallowEdgeLookup { $_[0]->{_disallow_edge_lookup} }
+sub setDisallowEdgeLookup { $_[0]->{_disallow_edge_lookup} = $_[1] }
+
+sub hasMoreData { $_[0]->{_has_more_data} }
+sub setHasMoreData { $_[0]->{_has_more_data} = $_[1] }
+
 sub setIdentifier { $_[0]->{_identifier} = $_[1] }
 sub getIdentifier { $_[0]->{_identifier} }
 
@@ -33,6 +39,10 @@ sub getDescription { $_[0]->{_description} }
 
 sub setFileName { $_[0]->{_file_name} = $_[1] }
 sub getFileName { $_[0]->{_file_name} }
+
+sub setFileHandle { $_[0]->{_file_handle} = $_[1] }
+sub getFileHandle { $_[0]->{_file_handle} }
+
 
 sub setPublications { 
   my ($self, $hash, $columnCount) = @_;
@@ -124,11 +134,13 @@ sub addEdge {
 
   my $edge = CBIL::ISA::Edge->new($input, $protocolApplications, $output, $fileName);
 
-  foreach my $existingEdge (@{$self->getEdges()}) {
-    if($edge->equals($existingEdge)) {
-      $existingEdge->addInput($input);
-      $existingEdge->addOutput($output);
-      return $existingEdge;
+  unless($self->disallowEdgeLookup()) {
+    foreach my $existingEdge (@{$self->getEdges()}) {
+      if($edge->equals($existingEdge)) {
+        $existingEdge->addInput($input);
+        $existingEdge->addOutput($output);
+        return $existingEdge;
+      }
     }
   }
 

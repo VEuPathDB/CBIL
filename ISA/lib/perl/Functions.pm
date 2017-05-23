@@ -6,6 +6,8 @@ require Exporter;
 
 use Scalar::Util 'blessed';
 
+use Date::Manip qw(Date_Init ParseDate UnixDate);
+
 use strict;
 
 use CBIL::ISA::OntologyTerm;
@@ -45,6 +47,37 @@ sub new {
   return $self;
 }
 
+
+sub formatEuroDate {
+  my ($self, $obj) = @_;
+
+  my $value = $obj->getValue();
+
+  Date_Init("DateFormat=non-US"); 
+
+  my $formattedDate = UnixDate(ParseDate($value), "%Y-%m-%d");
+
+  unless($formattedDate) {
+    die "Date Format not supported for $value\n";
+  }
+
+  return $formattedDate;
+}
+
+
+sub formatHouseholdId {
+  my ($self, $obj) = @_;
+
+  my $value = $obj->getValue();
+
+  if ($value=~/^HH\d+$/i) {
+    $value = uc($value);
+  }
+  else {
+    $value = "HH$value";
+  }
+  return $value;
+}
 
 sub valueIsMappedValue {
   my ($self, $obj) = @_;

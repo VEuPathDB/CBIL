@@ -30,6 +30,21 @@ sub getRegexMatch {$_[0]->{_regex_match} }
 sub setFunctions {$_[0]->{_functions} = $_[1]}
 sub getFunctions {$_[0]->{_functions} }
 
+sub setRowLimit {$_[0]->{_row_limit} = $_[1]}
+sub getRowLimit {$_[0]->{_row_limit} }
+
+
+sub setStudySpecialColumns {$_[0]->{_study_special_columns} = $_[1]}
+sub getStudySpecialColumns {$_[0]->{_study_special_columns} }
+sub addStudySpecialColumn {
+  my ($self, $col) = @_;
+
+  foreach(@{$self->{_study_special_columns}}) {
+    return if($_ eq $col);
+  }
+
+  push @{$self->{_study_special_columns}}, $col;
+}
 
 sub new {
   my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile, $valueMappingFile, $debug) = @_;
@@ -89,6 +104,11 @@ sub new {
   my $functions = CBIL::ISA::Functions->new({_ontology_mapping => \%ontologyMapping, _ontology_sources => \%ontologySources, _valueMappingFile => $valueMappingFile});
   $self->setFunctions($functions);
 
+  $self->setStudySpecialColumns(['name', 'description', 'sourcemtoverride', 'samplemtoverride', 'parent']);
+  $self->setRowLimit(500);
+
+  $self->setOntologyAccessionsHash({});
+
   return $self;
 }
 
@@ -144,12 +164,18 @@ sub parseInvestigation {
     my $study = CBIL::ISA::Study->new({});
 
     $study->{_SIMPLE_XML} = $studyXml;
+    $study->setHasMoreData(1);
 
     $study->setFileName($metaDataFileFullPath);
 
     my %protocols;
 
     $studyXml->{identifier} = $identifier;
+
+    if(lc $studyXml->{disallowEdgeLookup} eq 'true') {
+      $study->setDisallowEdgeLookup(1);
+    }
+
 
     my $studyIdentifier = $self->makeIdentifier($studyXml);
     $study->setIdentifier($studyIdentifier);    
@@ -182,67 +208,102 @@ sub parseInvestigation {
 
 
 #@override
-sub parseStudies {
-  my ($self) = @_;
+sub parseStudy {
+  my ($self, $study) = @_;
 
-  foreach my $study (@{$self->getStudies()}) {
+  my $studyXml = $study->{_SIMPLE_XML};
+  my $fileName = $study->getFileName();
+  my $fileHandle = $study->getFileHandle();
 
-    my $studyXml = $study->{_SIMPLE_XML};
-    my $fileName = $study->getFileName();
+  unless($fileHandle) {
+    open($fileHandle,  $fileName) or "Cannot open file $fileName for reading: $!";    
+    $study->setFileHandle($fileHandle);
 
-    $self->addNodesAndEdgesToStudy($study, $fileName, $studyXml);
+    my $header = <$fileHandle>;
+    chomp $header;
+    my @headers = split(/\t/, $header);
+    $study->{_simple_study_headers} = \@headers;
+    $study->{_simple_study_count} = 1;
   }
 
-  # get from Investigation.pm
   $self->dealWithAllOntologies();
+  @allOntologyTerms = ();
+  $study->{_nodes} = [];
+  $study->{_edges} = [];
+
+  $self->addNodesAndEdgesToStudy($study, $fileHandle, $studyXml);
+
+#  my %nodeType;
+#  foreach(@{$study->getNodes()}) {
+#    my $type = $_->getMaterialType()->getTerm();
+#    $nodeType{$type}++;
+#  }
+
+#  print STDERR Dumper \%nodeType;
+#  print STDERR "Edge Count:  " . scalar @{$study->getEdges()};
 }
 
 
-
-
 sub addNodesAndEdgesToStudy {
-  my ($self, $study, $metaDataTabFile, $studyXml) = @_;
+  my ($self, $study, $fileHandle, $studyXml) = @_;
 
-  open(FILE, $metaDataTabFile) or "Cannot open file $metaDataTabFile for reading: $!";
+  my $headers = $study->{_simple_study_headers};
+  my $count = $study->{_simple_study_count};
 
-  my $header = <FILE>;
-  chomp $header;
-  my @headers = split(/\t/, $header);
+  my $rowLimit = $self->getRowLimit();
+  my $rowCount = 0;
 
-  my @headersSlice = @headers[4..$#headers];
-
-  my $count = 1;;
-  while(my $line = <FILE>) {
+  while(my $line = <$fileHandle>) {
     chomp $line;
 
     my @a = split(/\t/, $line);
 
-    my $name = shift @a;
-    my $description = shift @a;
-    my $sourceMtOverride = shift @a;
-    my $sampleMtOverride = shift @a;
+    my %valuesHash;
 
+    for(my $i = 0; $i < scalar @$headers; $i++) {
+      my $lcHeader = lc $headers->[$i];
 
-    my $nodesHash = $self->makeNodes($name, $description, $sourceMtOverride, $sampleMtOverride, $count, $studyXml, $study);
-    my $leftoverIndexes = $self->addCharacteristicsToNodes($nodesHash, \@a, \@headersSlice);
-
-    my $protocolAppHash = $self->makeEdges($studyXml, $study, $nodesHash);
-    my $missingIndexes = $self->addProtocolParametersToEdges($protocolAppHash, \@a, \@headersSlice, $leftoverIndexes);
-
-    if(scalar @$missingIndexes > 0 && $count == 1) {
-      foreach my $i (@$missingIndexes) {
-        $self->handleError("Unmapped Column Header:  $headersSlice[$i]");
-      }
+      push @{$valuesHash{$lcHeader}}, $a[$i];
     }
 
+    my $nodesHash = $self->makeNodes(\%valuesHash, $count, $studyXml, $study);
+    my $leftoverColumns = $self->addCharacteristicsToNodes($nodesHash, \%valuesHash);
+
+    my $protocolAppHash = $self->makeEdges($studyXml, $study, $nodesHash);
+    my $missingColumns = $self->addProtocolParametersToEdges($protocolAppHash, \%valuesHash, $leftoverColumns);
+
+    if(scalar @$missingColumns > 0 && $count == 1) {
+      my $specialColumns = $self->getStudySpecialColumns();
+
+      foreach my $mc (@$missingColumns) {
+
+        my $isSpecial;
+        foreach my $sc (@$specialColumns) {
+          $isSpecial = 1 if(lc($mc) eq lc($sc));
+        }
+
+        $self->handleError("Unmapped Column Header:  $mc") unless($isSpecial);
+      }
+    }
     $count++;
+    $rowCount++;
+
+    $study->{_simple_study_count} = $count;
+
+    if($rowCount == $rowLimit) {
+      print STDERR "Processed $count lines\n";
+
+      return;
+    }
+
   }
 
-  close FILE;
+  $study->setHasMoreData(0);
+  close $fileHandle;
 }
 
 sub addProtocolParametersToEdges {
-  my ($self, $protocolAppHash, $values, $headers, $leftoverIndexes) = @_;
+  my ($self, $protocolAppHash, $valuesHash, $leftoverColumns) = @_;
 
 #  &checkArrayRefLengths($values, $headers);
 
@@ -250,10 +311,11 @@ sub addProtocolParametersToEdges {
 
   my @rv;
 
-  foreach my $i (@$leftoverIndexes) {
-    my $value = $values->[$i];
-    my $header = $headers->[$i];
+  foreach my $key (@$leftoverColumns) {
 
+    my $value = $valuesHash->{$key};
+
+    my $header = $key;
     if($header =~ /Parameter Value\s*\[(.+)\]/i) {
       $header = $1;
     }
@@ -289,7 +351,7 @@ sub addProtocolParametersToEdges {
       }
     }
     else {
-      push @rv, $i;
+      push @rv, $key;
     }
   }
 
@@ -297,20 +359,6 @@ sub addProtocolParametersToEdges {
 }
 
 
-sub handleError {
-  my ($self, $error) = @_;
-
-  my $debug = $self->getDebug();
-  $self->setHasErrors(1);
-
-  if($debug) {
-    print STDERR $error . "\n";
-  }
-  else {
-    die $error;
-  }
-
-}
 
 
 sub makeEdges {
@@ -358,17 +406,15 @@ sub findProtocolByName {
 
 
 sub addCharacteristicsToNodes {
-  my ($self, $nodesHash, $values, $headers) = @_;
+  my ($self, $nodesHash, $valuesHash) = @_;
 
   my @rv;
 
 #  &checkArrayRefLengths($values, $headers);
   my $ontologyMapping = $self->getOntologyMapping();
 
-  for(my $i = 0; $i < scalar @$headers; $i++) {
-    my $header = $headers->[$i];
-    my $value = $values->[$i];
-
+  while (my ($key, $values) = each %$valuesHash) {
+    my $header = $key;
     if($header =~ /Characteristics\s*\[(.+)\]/i) {
       $header = $1;
     }
@@ -376,34 +422,36 @@ sub addCharacteristicsToNodes {
 
     my $omType = "characteristicQualifier";
     if($ontologyMapping->{lc($header)} && $ontologyMapping->{lc($header)}->{$omType}) {
-      
-      next unless $value; # put this here because I still wanna check the headers
 
-      my $qualifier = $ontologyMapping->{lc($header)}->{$omType}->{source_id};
-      my $functions = $ontologyMapping->{lc($header)}->{$omType}->{function};
-      my $parent = $ontologyMapping->{lc($header)}->{$omType}->{parent};
+      foreach my $value(@$values) {
+        next unless $value; # put this here because I still wanna check the headers
 
-      my $node = $nodesHash->{$parent};
+        my $qualifier = $ontologyMapping->{lc($header)}->{$omType}->{source_id};
+        my $functions = $ontologyMapping->{lc($header)}->{$omType}->{function};
+        my $parent = $ontologyMapping->{lc($header)}->{$omType}->{parent};
 
-      my $char = CBIL::ISA::StudyAssayEntity::Characteristic->new({_value => $value});
-      $char->setQualifier($qualifier);
+        my $node = $nodesHash->{$parent};
 
-      push @$functions, "valueIsMappedValue";
+        my $char = CBIL::ISA::StudyAssayEntity::Characteristic->new({_value => $value});
+        $char->setQualifier($qualifier);
 
-      my $functionsObj = $self->getFunctions();
-      foreach my $function (@$functions) {
-        eval {
-          $functionsObj->$function($char);
-        };
-        if ($@) {
-          $self->handleError("problem w/ function $function: $@");
+        push @$functions, "valueIsMappedValue";
+
+        my $functionsObj = $self->getFunctions();
+        foreach my $function (@$functions) {
+          eval {
+            $functionsObj->$function($char);
+          };
+          if ($@) {
+            $self->handleError("problem w/ function $function: $@");
+          }
         }
-      }
 
-      $node->addCharacteristic($char);
+        $node->addCharacteristic($char);
+      }
     }
     else {
-      push @rv, $i;
+      push @rv, $key;
     }
   }
   return \@rv;
@@ -419,22 +467,27 @@ sub checkArrayRefLengths {
 
 
 sub makeNodes {
-  my ($self, $prefix, $description, $sourceMtOverride, $sampleMtOverride, $count, $studyXml, $study) = @_;
+  my ($self, $valuesHash, $count, $studyXml, $study) = @_;
 
   my $ontologyMapping = $self->getOntologyMapping();
 
   my %nodes;
 
   foreach my $nodeName (keys %{$studyXml->{node}}) {
-
     my $isaType = defined($studyXml->{node}->{$nodeName}->{isaObject}) ? $studyXml->{node}->{$nodeName}->{isaObject} : $nodeName;
     my $class = "CBIL::ISA::StudyAssayEntity::$isaType";
 
-    my $name = $prefix;
+    my $idColumn = lc($studyXml->{node}->{$nodeName}->{idColumn}) || "name";
+    my $name = $valuesHash->{$idColumn}->[0];
+    $self->addStudySpecialColumn($idColumn); # housekeeping
+
+    my $description = $valuesHash->{description}->[0];
+    my $sourceMtOverride = $valuesHash->{sourcemtoverride}->[0];
+    my $sampleMtOverride = $valuesHash->{samplemtoverride}->[0];
 
     if(my $suffix = $studyXml->{node}->{$nodeName}->{suffix}) {
 
-      if(my $useExactSuffix = $studyXml->{node}->{$nodeName}->{useExactSuffix}) {
+      if(lc $studyXml->{node}->{$nodeName}->{useExactSuffix} eq 'true') {
         $name .= $suffix;
       }
       else {
@@ -462,7 +515,7 @@ sub makeNodes {
       $node->setMaterialType($mt);
     }
 
-    if($isaType eq 'Sample') {
+    if($isaType eq 'Sample' && $studyXml->{sampleRegex}) {
       $node->setDescription($description);
 
       my $sampleIdentifier = $study->getIdentifier() . "-$count";;

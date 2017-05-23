@@ -57,15 +57,13 @@ sub new {
   $self->setInvestigationDirectory($investigationDirectory);
   $self->setDelimiter($delimiter);
 
+  $self->setOntologyAccessionsHash({});
+
   return $self;
 }
 
 sub setOntologyAccessionsHash { $_[0]->{_ontology_accessions} = $_[1] }
 sub getOntologyAccessionsHash { $_[0]->{_ontology_accessions} }
-
-sub setOntologyTerms { $_[0]->{_ontology_terms} = $_[1] }
-sub getOntologyTerms { $_[0]->{_ontology_terms} }
-
 
 sub setDelimiter { $_[0]->{_delimiter} = $_[1] }
 sub getDelimiter { $_[0]->{_delimiter} }
@@ -144,6 +142,8 @@ sub parseInvestigation {
 
     my $study = $self->makeStudy($studyHash, $studyColumnCounts);
 
+    $study->setHasMoreData(1);
+
     $self->addStudy($study);
 
     my $studyFileName = $investigationDirectory . "/" . $study->getFileName();
@@ -152,43 +152,41 @@ sub parseInvestigation {
 }
 
 
-
-sub parseStudies {
-  my ($self) = @_;
+sub parseStudy {
+  my ($self, $study) = @_;
 
   my $delimiter = $self->getDelimiter();
   my $investigationDirectory = $self->getInvestigationDirectory();
 
-  foreach my $study (@{$self->getStudies()}) {
-    my $studyFileName = $study->getFileName();
+  my $studyFileName = $study->getFileName();
 
 
-    my $studyFileReader = CBIL::ISA::StudyAssayFileReader->new($studyFileName, $delimiter);
+  my $studyFileReader = CBIL::ISA::StudyAssayFileReader->new($studyFileName, $delimiter);
 
 
-    while($studyFileReader->hasNextLine()) {
-      my $studyObjects = $studyFileReader->readLineToObjects();
-      $study->addNodesAndEdges($studyObjects, $studyFileName);
-    }
-    $studyFileReader->closeFh();
-
-
-    my $studyAssays = $study->getStudyAssays();
-    foreach my $assay (@$studyAssays) {
-      next unless($assay->getAssayFileName());
-
-      my $assayFileName = $investigationDirectory . "/" . $assay->getAssayFileName();
-      
-      my $assayFileReader = CBIL::ISA::StudyAssayFileReader->new($assayFileName, $delimiter);
-
-      while($assayFileReader->hasNextLine()) {
-        my $assayObjects = $assayFileReader->readLineToObjects();
-        $study->addNodesAndEdges($assayObjects, $assayFileName);
-      }
-      $assayFileReader->closeFh();
-    }
+  while($studyFileReader->hasNextLine()) {
+    my $studyObjects = $studyFileReader->readLineToObjects();
+    $study->addNodesAndEdges($studyObjects, $studyFileName);
   }
-  $self->dealWithAllOntologies();
+  $studyFileReader->closeFh();
+  
+
+  my $studyAssays = $study->getStudyAssays();
+  foreach my $assay (@$studyAssays) {
+    next unless($assay->getAssayFileName());
+
+    my $assayFileName = $investigationDirectory . "/" . $assay->getAssayFileName();
+    
+    my $assayFileReader = CBIL::ISA::StudyAssayFileReader->new($assayFileName, $delimiter);
+
+    while($assayFileReader->hasNextLine()) {
+      my $assayObjects = $assayFileReader->readLineToObjects();
+      $study->addNodesAndEdges($assayObjects, $assayFileName);
+    }
+    $assayFileReader->closeFh();
+  }
+
+  $study->setHasMoreData(0);
 }
 
 
@@ -198,7 +196,15 @@ sub parse {
 
   # split these out so we can get some information before processing nodes and edges
   $self->parseInvestigation();
-  $self->parseStudies();
+
+  foreach my $study (@{$self->getStudies()}) {
+    while($study->hasMoreData()) {
+      $self->parseStudy($study);
+      $self->dealWithAllOntologies();
+    }
+  }
+
+
 
   if($self->getHasErrors()) {
     die "___Errors Found.  Please fix and try again.";
@@ -208,23 +214,47 @@ sub parse {
 }
 
 
+sub handleError {
+  my ($self, $error) = @_;
+
+  my $debug = $self->getDebug();
+  $self->setHasErrors(1);
+
+  if($debug) {
+    print STDERR $error . "\n";
+  }
+  else {
+    die $error;
+  }
+
+}
+
+
 sub dealWithAllOntologies {
   my ($self) = @_;
 
-  my %ontologyTerms;
+  my $ontologyTerms = $self->getOntologyAccessionsHash();
+
+
   foreach my $ontologyTerm(@allOntologyTerms) {
     my $hasAccession = defined $ontologyTerm->getTermAccessionNumber();
 
-    $ontologyTerms{$ontologyTerm->getTermSourceRef()}->{$ontologyTerm->getTermAccessionNumber()}++ if($hasAccession);
+    $ontologyTerms->{$ontologyTerm->getTermSourceRef()}->{$ontologyTerm->getTermAccessionNumber()}++ if($hasAccession);
 
     # Characteristic Qualifiers are a special case.  Their term/accession/source is not defined in the investigation file
     if(blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::Characteristic') {
-      $ontologyTerms{"CHARACTERISTIC_QUALIFIER"}->{$ontologyTerm->getQualifier()}++;
+      $ontologyTerms->{"CHARACTERISTIC_QUALIFIER"}->{$ontologyTerm->getQualifier()}++;
+    }
+
+    my $accession = $ontologyTerm->getTermAccessionNumber();
+    my $source = $ontologyTerm->getTermSourceRef();
+    my $term = $ontologyTerm->getTerm();
+
+
+    unless(($accession && $source) || blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::Characteristic' || blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::ParameterValue') {
+      $self->handleError("OntologyTerm $term is required to have accession and source.");
     }
   }
-
-  $self->setOntologyAccessionsHash(\%ontologyTerms);
-  $self->setOntologyTerms(\@allOntologyTerms);
 }
 
 1;
