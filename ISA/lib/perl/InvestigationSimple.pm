@@ -312,9 +312,6 @@ sub addProtocolParametersToEdges {
   my @rv;
 
   foreach my $key (@$leftoverColumns) {
-
-    my $value = $valuesHash->{$key};
-
     my $header = $key;
     if($header =~ /Parameter Value\s*\[(.+)\]/i) {
       $header = $1;
@@ -328,26 +325,31 @@ sub addProtocolParametersToEdges {
 
       my $protocolApp = $protocolAppHash->{$parent};
 
-      my $pv = CBIL::ISA::StudyAssayEntity::ParameterValue->new({_value => $value});
-      $pv->setQualifier($qualifier);
-
-      push @$functions, "valueIsMappedValue";
-
-      my $functionsObj = $self->getFunctions();
-      foreach my $function (@$functions) {
-        eval {
-          $functionsObj->$function($pv);
-        };
-        if ($@) {
-          $self->handleError("problem w/ function $function: $@");
-        }
-      }
-
       if(!$protocolApp) {
         $self->handleError("Protocol [$parent] not defined for paramValue [$header]");
       }
       else {
-        $protocolApp->addParameterValue($pv);
+
+        my $values = $valuesHash->{$key};
+        foreach my $value (@$values) {
+          next unless $value;
+
+          my $pv = CBIL::ISA::StudyAssayEntity::ParameterValue->new({_value => $value});
+          $pv->setQualifier($qualifier);
+
+          push @$functions, "valueIsMappedValue";
+
+          my $functionsObj = $self->getFunctions();
+          foreach my $function (@$functions) {
+            eval {
+              $functionsObj->$function($pv);
+            };
+            if ($@) {
+              $self->handleError("problem w/ function $function: $@");
+            }
+          }
+          $protocolApp->addParameterValue($pv);
+        }
       }
     }
     else {
