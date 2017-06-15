@@ -48,6 +48,32 @@ sub new {
 }
 
 
+
+sub enforceYesNoForBoolean {
+  my ($self, $obj) = @_;
+
+  my $value = $obj->getValue();
+
+  return unless $value;
+
+  my %allowedValues = ("1" => "Yes",
+                       "yes" => "Yes",
+                       "true" => "Yes",
+                       "0" => "No",
+                       "no" => "No",
+                       "false" => "No",
+      );
+
+  my $cv = $allowedValues{lc($value)};
+
+  if($cv) {
+    return $cv;
+  }
+
+  die "Could not map value [$value] to Yes or No";
+}
+
+
 sub formatEuroDate {
   my ($self, $obj) = @_;
 
