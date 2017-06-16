@@ -59,15 +59,17 @@ sub enforceYesNoForBoolean {
   my %allowedValues = ("1" => "Yes",
                        "yes" => "Yes",
                        "true" => "Yes",
+                       "y" => "Yes",
                        "0" => "No",
                        "no" => "No",
+                       "n" => "No",
                        "false" => "No",
       );
 
   my $cv = $allowedValues{lc($value)};
 
   if($cv) {
-    return $cv;
+    return $obj->setValue($cv);
   }
 
   die "Could not map value [$value] to Yes or No";
@@ -82,6 +84,8 @@ sub formatEuroDate {
   Date_Init("DateFormat=non-US"); 
 
   my $formattedDate = UnixDate(ParseDate($value), "%Y-%m-%d");
+
+  $obj->setValue($formattedDate);
 
   unless($formattedDate) {
     die "Date Format not supported for $value\n";
@@ -98,11 +102,12 @@ sub formatHouseholdId {
 
   if ($value=~/^HH\d+$/i) {
     $value = uc($value);
+    $obj->setValue($value);
   }
   else {
-    $value = "HH$value";
+    $obj->setValue("HH$value");
   }
-  return $value;
+  return $obj;
 }
 
 sub valueIsMappedValue {
@@ -184,23 +189,19 @@ sub splitUnitFromValue {
 sub formatDate {
   my ($self, $obj) = @_;
 
-  my $date = $obj->getValue();
-  return undef unless $date;
+  my $value = $obj->getValue();
 
-  my  ($junk1,$junk2,$junk3,$day,$month,$year) = strptime($date);
+  Date_Init("DateFormat=US"); 
 
-  $month += 1;
-  die "invalid month $date, $year-$month-$day " unless (0< $month &&  $month<13);
-  die "invalid day for $date, $year-$month-$day " unless (0< $day &&  $day <32);
-  $day = "0".$day if length($day) == 1;
-  $month = "0".$month if $month <10;
-  $year = $year < 16 ? $year +2000 : $year+1900;
-  my $formatted_date = $year.$month.$day;
-  die "date is messed up $formatted_date"  unless (length($year.$month.$day) == 8);
+  my $formattedDate = UnixDate(ParseDate($value), "%Y-%m-%d");
 
-  $obj->setValue($formatted_date);
+  $obj->setValue($formattedDate);
 
-  return $formatted_date;
+  unless($formattedDate) {
+    die "Date Format not supported for $value\n";
+  }
+
+  return $formattedDate;
 }
 
 
