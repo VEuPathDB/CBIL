@@ -320,8 +320,16 @@ sub addProtocolParametersToEdges {
     my $omType = "protocolParameter";
     if($ontologyMapping->{lc($header)} && $ontologyMapping->{lc($header)}->{$omType}) {    
       my $qualifier = $ontologyMapping->{lc($header)}->{$omType}->{source_id};
-      my $functions = $ontologyMapping->{lc($header)}->{$omType}->{function};
+      my $functionsRef = $ontologyMapping->{lc($header)}->{$omType}->{function};
       my $parent = $ontologyMapping->{lc($header)}->{$omType}->{parent};
+
+      my @functions;
+      if($functionsRef) {
+        push @functions, @$functionsRef;
+      }
+      else {
+        push @functions, "valueIsMappedValue";
+      }
 
       my $protocolApp = $protocolAppHash->{$parent};
 
@@ -337,10 +345,9 @@ sub addProtocolParametersToEdges {
           my $pv = CBIL::ISA::StudyAssayEntity::ParameterValue->new({_value => $value});
           $pv->setQualifier($qualifier);
 
-          push @$functions, "valueIsMappedValue";
 
           my $functionsObj = $self->getFunctions();
-          foreach my $function (@$functions) {
+          foreach my $function (@functions) {
             eval {
               $functionsObj->$function($pv);
             };
@@ -410,37 +417,49 @@ sub findProtocolByName {
 sub addCharacteristicsToNodes {
   my ($self, $nodesHash, $valuesHash) = @_;
 
+
+  my @nodeNames = keys %$nodesHash;
+
   my @rv;
 
 #  &checkArrayRefLengths($values, $headers);
   my $ontologyMapping = $self->getOntologyMapping();
 
+
+
   while (my ($key, $values) = each %$valuesHash) {
+
     my $header = $key;
     if($header =~ /Characteristics\s*\[(.+)\]/i) {
       $header = $1;
     }
 
-
     my $omType = "characteristicQualifier";
     if($ontologyMapping->{lc($header)} && $ontologyMapping->{lc($header)}->{$omType}) {
+
+      my $qualifier = $ontologyMapping->{lc($header)}->{$omType}->{source_id};
+      my $functionsRef = $ontologyMapping->{lc($header)}->{$omType}->{function};
+
+      my @functions;
+      if($functionsRef) {
+        push @functions, @$functionsRef;
+
+      }
+      else {
+        push @functions, "valueIsMappedValue";
+      }
+
+      my $parent = $ontologyMapping->{lc($header)}->{$omType}->{parent};
+      my $node = $nodesHash->{$parent};
 
       foreach my $value(@$values) {
         next unless $value; # put this here because I still wanna check the headers
 
-        my $qualifier = $ontologyMapping->{lc($header)}->{$omType}->{source_id};
-        my $functions = $ontologyMapping->{lc($header)}->{$omType}->{function};
-        my $parent = $ontologyMapping->{lc($header)}->{$omType}->{parent};
-
-        my $node = $nodesHash->{$parent};
-
         my $char = CBIL::ISA::StudyAssayEntity::Characteristic->new({_value => $value});
         $char->setQualifier($qualifier);
 
-        push @$functions, "valueIsMappedValue";
-
         my $functionsObj = $self->getFunctions();
-        foreach my $function (@$functions) {
+        foreach my $function (@functions) {
           eval {
             $functionsObj->$function($char);
           };
