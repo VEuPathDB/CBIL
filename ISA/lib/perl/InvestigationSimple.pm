@@ -529,7 +529,7 @@ sub makeNodes {
 
       my $sourceId = $ontologyMapping->{lc($materialType)}->{materialType}->{source_id};
       unless($sourceId) {
-        $self->handleError("Could not find onotlogyTerm for material type [$materialType]");
+        $self->handleError("Could not find ontologyTerm for material type [$materialType]");
       }
 
       my $mt = &makeOntologyTerm($sourceId, $materialType, $mtClass);      
