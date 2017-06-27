@@ -33,6 +33,9 @@ sub getFunctions {$_[0]->{_functions} }
 sub setRowLimit {$_[0]->{_row_limit} = $_[1]}
 sub getRowLimit {$_[0]->{_row_limit} }
 
+sub setIsReporterMode {$_[0]->{_is_reporter_mode} = $_[1]}
+sub getIsReporterMode {$_[0]->{_is_reporter_mode} }
+
 
 sub setStudySpecialColumns {$_[0]->{_study_special_columns} = $_[1]}
 sub getStudySpecialColumns {$_[0]->{_study_special_columns} }
@@ -47,7 +50,7 @@ sub addStudySpecialColumn {
 }
 
 sub new {
-  my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile, $valueMappingFile, $debug) = @_;
+  my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile, $valueMappingFile, $debug, $isReporterMode) = @_;
 
   @allOntologyTerms = ();
 
@@ -108,6 +111,8 @@ sub new {
   $self->setRowLimit(500);
 
   $self->setOntologyAccessionsHash({});
+
+  $self->setIsReporterMode($isReporterMode);
 
   return $self;
 }
@@ -251,6 +256,8 @@ sub addNodesAndEdgesToStudy {
   my $count = $study->{_simple_study_count};
 
   my $rowLimit = $self->getRowLimit();
+  my $isReporterMode = $self->getIsReporterMode();
+
   my $rowCount = 0;
 
   while(my $line = <$fileHandle>) {
@@ -292,6 +299,12 @@ sub addNodesAndEdgesToStudy {
 
     if($rowCount == $rowLimit) {
       print STDERR "Processed $count lines\n";
+
+      if($isReporterMode) {
+        $study->setHasMoreData(0);
+        close $fileHandle;
+      }
+
 
       return;
     }
