@@ -81,6 +81,11 @@ sub formatEuroDate {
 
   my $value = $obj->getValue();
 
+  # deal with "Mon Year" values by setting the day to the first day of the month
+  if($value =~ /^\w{3}\s*\d{2}(\d{2})?$/) {
+    $value = "1 " . $value;
+  }
+
   Date_Init("DateFormat=non-US"); 
 
   my $formattedDate = UnixDate(ParseDate($value), "%Y-%m-%d");
