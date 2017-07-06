@@ -470,6 +470,7 @@ sub addCharacteristicsToNodes {
 
         my $char = CBIL::ISA::StudyAssayEntity::Characteristic->new({_value => $value});
         $char->setQualifier($qualifier);
+        $char->setAlternativeQualifier(lc($header));
 
         my $functionsObj = $self->getFunctions();
         foreach my $function (@functions) {
@@ -481,7 +482,7 @@ sub addCharacteristicsToNodes {
           }
         }
 
-        $node->addCharacteristic($char);
+        $node->addCharacteristic($char) if(defined $char->getValue());
       }
     }
     else {

@@ -135,6 +135,30 @@ sub valueIsMappedValue {
 }
 
 
+
+sub valueIsMappedValueAltQualifier {
+  my ($self, $obj) = @_;
+
+  my $value = lc $obj->getValue();
+  my $altQualifier = $obj->getAlternativeQualifier();
+
+  my $valueMapping = $self->getValueMapping();
+
+  my $qualifierValues = $valueMapping->{$altQualifier};
+
+
+  if($qualifierValues) {
+    my $newValue = $qualifierValues->{$value};
+    $newValue = undef unless($newValue);
+
+    if(exists $qualifierValues->{$value}) {
+      $obj->setValue($newValue);
+    }
+  }
+}
+
+
+
 sub valueIsOntologyTerm {
   my ($self, $obj) = @_;
 
