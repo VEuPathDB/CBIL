@@ -353,7 +353,7 @@ sub addProtocolParametersToEdges {
 
         my $values = $valuesHash->{$key};
         foreach my $value (@$values) {
-          next unless $value;
+          next unless($value || $value eq '0'); # put this here because I still wanna check the headers
 
           my $pv = CBIL::ISA::StudyAssayEntity::ParameterValue->new({_value => $value});
           $pv->setQualifier($qualifier);
@@ -466,7 +466,7 @@ sub addCharacteristicsToNodes {
       my $node = $nodesHash->{$parent};
 
       foreach my $value(@$values) {
-        next unless $value; # put this here because I still wanna check the headers
+        next unless($value || $value eq '0'); # put this here because I still wanna check the headers
 
         my $char = CBIL::ISA::StudyAssayEntity::Characteristic->new({_value => $value});
         $char->setQualifier($qualifier);

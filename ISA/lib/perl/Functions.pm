@@ -93,7 +93,7 @@ sub formatEuroDate {
   $obj->setValue($formattedDate);
 
   unless($formattedDate) {
-    die "Date Format not supported for $value\n";
+    die "Date Format not supported for [$value]\n";
   }
 
   return $formattedDate;
@@ -128,7 +128,7 @@ sub valueIsMappedValue {
   if($qualifierValues) {
     my $newValue = $qualifierValues->{$value};
 
-    if($newValue) {
+    if($newValue || $newValue eq '0') {
       $obj->setValue($newValue);
     }
   }
@@ -149,7 +149,7 @@ sub valueIsMappedValueAltQualifier {
 
   if($qualifierValues) {
     my $newValue = $qualifierValues->{$value};
-    $newValue = undef unless($newValue);
+    $newValue = undef unless(defined($newValue));
 
     if(exists $qualifierValues->{$value}) {
       $obj->setValue($newValue);
