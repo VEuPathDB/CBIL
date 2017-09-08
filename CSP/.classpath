@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src/java"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.launching.macosx.MacOSXType/Java SE 6 [1.6.0_65-b14-466.1]"/>
+	<classpathentry kind="lib" path="lib/java/not_deployed/servlet-api-2.4.jar"/>
+	<classpathentry kind="lib" path="lib/java/oro-2.0.8.jar"/>
+	<classpathentry kind="output" path="classes"/>
+</classpath>
