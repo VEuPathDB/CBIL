@@ -1,17 +1,40 @@
 #! /usr/bin/perl
+#
+#	$Revision$
+#
+#	Added function to fetch latest insert/delete batches from NCBI ftp
+#		--fetch=[x] where [x] is how many months ago, up to today, to fetch updates for
+#	To be run under cron:
+#		/eupath/data/dbest/updateDbESTMirror.pl --fetch=1 --gusConfigFile=/eupath/data/dbest/gus.config --dataFileDir=/eupath/data/dbest >> /eupath/data/dbest/log 2>&1
+#
+use strict;
+use warnings;
+
 use lib "$ENV{GUS_HOME}/lib/perl";
 use Getopt::Long;
 use GUS::ObjRelP::DbiDatabase;
 use GUS::Supported::GusConfig;
+use Net::FTP;
+use Date::Calc qw/Today Add_Delta_YM/;
+use Cwd qw/cwd abs_path/;
 
-my ($verbose,$gusConfigFile,$dataFileDir);
-&GetOptions("verbose!"=> \$verbose,
-            "gusConfigFile=s" => \$gusConfigFile,
-	    "dataFileDir=s" => \$dataFileDir );
+my ($verbose,$gusConfigFile,$dataFileDir,$fetch,$gunzip);
+&GetOptions(
+	"verbose!"=> \$verbose,
+	"gusConfigFile=s" => \$gusConfigFile,
+	"dataFileDir=s" => \$dataFileDir,
+	"fetch=i" => \$fetch,
+	"gunzip=s" => \$gunzip );
+
+if($fetch){
+	$gunzip ||= '/usr/bin/gunzip';
+	$dataFileDir = fetchUpdates($fetch,$dataFileDir);
+	printf STDERR ("Files downloaded to %s\n", $dataFileDir);
+}
 
 $| = 1;
 
-print STDERR "Establishing dbi login\n" if $verbose;
+printf STDERR ("Establishing dbi login\n") if $verbose;
 
 my $gusconfig = GUS::Supported::GusConfig->new($gusConfigFile);
 
@@ -53,7 +76,7 @@ $dbh->do("ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS'");
 $| = 1;
 
 my $date = `date`; chomp($date);
-print  "updateDbESTMirror.pl: started at $date\n";
+printf STDERR ("updateDbESTMirror.pl: started at %s\n", $date);
 
 opendir(DDIR, $dataFileDir);
 my @dataFiles = readdir(DDIR);
@@ -63,10 +86,7 @@ my $sth = $dbh->prepare("select count(*) from dbest.processedfile where name = ?
 
 
 closedir(DDIR);
-print "Will load files:"; 
-print (join "\n", @dataFiles);
-print "\n";
-# exit;
+printf STDERR ("Loading data files: %s\n", join("\n", @dataFiles));
 
 my ($h,@est, @seq, @comm, @pub, @maprec);
 
@@ -76,7 +96,7 @@ foreach my $f(@dataFiles) {
   my $num = $sth->fetchrow_array();
   $sth->finish();
   if ($num >= 1) {
-    print "$f loaded into dbEST during a previous run - skipping.\n";
+    printf STDERR ("%s loaded into dbEST during a previous run - skipping.\n", $f);
     next;
   }
 
@@ -104,7 +124,9 @@ foreach my $t (keys %$h) {
     }
   }
 }
-print "updateDbESTMirror.pl done\n";
+printf STDERR ("updateDbESTMirror.pl done\n");
+
+$dbh->disconnect();
 
 ################################################
 # subroutines
@@ -113,7 +135,7 @@ print "updateDbESTMirror.pl done\n";
 sub delete {
   my $f = shift;
   my $t = shift;
-  print "Deleting entries from file $dataFileDir/$f\n";
+  print STDERR "Deleting entries from file $dataFileDir/$f\n";
   open "F", "<$dataFileDir/$f" or die;
   while (<F>){
     chomp $_;
@@ -133,7 +155,7 @@ sub insert {
   # It is OK to do a straight insert since the previous delete file
   # should have deleted any rows being updated...
 
-  print "Inserting entries from $dataFileDir/$f...";
+  print STDERR "Inserting entries from $dataFileDir/$f...";
   my $start = time;
   open(F,"<$dataFileDir/$f");
   while (<F>) {
@@ -177,7 +199,7 @@ sub insert {
   my $end = time;
   my $secs = $end - $start;
   my $mins = int(($secs / 60.0) + 0.5);
-  print "done in ", ($end - $start), " second(s) ($mins minutes)\n";
+  print STDERR "done in ", ($end - $start), " second(s) ($mins minutes)\n";
 }
 
 sub fixdate{
@@ -231,7 +253,37 @@ sub getNumMonth {
   return  $month{$m};
 }
 
+sub fetchUpdates {
+	my ($monthsAgo,$downloadRoot) = @_;
+	$monthsAgo ||= 1;
+	my @monthsToFetch;
+	my @today = Today();
+	do{ 
+		push(@monthsToFetch, sprintf("%04d%02d",Add_Delta_YM(@today, 0, -$monthsAgo)));
+	}while(1 + $monthsAgo--);
+	my $downloadDir = abs_path(sprintf("%s/download_%04d%02d%02d", $downloadRoot || ".", @today));
+	unless(-d $downloadDir){
+		mkdir($downloadDir) or die "Cannot create directory $downloadDir:$!\n";
+	}
+	chdir($downloadDir);
+	my $host = 'ftp.ncbi.nih.gov';
+	my $path = '/repository/dbEST/bcp';
+	my $ftp = Net::FTP->new($host) or die "Cannot connect to $host:$!\n";
+	$ftp->login('anonymous', '');
+	$ftp->binary();
+	$ftp->cwd($path) or die "At FTP host, cannot cd to $path:$!\n";
+	my @list;
+	foreach my $month (@monthsToFetch){
+	 	push(@list, grep { /(insert|delete)\.$month\d\d\.bcp\.\d+\.gz/ } $ftp->ls());
+	}
+	$ftp->get($_) for @list;
+	$ftp->quit();
+	opendir(DH, $downloadDir) or die "$!\n";
+	my @allfiles = grep { /\.gz$/ } readdir(DH);
+	system("$gunzip -f $_") for @allfiles;
+	return $downloadDir;
+}
 
 
-$dbh->disconnect();
+
 1;
