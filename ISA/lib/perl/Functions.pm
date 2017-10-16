@@ -39,10 +39,12 @@ sub new {
       chomp;
 
       my ($qualName, $qualSourceId, $in, $out) = split(/\t/, $_);
+      # I think case for source_ids matters so these need to match exactly
       $valueMapping->{$qualSourceId}->{$in} = $out;
 
       if($qualName) {
-        $valueMapping->{$qualName}->{$in} = $out;
+        my $lcQualName = lc $qualName;
+        $valueMapping->{$lcQualName}->{$in} = $out;
       }
     }
   }
