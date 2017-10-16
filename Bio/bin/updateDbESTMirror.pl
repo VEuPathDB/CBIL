@@ -79,7 +79,7 @@ my $date = `date`; chomp($date);
 printf STDERR ("updateDbESTMirror.pl: started at %s\n", $date);
 
 opendir(DDIR, $dataFileDir);
-my @dataFiles = readdir(DDIR);
+my @dataFiles = grep { !/^\./ } readdir(DDIR);
 
 my $sth = $dbh->prepare("select count(*) from dbest.processedfile where name = ?");
 
