@@ -40,6 +40,10 @@ sub new {
 
       my ($qualName, $qualSourceId, $in, $out) = split(/\t/, $_);
       $valueMapping->{$qualSourceId}->{$in} = $out;
+
+      if($qualName) {
+        $valueMapping->{$qualName}->{$in} = $out;
+      }
     }
   }
   $self->setValueMapping($valueMapping);
