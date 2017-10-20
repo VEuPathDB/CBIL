@@ -22,8 +22,13 @@ sub splitBamUniqueNonUnique {
     my $statsHash = CBIL::Util::DnaSeqMetrics::runSamtoolsStats($file_to_open);
     my $totalReads = $statsHash->{'raw total sequences'};
 
-    &runCmd("samtools view -h  $file_to_open  | grep '\@SQ\\\|NH:i:[2-9]' |samtools view -h -bS - > $nonunique");
-    &runCmd("samtools view -h  $file_to_open | grep -v 'NH:i:[2-9]' |samtools view -h -bS - > $unique");
+   
+# my $cmd = "samtools view -h  $file_to_open | grep -P '^\@SQ|NH:i:1/\s' |samtools view -h -bS - > $unique";
+ #   print Dumper $cmd;
+   
+    &runCmd("samtools view -h  $file_to_open  | grep -P '(NH:i:([2-9]|1\\d))|(\@SQ)|(\@HD)' |samtools view -h -bS - > $nonunique");
+    &runCmd("samtools view -h  $file_to_open | grep -P '^\@SQ|NH:i:1\\s|^\@HD' |samtools view -h -bS - > $unique");
+#    die;
 
     open (M, ">$expDir/mappingStats.txt") or die "Cannot open mapping stat file file $expDir/mappingStats.txt for writing\n";
     print M "file\tcoverage\tmapped\tnumber_reads_mapped\taverage_read_length\n";    
