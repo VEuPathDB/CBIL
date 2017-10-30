@@ -482,7 +482,7 @@ sub addCharacteristicsToNodes {
           }
         }
 
-        $node->addCharacteristic($char) if(defined $char->getValue());
+        $node->addCharacteristic($char) if(defined $char->getValue() && $char->getValue() != "");
       }
     }
     else {
