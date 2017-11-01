@@ -26,8 +26,8 @@ sub splitBamUniqueNonUnique {
 # my $cmd = "samtools view -h  $file_to_open | grep -P '^\@SQ|NH:i:1/\s' |samtools view -h -bS - > $unique";
  #   print Dumper $cmd;
    
-    &runCmd("samtools view -h  $file_to_open  | grep -P '(NH:i:([2-9]|1\\d))|(\@SQ)|(\@HD)' |samtools view -h -bS - > $nonunique");
-    &runCmd("samtools view -h  $file_to_open | grep -P '^\@SQ|NH:i:1\\s|^\@HD' |samtools view -h -bS - > $unique");
+    &runCmd("samtools view -h  $file_to_open  | grep -P '(NH:i:([2-9]|1\\d))|(^\@SQ)|(^\@HD)' |samtools view -h -bS - > $nonunique");
+    &runCmd("samtools view -h  $file_to_open | grep -P '(^\@SQ)|NH:i:1[\\s|\$]|(^\@HD)' |samtools view -h -bS - > $unique");
 #    die;
 
     open (M, ">$expDir/mappingStats.txt") or die "Cannot open mapping stat file file $expDir/mappingStats.txt for writing\n";
