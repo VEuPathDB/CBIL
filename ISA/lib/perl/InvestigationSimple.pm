@@ -467,7 +467,6 @@ sub addCharacteristicsToNodes {
 
       foreach my $value(@$values) {
         next unless($value || $value eq '0'); # put this here because I still wanna check the headers
-
         my $char = CBIL::ISA::StudyAssayEntity::Characteristic->new({_value => $value});
         $char->setQualifier($qualifier);
         $char->setAlternativeQualifier(lc($header));
@@ -482,7 +481,8 @@ sub addCharacteristicsToNodes {
           }
         }
 
-        $node->addCharacteristic($char) if(defined $char->getValue() && $char->getValue() != "");
+        $node->addCharacteristic($char) if(defined $char->getValue() && $char->getValue() ne "");
+
       }
     }
     else {
