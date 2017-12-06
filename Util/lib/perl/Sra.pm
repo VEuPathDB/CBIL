@@ -244,11 +244,11 @@ sub getFastqForSraRunId {
 	die "ERROR ($?): Unable to fetch sra file for $runId\n";
     }
     print STDERR "extracting fastq file(s)...";
-    if ($isPairedEnd eq "true") {
+    if ($isPairedEnd) {
 	system("fastq-dump -B -I --split-files ./$file");
     }
-    elsif($isPairedEnd eq "false") {
-
+    else {
+	print STDERR "data is not paired end!\n";
 	system("fastq-dump --split-spot --skip-technical ./$file");
 	my $first = $runId.".fastq";
 	my $second = $runId."_1.fastq";
@@ -257,9 +257,6 @@ sub getFastqForSraRunId {
 	# }
 	#else {
 	system("mv $first $second");
-    }
-    else {
-	die "cant determine if dataset is paired end. param set to $isPairedEnd";
     }
     my @files = glob("$runId*.fastq");
     print STDERR "DONE: ".scalar(@files)." files (".join(", ",@files).")\n";
