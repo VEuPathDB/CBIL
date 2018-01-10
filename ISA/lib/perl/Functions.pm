@@ -6,7 +6,7 @@ require Exporter;
 
 use Scalar::Util 'blessed';
 
-use Date::Manip qw(Date_Init ParseDate UnixDate);
+use Date::Manip qw(Date_Init ParseDate UnixDate DateCalc);
 
 use strict;
 
@@ -23,6 +23,14 @@ sub getValueMappingFile {$_[0]->{_valueMappingFile} }
 
 sub getValueMapping {$_[0]->{_valueMapping} }
 sub setValueMapping {$_[0]->{_valueMapping} = $_[1] }
+
+sub getDateObfuscationFile {$_[0]->{_dateObfuscationFile} }
+
+sub getDateObfuscationOutFh {$_[0]->{_dateObfuscationOutFh} }
+sub setDateObfuscationOutFh {$_[0]->{_dateObfuscationOutFh} = $_[1] }
+
+sub getDateObfuscation {$_[0]->{_dateObfuscation} }
+sub setDateObfuscation {$_[0]->{_dateObfuscation} = $_[1] }
 
 sub new {
   my ($class, $args) = @_;
@@ -47,8 +55,27 @@ sub new {
         $valueMapping->{$lcQualName}->{$in} = $out;
       }
     }
+    close FILE;
   }
   $self->setValueMapping($valueMapping);
+
+  my $dateObfuscationFile = $self->getDateObfuscationFile();
+  my $dateObfuscation = {};
+  if($dateObfuscationFile) {
+    open(FILE, $dateObfuscationFile) or die "Cannot open file $dateObfuscationFile for reading: $!";
+
+    while(<FILE>) {
+      chomp;
+      my ($recordTypeSourceId, $recordPrimaryKey, $delta) = split(/\t/, $_);
+      $dateObfuscation->{$recordTypeSourceId}->{$recordPrimaryKey} = $delta;
+    }
+    close FILE;
+
+    # Important to append here
+    open(my $dateObfuscationOutFile, ">>$dateObfuscationFile") or die "Cannot open file $dateObfuscationFile for writing: $!";
+    $self->setDateObfuscationOutFh($dateObfuscationOutFile);
+  }
+  $self->setDateObfuscation($dateObfuscation);
 
   return $self;
 }
@@ -82,8 +109,84 @@ sub enforceYesNoForBoolean {
 }
 
 
+sub calculateAndCacheDelta {
+  my ($self, $sourceId, $primaryKey) = @_;
+
+  my $dateObfuscationOutFh = $self->getDateObfuscationOutFh();
+  my $dateObfuscation = $self->getDateObfuscation();
+
+  my $plusOrMinusDays = 7; # TODO: parameterize this
+
+  my $direction = int (rand(2)) ? 1 : -1;
+
+  my $magnitude = 1 + int(rand($plusOrMinusDays));
+
+  my $days = $direction * $magnitude; 
+
+  my $deltaString = "0:0:0:$days:0:0:0";
+
+  # print to cache file
+  print $dateObfuscationOutFh "$sourceId\t$primaryKey\t$deltaString\n";
+  $dateObfuscation->{$sourceId}->{$primaryKey} = $deltaString;
+
+  return $deltaString;
+}
+
+
+sub formatEuroDateWithObfuscation {
+  my ($self, $obj, $parentObj) = @_;
+
+  my $value = $obj->getValue();
+
+  # deal with "Mon Year" values by setting the day to the first day of the month
+  if($value =~ /^\w{3}\s*\d{2}(\d{2})?$/) {
+    $value = "1 " . $value;
+  }
+
+  Date_Init("DateFormat=non-US"); 
+
+  my $formattedDate;
+  if($self->getDateObfuscationFile()) {
+    my $dateObfuscation = $self->getDateObfuscation();
+
+    my $delta;
+
+    if($parentObj->isNode()) {
+      my $nodeId = $parentObj->getValue();
+
+      my $materialType = $parentObj->getMaterialType();
+      my $materialTypeSourceId = $materialType->getTermAccessionNumber();
+      $delta = $dateObfuscation->{$materialTypeSourceId}->{$nodeId};
+
+      unless($delta) {
+        $delta = $self->calculateAndCacheDelta($materialTypeSourceId, $nodeId);
+      }
+    }
+    else {
+      # TODO: deal with protocol params
+      die "Only Characteristic Values currently allow date obfuscation";
+    }
+
+    my $date = DateCalc($value, $delta); 
+    $formattedDate = UnixDate($date, "%Y-%m-%d");
+  }
+  else {
+    die "No dateObfuscationFile was not provided";
+  }
+
+  $obj->setValue($formattedDate);
+
+  unless($formattedDate) {
+    die "Date Format not supported for [$value]\n";
+  }
+
+  return $formattedDate;
+}
+
+
+
 sub formatEuroDate {
-  my ($self, $obj) = @_;
+  my ($self, $obj, $parentObj) = @_;
 
   my $value = $obj->getValue();
 
@@ -104,6 +207,7 @@ sub formatEuroDate {
 
   return $formattedDate;
 }
+
 
 
 sub formatHouseholdId {
@@ -229,6 +333,52 @@ sub formatDate {
   Date_Init("DateFormat=US"); 
 
   my $formattedDate = UnixDate(ParseDate($value), "%Y-%m-%d");
+
+  $obj->setValue($formattedDate);
+
+  unless($formattedDate) {
+    die "Date Format not supported for $value\n";
+  }
+
+  return $formattedDate;
+}
+
+
+sub formatDateWithObfuscation {
+  my ($self, $obj, $parentObj) = @_;
+
+  my $value = $obj->getValue();
+
+  Date_Init("DateFormat=US"); 
+
+  my $formattedDate;
+  if($self->getDateObfuscationFile()) {
+    my $dateObfuscation = $self->getDateObfuscation();
+
+    my $delta;
+
+    if($parentObj->isNode()) {
+      my $nodeId = $parentObj->getValue();
+
+      my $materialType = $parentObj->getMaterialType();
+      my $materialTypeSourceId = $materialType->getTermAccessionNumber();
+      $delta = $dateObfuscation->{$materialTypeSourceId}->{$nodeId};
+
+      unless($delta) {
+        $delta = $self->calculateAndCacheDelta($materialTypeSourceId, $nodeId);
+      }
+    }
+    else {
+      # TODO: deal with protocol params
+      die "Only Characteristic Values currently allow date obfuscation";
+    }
+
+    my $date = DateCalc($value, $delta); 
+    $formattedDate = UnixDate($date, "%Y-%m-%d");
+  }
+  else {
+    die "No dateObfuscationFile was not provided";
+  }
 
   $obj->setValue($formattedDate);
 
