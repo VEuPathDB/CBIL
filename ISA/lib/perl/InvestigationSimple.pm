@@ -50,7 +50,7 @@ sub addStudySpecialColumn {
 }
 
 sub new {
-  my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile, $valueMappingFile, $debug, $isReporterMode) = @_;
+  my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile, $valueMappingFile, $debug, $isReporterMode, $dateObfuscationFile) = @_;
 
   @allOntologyTerms = ();
 
@@ -104,7 +104,7 @@ sub new {
 
   $self->setDebug($debug);
 
-  my $functions = CBIL::ISA::Functions->new({_ontology_mapping => \%ontologyMapping, _ontology_sources => \%ontologySources, _valueMappingFile => $valueMappingFile});
+  my $functions = CBIL::ISA::Functions->new({_ontology_mapping => \%ontologyMapping, _ontology_sources => \%ontologySources, _valueMappingFile => $valueMappingFile, _dateObfuscationFile => $dateObfuscationFile});
   $self->setFunctions($functions);
 
   $self->setStudySpecialColumns(['name', 'description', 'sourcemtoverride', 'samplemtoverride', 'parent']);
@@ -362,7 +362,7 @@ sub addProtocolParametersToEdges {
           my $functionsObj = $self->getFunctions();
           foreach my $function (@functions) {
             eval {
-              $functionsObj->$function($pv);
+              $functionsObj->$function($pv, $protocolApp);
             };
             if ($@) {
               $self->handleError("problem w/ function $function: $@");
@@ -474,7 +474,7 @@ sub addCharacteristicsToNodes {
         my $functionsObj = $self->getFunctions();
         foreach my $function (@functions) {
           eval {
-            $functionsObj->$function($char);
+            $functionsObj->$function($char, $node);
           };
           if ($@) {
             $self->handleError("problem w/ function $function: $@");
