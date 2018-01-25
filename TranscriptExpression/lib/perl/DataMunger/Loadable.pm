@@ -1,6 +1,8 @@
 package CBIL::TranscriptExpression::DataMunger::Loadable;
 use base qw(CBIL::TranscriptExpression::DataMunger);
 
+use Data::Dumper;
+
 use strict;
 use CBIL::TranscriptExpression::Error;
 
