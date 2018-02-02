@@ -470,7 +470,11 @@ sub addCharacteristicsToNodes {
       my $node = $nodesHash->{$parent};
 
       my $nodeName = $node->getValue();
-      my @inputNodes = @{$nodeIOHash->{$nodeName}};
+
+      my @inputNodes;
+      if($nodeIOHash->{$nodeName}) {
+        @inputNodes = @{$nodeIOHash->{$nodeName}};
+      }
 
       foreach my $value(@$values) {
         next unless($value || $value eq '0'); # put this here because I still wanna check the headers
