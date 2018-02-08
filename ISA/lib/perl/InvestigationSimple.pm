@@ -221,7 +221,7 @@ sub parseStudy {
   my $fileHandle = $study->getFileHandle();
 
   unless($fileHandle) {
-    open($fileHandle,  $fileName) or "Cannot open file $fileName for reading: $!";    
+    open($fileHandle,  $fileName) or die "Cannot open file $fileName for reading: $!";    
     $study->setFileHandle($fileHandle);
 
     my $header = <$fileHandle>;
@@ -262,6 +262,8 @@ sub addNodesAndEdgesToStudy {
 
   while(my $line = <$fileHandle>) {
     chomp $line;
+
+
 
     my @a = split(/\t/, $line);
 
