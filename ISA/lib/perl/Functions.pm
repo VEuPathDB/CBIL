@@ -47,12 +47,15 @@ sub new {
       chomp;
 
       my ($qualName, $qualSourceId, $in, $out) = split(/\t/, $_);
+
+      my $lcIn = lc($in);
+
       # I think case for source_ids matters so these need to match exactly
-      $valueMapping->{$qualSourceId}->{$in} = $out;
+      $valueMapping->{$qualSourceId}->{$lcIn} = $out;
 
       if($qualName) {
         my $lcQualName = lc $qualName;
-        $valueMapping->{$lcQualName}->{$in} = $out;
+        $valueMapping->{$lcQualName}->{$lcIn} = $out;
       }
     }
     close FILE;
@@ -264,7 +267,9 @@ sub valueIsMappedValue {
   my $qualifierValues = $valueMapping->{$qualSourceId};
 
   if($qualifierValues) {
-    my $newValue = $qualifierValues->{$value};
+    my $lcValue = lc($value);
+
+    my $newValue = $qualifierValues->{$lcValue};
 
     if($newValue || $newValue eq '0') {
       $obj->setValue($newValue);
@@ -286,7 +291,9 @@ sub valueIsMappedValueAltQualifier {
 
 
   if($qualifierValues) {
-    my $newValue = $qualifierValues->{$value};
+    my $lcValue = lc($value);
+
+    my $newValue = $qualifierValues->{$lcValue};
     $newValue = undef unless(defined($newValue));
 
     if(exists $qualifierValues->{$value}) {
