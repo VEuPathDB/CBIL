@@ -360,6 +360,33 @@ sub splitUnitFromValue {
 }
 
 
+sub setUnitToYear {
+  my ($self, $obj) = @_;
+
+  my $YEAR_SOURCE_ID = "UO_0000036";
+
+  my $unit = $obj->getUnit();
+  my $unitSourceId = $unit->getTermAccessionNumber();
+  return if $unitSourceId eq $YEAR_SOURCE_ID;
+
+  my $conversionFactor;
+  if ($unitSourceId eq "UO_0000035") {     # month
+    $conversionFactor = 12;
+  } elsif ($unitSourceId eq "UO_0000034") { # week
+    $conversionFactor = 52;
+  } elsif ($unitSourceId eq "UO_0000033") {  # day
+    $conversionFactor = 365.25;
+  } else {
+    die "unknown unitSourceId \"$unitSourceId\"";
+  }
+
+  my $value = $obj->getValue();
+  $obj->setValue($value / $conversionFactor);
+  $unit->setTermAccessionNumber("$YEAR_SOURCE_ID");
+  $unit->setTerm("year");
+}
+
+
 sub formatDate {
   my ($self, $obj) = @_;
 
