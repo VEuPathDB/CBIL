@@ -221,7 +221,7 @@ sub parseStudy {
   my $fileHandle = $study->getFileHandle();
 
   unless($fileHandle) {
-    open($fileHandle,  $fileName) or "Cannot open file $fileName for reading: $!";    
+    open($fileHandle,  $fileName) or die "Cannot open file $fileName for reading: $!";    
     $study->setFileHandle($fileHandle);
 
     my $header = <$fileHandle>;
@@ -263,6 +263,8 @@ sub addNodesAndEdgesToStudy {
   while(my $line = <$fileHandle>) {
     chomp $line;
 
+
+
     my @a = split(/\t/, $line);
 
     my %valuesHash;
@@ -274,10 +276,12 @@ sub addNodesAndEdgesToStudy {
     }
 
     my $nodesHash = $self->makeNodes(\%valuesHash, $count, $studyXml, $study);
-    my $leftoverColumns = $self->addCharacteristicsToNodes($nodesHash, \%valuesHash);
 
-    my $protocolAppHash = $self->makeEdges($studyXml, $study, $nodesHash);
-    my $missingColumns = $self->addProtocolParametersToEdges($protocolAppHash, \%valuesHash, $leftoverColumns);
+    my ($protocolAppHash, $nodeIOHash) = $self->makeEdges($studyXml, $study, $nodesHash);
+
+    my $leftoverColumns = $self->addCharacteristicsToNodes($nodesHash, \%valuesHash, $nodeIOHash);
+
+    my $missingColumns = $self->addProtocolParametersToEdges($protocolAppHash, \%valuesHash, $leftoverColumns, $nodeIOHash);
 
     if(scalar @$missingColumns > 0 && $count == 1) {
       my $specialColumns = $self->getStudySpecialColumns();
@@ -362,7 +366,7 @@ sub addProtocolParametersToEdges {
           my $functionsObj = $self->getFunctions();
           foreach my $function (@functions) {
             eval {
-              $functionsObj->$function($pv, $protocolApp);
+              $functionsObj->$function($pv, $protocolApp, undef);
             };
             if ($@) {
               $self->handleError("problem w/ function $function: $@");
@@ -388,6 +392,7 @@ sub makeEdges {
 
   my %rv;
 
+  my %nodeIO;
 
   foreach my $edge (@{$studyXml->{edge}}) {
     my $input = $edge->{input};
@@ -409,9 +414,13 @@ sub makeEdges {
       $pa->setProtocol($protocol);
       push @protocolApplications, $pa;
     }
-    $study->addEdge($inputNode, \@protocolApplications, $outputNode);
+    my $edge = $study->addEdge($inputNode, \@protocolApplications, $outputNode);
+
+    my $outputNodeName = $outputNode->getValue();
+
+    push @{$nodeIO{$outputNodeName}}, $inputNode;
   }
-  return \%rv;
+  return(\%rv, \%nodeIO);
 }
 
 sub findProtocolByName {
@@ -428,8 +437,7 @@ sub findProtocolByName {
 
 
 sub addCharacteristicsToNodes {
-  my ($self, $nodesHash, $valuesHash) = @_;
-
+  my ($self, $nodesHash, $valuesHash, $nodeIOHash) = @_;
 
   my @nodeNames = keys %$nodesHash;
 
@@ -437,8 +445,6 @@ sub addCharacteristicsToNodes {
 
 #  &checkArrayRefLengths($values, $headers);
   my $ontologyMapping = $self->getOntologyMapping();
-
-
 
   while (my ($key, $values) = each %$valuesHash) {
 
@@ -465,6 +471,13 @@ sub addCharacteristicsToNodes {
       my $parent = $ontologyMapping->{lc($header)}->{$omType}->{parent};
       my $node = $nodesHash->{$parent};
 
+      my $nodeName = $node->getValue();
+
+      my @inputNodes;
+      if($nodeIOHash->{$nodeName}) {
+        @inputNodes = @{$nodeIOHash->{$nodeName}};
+      }
+
       foreach my $value(@$values) {
         next unless($value || $value eq '0'); # put this here because I still wanna check the headers
         my $char = CBIL::ISA::StudyAssayEntity::Characteristic->new({_value => $value});
@@ -474,7 +487,7 @@ sub addCharacteristicsToNodes {
         my $functionsObj = $self->getFunctions();
         foreach my $function (@functions) {
           eval {
-            $functionsObj->$function($char, $node);
+            $functionsObj->$function($char, $node, \@inputNodes);
           };
           if ($@) {
             $self->handleError("problem w/ function $function: $@");

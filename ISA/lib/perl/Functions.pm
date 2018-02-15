@@ -47,12 +47,15 @@ sub new {
       chomp;
 
       my ($qualName, $qualSourceId, $in, $out) = split(/\t/, $_);
+
+      my $lcIn = lc($in);
+
       # I think case for source_ids matters so these need to match exactly
-      $valueMapping->{$qualSourceId}->{$in} = $out;
+      $valueMapping->{$qualSourceId}->{$lcIn} = $out;
 
       if($qualName) {
         my $lcQualName = lc $qualName;
-        $valueMapping->{$lcQualName}->{$in} = $out;
+        $valueMapping->{$lcQualName}->{$lcIn} = $out;
       }
     }
     close FILE;
@@ -109,11 +112,20 @@ sub enforceYesNoForBoolean {
 }
 
 
-sub calculateAndCacheDelta {
-  my ($self, $sourceId, $primaryKey) = @_;
+sub cacheDelta {
+  my ($self, $sourceId, $primaryKey, $deltaString) = @_;
 
+  # print to cache file
   my $dateObfuscationOutFh = $self->getDateObfuscationOutFh();
   my $dateObfuscation = $self->getDateObfuscation();
+
+  print $dateObfuscationOutFh "$sourceId\t$primaryKey\t$deltaString\n";
+  $dateObfuscation->{$sourceId}->{$primaryKey} = $deltaString;
+}
+
+
+sub calculateDelta {
+  my ($self) = @_;
 
   my $plusOrMinusDays = 7; # TODO: parameterize this
 
@@ -125,16 +137,12 @@ sub calculateAndCacheDelta {
 
   my $deltaString = "0:0:0:$days:0:0:0";
 
-  # print to cache file
-  print $dateObfuscationOutFh "$sourceId\t$primaryKey\t$deltaString\n";
-  $dateObfuscation->{$sourceId}->{$primaryKey} = $deltaString;
-
   return $deltaString;
 }
 
 
-sub formatEuroDateWithObfuscation {
-  my ($self, $obj, $parentObj) = @_;
+sub internalDateWithObfuscation {
+  my ($self, $obj, $parentObj, $parentInputObjs, $dateFormat) = @_;
 
   my $value = $obj->getValue();
 
@@ -143,7 +151,7 @@ sub formatEuroDateWithObfuscation {
     $value = "1 " . $value;
   }
 
-  Date_Init("DateFormat=non-US"); 
+  Date_Init($dateFormat); 
 
   my $formattedDate;
   if($self->getDateObfuscationFile()) {
@@ -159,7 +167,30 @@ sub formatEuroDateWithObfuscation {
       $delta = $dateObfuscation->{$materialTypeSourceId}->{$nodeId};
 
       unless($delta) {
-        $delta = $self->calculateAndCacheDelta($materialTypeSourceId, $nodeId);
+
+        # if I have inputs and one of my inputs has a delta, cache that and use for self
+        if(scalar @$parentInputObjs > 0) {
+          foreach my $input(@$parentInputObjs) {
+            my $inputNodeId = $input->getValue();
+
+            my $inputMaterialType = $input->getMaterialType();
+            my $inputMaterialTypeSourceId = $inputMaterialType->getTermAccessionNumber();
+
+            if($delta && $delta ne $dateObfuscation->{$inputMaterialTypeSourceId}->{$inputNodeId}) {
+              die "2 deltas found for parents of $nodeId" if($dateObfuscation->{$inputMaterialTypeSourceId}->{$inputNodeId});
+            }
+
+            $delta = $dateObfuscation->{$inputMaterialTypeSourceId}->{$inputNodeId};
+            $self->cacheDelta($materialTypeSourceId, $nodeId, $delta) if($delta);
+          }
+        }
+
+        # else, calculate new delta and cache for self
+        unless($delta) {
+          $delta = $self->calculateDelta();
+          $self->cacheDelta($materialTypeSourceId, $nodeId, $delta);
+
+        }
       }
     }
     else {
@@ -236,7 +267,9 @@ sub valueIsMappedValue {
   my $qualifierValues = $valueMapping->{$qualSourceId};
 
   if($qualifierValues) {
-    my $newValue = $qualifierValues->{$value};
+    my $lcValue = lc($value);
+
+    my $newValue = $qualifierValues->{$lcValue};
 
     if($newValue || $newValue eq '0') {
       $obj->setValue($newValue);
@@ -258,7 +291,9 @@ sub valueIsMappedValueAltQualifier {
 
 
   if($qualifierValues) {
-    my $newValue = $qualifierValues->{$value};
+    my $lcValue = lc($value);
+
+    my $newValue = $qualifierValues->{$lcValue};
     $newValue = undef unless(defined($newValue));
 
     if(exists $qualifierValues->{$value}) {
@@ -325,6 +360,33 @@ sub splitUnitFromValue {
 }
 
 
+sub setUnitToYear {
+  my ($self, $obj) = @_;
+
+  my $YEAR_SOURCE_ID = "UO_0000036";
+
+  my $unit = $obj->getUnit();
+  my $unitSourceId = $unit->getTermAccessionNumber();
+  return if $unitSourceId eq $YEAR_SOURCE_ID;
+
+  my $conversionFactor;
+  if ($unitSourceId eq "UO_0000035") {     # month
+    $conversionFactor = 12;
+  } elsif ($unitSourceId eq "UO_0000034") { # week
+    $conversionFactor = 52;
+  } elsif ($unitSourceId eq "UO_0000033") {  # day
+    $conversionFactor = 365.25;
+  } else {
+    die "unknown unitSourceId \"$unitSourceId\"";
+  }
+
+  my $value = $obj->getValue();
+  $obj->setValue($value / $conversionFactor);
+  $unit->setTermAccessionNumber("$YEAR_SOURCE_ID");
+  $unit->setTerm("year");
+}
+
+
 sub formatDate {
   my ($self, $obj) = @_;
 
@@ -343,52 +405,17 @@ sub formatDate {
   return $formattedDate;
 }
 
-
 sub formatDateWithObfuscation {
-  my ($self, $obj, $parentObj) = @_;
+  my ($self, $obj, $parentObj, $parentInputObjs) = @_;
 
-  my $value = $obj->getValue();
-
-  Date_Init("DateFormat=US"); 
-
-  my $formattedDate;
-  if($self->getDateObfuscationFile()) {
-    my $dateObfuscation = $self->getDateObfuscation();
-
-    my $delta;
-
-    if($parentObj->isNode()) {
-      my $nodeId = $parentObj->getValue();
-
-      my $materialType = $parentObj->getMaterialType();
-      my $materialTypeSourceId = $materialType->getTermAccessionNumber();
-      $delta = $dateObfuscation->{$materialTypeSourceId}->{$nodeId};
-
-      unless($delta) {
-        $delta = $self->calculateAndCacheDelta($materialTypeSourceId, $nodeId);
-      }
-    }
-    else {
-      # TODO: deal with protocol params
-      die "Only Characteristic Values currently allow date obfuscation";
-    }
-
-    my $date = DateCalc($value, $delta); 
-    $formattedDate = UnixDate($date, "%Y-%m-%d");
-  }
-  else {
-    die "No dateObfuscationFile was not provided";
-  }
-
-  $obj->setValue($formattedDate);
-
-  unless($formattedDate) {
-    die "Date Format not supported for $value\n";
-  }
-
-  return $formattedDate;
+  $self->internalDateWithObfuscation($obj, $parentObj, $parentInputObjs, "DateFormat=US");
 }
 
+sub formatEuroDateWithObfuscation {
+  my ($self, $obj, $parentObj, $parentInputObjs) = @_;
+
+  $self->internalDateWithObfuscation($obj, $parentObj, $parentInputObjs, "DateFormat=non-US");
+}
 
 sub makeOntologyTerm {
   my ($sourceId, $termName, $class) = @_;
