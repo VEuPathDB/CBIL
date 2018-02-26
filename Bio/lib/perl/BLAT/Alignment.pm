@@ -626,7 +626,7 @@ sub score {
 
   my $alignedBases = $self->get('matches') + $self->get('mismatches') + $self->get('num_ns');
   my $alignedQueryBases =  $self->get('matches') + $self->get('rep_matches') + $self->get('num_ns');
-  my $alignPct = ($alignedBases / $self->get('q_size')) * 100.0;
+  my $alignPct = eval{($alignedBases / $self->get('q_size')) * 100.0};
   my $pctId = ($alignedQueryBases / $alignedBases) * 100.0;
   my $score = sprintf("%3.3f", sqrt($pctId * $alignPct));
 
