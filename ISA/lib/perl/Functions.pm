@@ -386,21 +386,6 @@ sub setUnitToYear {
   $unit->setTerm("year");
 }
 
-sub booleanToYesNo {
-  my ($self, $obj) = @_;
-  my $value = uc($obj->getValue());
-  my $map = {
-    '0' => 'No',
-    'NO' => 'No',
-    'FALSE' => 'No',
-    '1' => 'Yes',
-    'YES' => 'Yes',
-    'TRUE' => 'Yes',
-  };
-  die "boolean value not recognized: $value" unless $map->{$value};
-  $obj->setValue($map->{$value});
-  
-}
 
 sub formatDate {
   my ($self, $obj) = @_;
