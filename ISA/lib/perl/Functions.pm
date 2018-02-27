@@ -90,7 +90,8 @@ sub enforceYesNoForBoolean {
 
   my $value = $obj->getValue();
 
-  return unless $value;
+ #return unless $value;
+  return undef unless defined($value) && $value ne "";
 
   my %allowedValues = ("1" => "Yes",
                        "yes" => "Yes",
@@ -104,7 +105,7 @@ sub enforceYesNoForBoolean {
 
   my $cv = $allowedValues{lc($value)};
 
-  if($cv) {
+  if(defined($cv)) {
     return $obj->setValue($cv);
   }
 
