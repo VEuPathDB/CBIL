@@ -90,8 +90,8 @@ sub enforceYesNoForBoolean {
 
   my $value = $obj->getValue();
 
- #return unless $value;
   return undef unless defined($value) && $value ne "";
+  if($value =~ /^\d+$/){ $value = int($value); } # remove leading zeros if $value is integer;
 
   my %allowedValues = ("1" => "Yes",
                        "yes" => "Yes",
@@ -108,6 +108,7 @@ sub enforceYesNoForBoolean {
   if(defined($cv)) {
     return $obj->setValue($cv);
   }
+  print Dumper $obj;
 
   die "Could not map value [$value] to Yes or No";
 }
