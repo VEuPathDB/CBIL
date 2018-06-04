@@ -340,7 +340,7 @@ sub addProtocolParametersToEdges {
       my $functionsRef = $ontologyMapping->{lc($header)}->{$omType}->{function};
       my $parent = $ontologyMapping->{lc($header)}->{$omType}->{parent};
 
-      my @functions;
+      my @functions = qw/formatSentenceCase/;
       if($functionsRef) {
         push @functions, @$functionsRef;
       }
@@ -459,7 +459,7 @@ sub addCharacteristicsToNodes {
       my $qualifier = $ontologyMapping->{lc($header)}->{$omType}->{source_id};
       my $functionsRef = $ontologyMapping->{lc($header)}->{$omType}->{function};
 
-      my @functions;
+      my @functions = qw/formatSentenceCase/;
       if($functionsRef) {
         push @functions, @$functionsRef;
 
