@@ -436,6 +436,18 @@ sub makeOntologyTerm {
   
 }
 
+sub formatSentenceCase {
+  my ($self, $obj) = @_;
+  my $val = ucfirst(lc($obj->getValue()));
+	return $obj->setValue($val);
+}
+
+sub formatTitleCase {
+  my ($self, $obj) = @_;
+  my $val = join(" ", map { ucfirst } split(/\s/, lc($obj->getValue())));
+	return $obj->setValue($val);
+}
+
 
 sub makeObjectFromHash {
   my ($class, $hash) = @_;
