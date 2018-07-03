@@ -1,13 +1,13 @@
 #!/usr/bin/R
-if (!require(rhdf5)) {
-   source("https://bioconductor.org/biocLite.R")
-   biocLite("rhdf5", lib='~/R_libs')
+#if (!require(rhdf5)) {
+#   source("https://bioconductor.org/biocLite.R")
+#   biocLite("rhdf5", lib='~/R_libs')
    library(rhdf5)  
-}
-if (!require(biom)) {
-   install.packages('biom',lib='~/R_libs');
-   library(biom)  
-}
+#}
+#if (!require(biom)) {
+#   install.packages('biom',lib='~/R_libs');
+   library(biomformat)  
+#}
 
 
 # This generates the matrix columns-wise
