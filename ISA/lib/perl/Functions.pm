@@ -448,6 +448,14 @@ sub formatTitleCase {
 	return $obj->setValue($val);
 }
 
+sub formatNumeric {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+	if($val =~ /^na$/i){
+		return $obj->setValue(undef);
+	}
+}
+
 
 sub makeObjectFromHash {
   my ($class, $hash) = @_;
