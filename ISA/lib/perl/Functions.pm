@@ -108,7 +108,7 @@ sub enforceYesNoForBoolean {
   if(defined($cv)) {
     return $obj->setValue($cv);
   }
-  print Dumper $obj;
+  print STDERR Dumper $obj;
 
   die "Could not map value [$value] to Yes or No";
 }
