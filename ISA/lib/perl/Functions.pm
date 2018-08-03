@@ -210,7 +210,7 @@ sub internalDateWithObfuscation {
   $obj->setValue($formattedDate);
 
   unless($formattedDate) {
-    die "Date Format not supported for [$value]\n";
+    die "Date Format not supported for [$value]\n" . $obj->getAlternativeQualifier . "\n";
   }
 
   return $formattedDate;
@@ -431,7 +431,7 @@ sub formatTime {
   $obj->setValue($formattedTime);
 
   unless($formattedTime) {
-    die "Date Format not supported for $value\n";
+    die "(formatTime) Format not supported for $value\n" . Dumper $obj;
   }
 
   return $formattedTime;
