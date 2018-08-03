@@ -108,7 +108,7 @@ sub enforceYesNoForBoolean {
   if(defined($cv)) {
     return $obj->setValue($cv);
   }
-  print STDERR Dumper $obj;
+  print Dumper $obj;
 
   die "Could not map value [$value] to Yes or No";
 }
@@ -417,6 +417,24 @@ sub formatEuroDateWithObfuscation {
   my ($self, $obj, $parentObj, $parentInputObjs) = @_;
 
   $self->internalDateWithObfuscation($obj, $parentObj, $parentInputObjs, "DateFormat=non-US");
+}
+
+sub formatTime {
+  my ($self, $obj) = @_;
+
+  my $value = $obj->getValue();
+
+  Date_Init("DateFormat=US"); 
+
+  my $formattedTime = UnixDate(ParseDate($value), "%T");
+
+  $obj->setValue($formattedTime);
+
+  unless($formattedTime) {
+    die "Date Format not supported for $value\n";
+  }
+
+  return $formattedTime;
 }
 
 sub makeOntologyTerm {
