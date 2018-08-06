@@ -426,7 +426,7 @@ sub formatTime {
 
   Date_Init("DateFormat=US"); 
 
-  my $formattedTime = UnixDate(ParseDate($value), "%T");
+  my $formattedTime = UnixDate(ParseDate($value), "%H%M");
 
   $obj->setValue($formattedTime);
 
