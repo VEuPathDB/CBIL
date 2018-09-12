@@ -423,6 +423,7 @@ sub formatTime {
   my ($self, $obj) = @_;
 
   my $value = $obj->getValue();
+	$value =~ s/^0:(\d\d\w\w)$/12:$1/;
 
   Date_Init("DateFormat=US"); 
 
