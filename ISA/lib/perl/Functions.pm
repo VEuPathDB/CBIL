@@ -475,6 +475,16 @@ sub formatNumeric {
 	}
 }
 
+sub collapseColumns {
+  my ($self, $obj) = @_;
+	my $sid = lc($obj->{_qualifier});
+	my $alt = lc($obj->{_alternative_qualifier});
+	my ($name) = @{$self->getOntologyMapping()->{$sid}->{characteristicQualifier}->{name}};
+	if($alt ne $name){
+		$obj->{_alternative_qualifier} = $name;
+	}
+}
+
 
 sub makeObjectFromHash {
   my ($class, $hash) = @_;
