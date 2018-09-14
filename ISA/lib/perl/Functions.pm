@@ -423,6 +423,7 @@ sub formatTime {
   my ($self, $obj) = @_;
 
   my $value = $obj->getValue();
+	$value =~ s/^0:(\d\d\w\w)$/12:$1/;
 
   Date_Init("DateFormat=US"); 
 
@@ -471,6 +472,16 @@ sub formatNumeric {
   my $val = $obj->getValue();
 	if($val =~ /^na$/i){
 		return $obj->setValue(undef);
+	}
+}
+
+sub collapseColumns {
+  my ($self, $obj) = @_;
+	my $sid = lc($obj->{_qualifier});
+	my $alt = lc($obj->{_alternative_qualifier});
+	my ($name) = @{$self->getOntologyMapping()->{$sid}->{characteristicQualifier}->{name}};
+	if($alt ne $name){
+		$obj->{_alternative_qualifier} = $name;
 	}
 }
 
