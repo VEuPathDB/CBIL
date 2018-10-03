@@ -237,7 +237,8 @@ sub getFastqForSraRunId {
     my($runId,$isPairedEnd) = @_;
     my $file = "$runId.sra";
     unlink("$runId.sra") if -e "$runId.sra";
-    my $cmd = "wget https://ftp-private.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/".substr($runId,0,3)."/".substr($runId,0,6)."/$runId/$file";
+    ###  replacing wget with prefetch       my $cmd = "wget https://ftp-private.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/".substr($runId,0,3)."/".substr($runId,0,6)."/$runId/$file";
+    my $cmd = "prefetch -O . $runId";
     print STDERR "retrieving $runId with $cmd\n";
     system($cmd);
     if($?){
@@ -267,7 +268,8 @@ sub getCsForSraRunId {
   my($runId,$pe) = @_;
   my $file = "$runId.sra";
   unlink("$runId.sra") if -e "$runId.sra";
-  my $cmd = "wget https://ftp-private.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/".substr($runId,0,3)."/".substr($runId,0,6)."/$runId/$file";
+  #####  replacing wget with prefetch      my $cmd = "wget https://ftp-private.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/".substr($runId,0,3)."/".substr($runId,0,6)."/$runId/$file";
+  my $cmd = "prefetch -O . $runId";
   print STDERR "retrieving $runId with $cmd\n";
   system($cmd);
   if($?){
