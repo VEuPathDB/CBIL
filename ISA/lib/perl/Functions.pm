@@ -210,7 +210,7 @@ sub internalDateWithObfuscation {
   $obj->setValue($formattedDate);
 
   unless($formattedDate) {
-    die "Date Format not supported for [$value]\n";
+    die "Date Format not supported for [$value], OR bad date obfuscation file\n" . $obj->getAlternativeQualifier . "\n";
   }
 
   return $formattedDate;
@@ -267,6 +267,10 @@ sub valueIsMappedValue {
   my $valueMapping = $self->getValueMapping();
 
   my $qualifierValues = $valueMapping->{$qualSourceId};
+  unless($qualifierValues){
+    my $qualName = $obj->getAlternativeQualifier();
+    $qualifierValues = $valueMapping->{$qualName};
+  }
 
   if($qualifierValues) {
     my $lcValue = lc($value);
@@ -275,6 +279,9 @@ sub valueIsMappedValue {
 
     if($newValue || $newValue eq '0') {
       $obj->setValue($newValue);
+    }
+    elsif(uc($newValue) eq ":::UNDEF:::"){
+      $obj->setValue(undef);
     }
   }
 }
@@ -419,6 +426,25 @@ sub formatEuroDateWithObfuscation {
   $self->internalDateWithObfuscation($obj, $parentObj, $parentInputObjs, "DateFormat=non-US");
 }
 
+sub formatTime {
+  my ($self, $obj) = @_;
+
+  my $value = $obj->getValue();
+  $value =~ s/^0:(\d\d\w\w)$/12:$1/;
+
+  Date_Init("DateFormat=US"); 
+
+  my $formattedTime = UnixDate(ParseDate($value), "%H%M");
+
+  $obj->setValue($formattedTime);
+
+  unless($formattedTime) {
+    die "(formatTime) Format not supported for $value\n" . Dumper $obj;
+  }
+
+  return $formattedTime;
+}
+
 sub makeOntologyTerm {
   my ($sourceId, $termName, $class) = @_;
 
@@ -439,15 +465,29 @@ sub makeOntologyTerm {
 sub formatSentenceCase {
   my ($self, $obj) = @_;
   my $val = ucfirst(lc($obj->getValue()));
-	return $obj->setValue($val);
+  return $obj->setValue($val);
 }
 
 sub formatTitleCase {
   my ($self, $obj) = @_;
   my $val = join(" ", map { ucfirst } split(/\s/, lc($obj->getValue())));
-	return $obj->setValue($val);
+  return $obj->setValue($val);
 }
 
+sub formatNumeric {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  if($val =~ /^na$/i){
+    return $obj->setValue(undef);
+  }
+}
+
+sub formatFtoC {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val);
+  return $obj->setValue((($val - 32) * 5) / 9);
+}
 
 sub makeObjectFromHash {
   my ($class, $hash) = @_;
