@@ -220,6 +220,7 @@ sub parseStudy {
   my $fileName = $study->getFileName();
   my $fileHandle = $study->getFileHandle();
 
+  print STDERR "Processing study file $fileName\n";
   unless($fileHandle) {
     open($fileHandle,  $fileName) or die "Cannot open file $fileName for reading: $!";    
     $study->setFileHandle($fileHandle);
