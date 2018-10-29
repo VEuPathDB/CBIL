@@ -42,7 +42,7 @@ sub getFastqForStudyId {
       rename("${runId}_1.fastq", "$sampleId.$sampleCount{$sampleId}_1.fastq");
       rename("${runId}_2.fastq", "$sampleId.$sampleCount{$sampleId}_2.fastq");
     } else {
-      rename("$runId.fastq", "$sampleId.$sampleCount{$sampleId}.fastq"); 
+      rename("${runId}_1.fastq", "$sampleId.$sampleCount{$sampleId}.fastq"); 
     }
   }
 }
@@ -310,7 +310,10 @@ sub getFastqForSraRunId {
     ###  replacing wget with prefetch       my $cmd = "wget https://ftp-private.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/".substr($runId,0,3)."/".substr($runId,0,6)."/$runId/$file";
     my $cmd = "prefetch -O . $runId";
     print STDERR "retrieving $runId with $cmd\n";
-    system($cmd);
+    #TODO test with something paired end, since not 100% sure how those files are named
+    if (! -f "${runId}_1.fastq") {
+      system($cmd);
+    }
     if($?){
 	die "ERROR ($?): Unable to fetch sra file for $runId\n";
     }
