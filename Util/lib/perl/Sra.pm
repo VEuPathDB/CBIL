@@ -6,11 +6,50 @@ use Data::Dumper;
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(getRunIdsFromSraSampleIds getFastqForSraRunId getFastqForSampleIds getCsForSampleIds);
+@EXPORT = qw(getRunIdsFromSraSampleIds getFastqForSraRunId getFastqForSampleIds getCsForSampleIds getRunIdsFromSraStudyId getFastqForStudyId runEfetch);
 
+sub getFastqForStudyId {
+  my($studyId, $isPairedEnd, $dontDownload) = @_;
+  print STDERR "fetching runIds from studyId: $studyId\n";
+  my @runs = &getRunIdsFromSraStudyId($studyId);
+
+  my %done;
+  my %sampleCount;
+
+  foreach my $run (@runs) {
+    my $runId = $run->[1];
+
+    if ($done{$runId}) {
+      print STDERR "WARNING: already retrieved '$runId' .. skipping\n";
+      next;
+    }
+
+    print STDERR Dumper("current runId:" . $runId . "\n");
+    next if $dontDownload;
+    &getFastqForSraRunId($runId, $isPairedEnd);
+    $done{$runId} = 1;
+
+    #in case of technical replicates
+    my $sampleId = $run->[0];
+    if (exists $sampleCount{$sampleId}) {
+      $sampleCount{$sampleId} = $sampleCount{$sampleId} + 1;
+    } else {
+      $sampleCount{$sampleId} = 1;
+    }
+
+    #consider just using srr instead of a count. easier to match up against metadata maybe
+    if ($isPairedEnd) {
+      rename("${runId}_1.fastq", "$sampleId.$sampleCount{$sampleId}_1.fastq");
+      rename("${runId}_2.fastq", "$sampleId.$sampleCount{$sampleId}_2.fastq");
+    } else {
+      rename("${runId}_1.fastq", "$sampleId.$sampleCount{$sampleId}.fastq"); 
+    }
+  }
+}
 
 sub getFastqForSampleIds {
   my($sids,$fileoutone,$fileouttwo,$dontdownload,$isPairedEnd) = @_;
+  print STDERR Dumper(@$sids);
   $fileoutone = $fileoutone ? $fileoutone : "reads_1.fastq";
   $fileouttwo = $fileouttwo ? $fileouttwo : "reads_2.fastq";
   my @rids;
@@ -151,6 +190,87 @@ sub getCsForSampleIds {
   rename("tmpReads_2.csfasta.qual","$fileouttwo.qual") if (-e "tmpReads_2.csfasta.qual");
 }
 
+sub getRunIdsFromSraStudyId {
+  my ($studyId) = @_;
+
+  my $utils = "https://www.ncbi.nlm.nih.gov/entrez/eutils";
+
+  my $esearch = "$utils/esearch?db=sra&term=$studyId&usehistory=1&retmax=1";
+
+  my $esearch_result = get($esearch);
+
+  $esearch_result =~ 
+m|<Count>(\d+)</Count>.*<QueryKey>(\d+)</QueryKey>.*<WebEnv>(\S+)</WebEnv>|s; 
+
+  my $Count    = $1; 
+  my $QueryKey = $2; 
+  my $WebEnv   = $3; 
+
+  my @ids = &runEfetch($Count, $QueryKey, $WebEnv);
+
+  return @ids;
+}
+
+sub runEfetch {
+  my ($Count, $QueryKey, $WebEnv) = @_;
+
+  my $utils = "https://www.ncbi.nlm.nih.gov/entrez/eutils";
+
+  my $efetch = "$utils/efetch.fcgi?rettype=xml&retmode=text&retmax=$Count&db=sra&query_key=$QueryKey&WebEnv=$WebEnv";
+
+  my $efetch_result = get($efetch); 
+
+  my $root = XMLin($efetch_result);
+
+  my @ids;
+  my @expPa;
+
+  my $ep = $root->{'EXPERIMENT_PACKAGE'};
+
+  if(ref($ep) eq 'ARRAY') {
+    foreach my $a (@{$ep}) {
+      push(@expPa,$a);
+    }
+  } else {
+    push(@expPa,$ep);
+  }
+
+  foreach my $e (@expPa) {
+    my %sids;
+    if(ref($e->{SAMPLE}) eq 'ARRAY') {
+      foreach my $a (@{$e->{SAMPLE}}) {
+        $sids{$a->{accession}}++;
+      }
+    } else {
+      $sids{$e->{SAMPLE}->{accession}}++;
+    }
+
+    my @runsets;
+    if(ref($e->{RUN_SET}) eq 'ARRAY') {
+      foreach my $a (@{$e->{RUN_SET}}) {
+        push(@runsets,$a);
+      }
+    } else {
+      push(@runsets,$e->{RUN_SET});
+    }
+
+    foreach my $rs (@runsets){
+      if(ref($rs->{RUN}) eq 'ARRAY') {
+        foreach my $r (@{$rs->{RUN}}) {
+          push(@ids, [join(",",keys%sids),$r->{accession},$r->{total_spots},$r->{total_bases},($e->{EXPERIMENT}->{DESIGN}->{LIBRARY_DESCRIPTOR}->{LIBRARY_LAYOUT}->{PAIRED}) ? "PAIRED" : "SINGLE"]);
+        }
+      } else {
+        push(@ids, [join(",",keys%sids),$rs->{RUN}->{accession},$rs->{RUN}->{total_spots},$rs->{RUN}->{total_bases},($e->{EXPERIMENT}->{DESIGN}->{LIBRARY_DESCRIPTOR}->{LIBRARY_LAYOUT}->{PAIRED}) ? "PAIRED" : "SINGLE" ]);
+      }
+    }
+
+   #($e->{EXPERIMENT}->{DESIGN}->{LIBRARY_DESCRIPTOR}->{LIBRARY_LAYOUT}->{SINGLE}) ? print STDERR "ssingle\n" : print STDERR "ppaired\n"; 
+
+  }
+
+  return @ids;
+}
+
 
 sub getRunIdsFromSraSampleId { 
  my ($sid) = @_; 
@@ -172,58 +292,8 @@ m|<Count>(\d+)</Count>.*<QueryKey>(\d+)</QueryKey>.*<WebEnv>(\S+)</WebEnv>|s;
  my $QueryKey = $2; 
  my $WebEnv   = $3; 
 
- my $efetch = "$utils/efetch.fcgi?rettype=$report&retmode=text&retmax=$Count&db=$db&query_key=$QueryKey&WebEnv=$WebEnv"; 
-
-# print "\n--------------\n$efetch\n--------------\n";
-
- my $efetch_result = get($efetch); 
-
- my $root = XMLin($efetch_result); 
-
-# print Dumper $root; 
-# exit;
+ my @ids = &runEfetch($Count, $QueryKey, $WebEnv);
  
- my @ids;
- my @expPa;
- my $ep = $root->{'EXPERIMENT_PACKAGE'};
-
- if(ref($ep) eq 'ARRAY'){
-   foreach my $a (@{$ep}){
-     push(@expPa,$a);
-   }
- }else{
-   push(@expPa,$ep);
- }
- foreach my $e (@expPa){
-   my %sids;
-   if(ref($e->{SAMPLE}) eq 'ARRAY'){
-     foreach my $a (@{$e->{SAMPLE}}){
-       $sids{$a->{accession}}++;
-     }
-   }else{
-     $sids{$e->{SAMPLE}->{accession}}++;
-   }
-   my @runsets;
-   if(ref($e->{RUN_SET}) eq 'ARRAY'){
-     foreach my $a (@{$e->{RUN_SET}}){
-       push(@runsets,$a);
-     }
-   }else{
-     push(@runsets,$e->{RUN_SET});
-   }
-   foreach my $rs (@runsets){
-     if(ref($rs->{RUN}) eq 'ARRAY'){
-       foreach my $r (@{$rs->{RUN}}){
-         push(@ids, [join(",",keys%sids),$r->{accession},$r->{total_spots},$r->{total_bases},($e->{EXPERIMENT}->{DESIGN}->{LIBRARY_DESCRIPTOR}->{LIBRARY_LAYOUT}->{PAIRED}) ? "PAIRED" : "SINGLE"]);
-       }
-     }else{
-       push(@ids, [join(",",keys%sids),$rs->{RUN}->{accession},$rs->{RUN}->{total_spots},$rs->{RUN}->{total_bases},($e->{EXPERIMENT}->{DESIGN}->{LIBRARY_DESCRIPTOR}->{LIBRARY_LAYOUT}->{PAIRED}) ? "PAIRED" : "SINGLE" ]);
-     }
-   }
-
-   #($e->{EXPERIMENT}->{DESIGN}->{LIBRARY_DESCRIPTOR}->{LIBRARY_LAYOUT}->{SINGLE}) ? print STDERR "ssingle\n" : print STDERR "ppaired\n";
-
- }
  return @ids;
 }
 
@@ -240,7 +310,10 @@ sub getFastqForSraRunId {
     ###  replacing wget with prefetch       my $cmd = "wget https://ftp-private.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/".substr($runId,0,3)."/".substr($runId,0,6)."/$runId/$file";
     my $cmd = "prefetch -O . $runId";
     print STDERR "retrieving $runId with $cmd\n";
-    system($cmd);
+    #TODO test with something paired end, since not 100% sure how those files are named
+    if (! -f "${runId}_1.fastq") {
+      system($cmd);
+    }
     if($?){
 	die "ERROR ($?): Unable to fetch sra file for $runId\n";
     }
