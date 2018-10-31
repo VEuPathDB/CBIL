@@ -31,18 +31,11 @@ sub getFastqForStudyId {
 
     #in case of technical replicates
     my $sampleId = $run->[0];
-    if (exists $sampleCount{$sampleId}) {
-      $sampleCount{$sampleId} = $sampleCount{$sampleId} + 1;
-    } else {
-      $sampleCount{$sampleId} = 1;
-    }
-
-    #consider just using srr instead of a count. easier to match up against metadata maybe
     if ($isPairedEnd) {
-      rename("${runId}_1.fastq", "$sampleId.$sampleCount{$sampleId}_1.fastq");
-      rename("${runId}_2.fastq", "$sampleId.$sampleCount{$sampleId}_2.fastq");
+      rename("${runId}_1.fastq", "$sampleId.${runId}_1.fastq");
+      rename("${runId}_2.fastq", "$sampleId.${runId}_2.fastq");
     } else {
-      rename("${runId}_1.fastq", "$sampleId.$sampleCount{$sampleId}.fastq"); 
+      rename("${runId}_1.fastq", "$sampleId.${runId}.fastq"); 
     }
   }
 }
