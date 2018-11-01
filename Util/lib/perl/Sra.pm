@@ -9,7 +9,7 @@ require Exporter;
 @EXPORT = qw(getRunIdsFromSraSampleIds getFastqForSraRunId getFastqForSampleIds getCsForSampleIds getRunIdsFromSraStudyId getFastqForStudyId runEfetch);
 
 sub getFastqForStudyId {
-  my($studyId, $isPairedEnd, $dontDownload) = @_;
+  my($studyId, $isPairedEnd, $dontDownload, $deflineVars) = @_;
   print STDERR "fetching runIds from studyId: $studyId\n";
   my @runs = &getRunIdsFromSraStudyId($studyId);
 
@@ -26,7 +26,7 @@ sub getFastqForStudyId {
 
     print STDERR Dumper("current runId:" . $runId . "\n");
     next if $dontDownload;
-    &getFastqForSraRunId($runId, $isPairedEnd);
+    &getFastqForSraRunId($runId, $isPairedEnd, $deflineVars);
     $done{$runId} = 1;
 
     #in case of technical replicates
@@ -297,7 +297,7 @@ m|<Count>(\d+)</Count>.*<QueryKey>(\d+)</QueryKey>.*<WebEnv>(\S+)</WebEnv>|s;
 ## fastq-dump --split-files SRR340224.sra
 
 sub getFastqForSraRunId {
-    my($runId,$isPairedEnd) = @_;
+    my($runId,$isPairedEnd,$deflineVars) = @_;
     my $file = "$runId.sra";
     unlink("$runId.sra") if -e "$runId.sra";
     ###  replacing wget with prefetch       my $cmd = "wget https://ftp-private.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/".substr($runId,0,3)."/".substr($runId,0,6)."/$runId/$file";
@@ -312,11 +312,19 @@ sub getFastqForSraRunId {
     }
     print STDERR "extracting fastq file(s)...";
     if ($isPairedEnd) {
-	system("fastq-dump -B -I --split-files ./$file");
+        if (defined $deflineVars) {
+          system("fastq-dump -B -I --defline-seq '$deflineVars' --split-files ./$file");
+        } else {
+	  system("fastq-dump -B -I --split-files ./$file");
+        }
     }
     else {
 	print STDERR "data is not paired end!\n";
-	system("fastq-dump --split-spot --skip-technical ./$file");
+        if (defined $deflineVars) {
+          system("fastq-dump --defline-seq '$deflineVars' --split-spot --skip-technical ./$file");
+        } else {
+  	  system("fastq-dump --split-spot --skip-technical ./$file");
+        }
 	my $first = $runId.".fastq";
 	my $second = $runId."_1.fastq";
 #  if (-e $first) {
