@@ -356,7 +356,7 @@ sub splitUnitFromValue {
   my $unitSourceId = $om->{lc($unitString)}->{unit}->{source_id};
   if (defined $value) {
     unless($unitSourceId) {
-      die "Could not find onotlogyTerm for Unit:  $unitString";
+      die "Could not find ontologyTerm for Unit:  $unitString";
     }
 
     my $unit = &makeOntologyTerm($unitSourceId, $unitString, $class);
