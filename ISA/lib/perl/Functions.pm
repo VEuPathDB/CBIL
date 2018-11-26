@@ -96,6 +96,7 @@ sub enforceYesNoForBoolean {
   my %allowedValues = ("1" => "Yes",
                        "yes" => "Yes",
                        "true" => "Yes",
+		       "na" => "na", 
                        "y" => "Yes",
                        "0" => "No",
                        "no" => "No",
