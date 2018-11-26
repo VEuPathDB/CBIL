@@ -97,7 +97,6 @@ sub enforceYesNoForBoolean {
     "1" => "Yes",
     "yes" => "Yes",
     "true" => "Yes",
-    "na" => "Na", 
     "y" => "Yes",
     "0" => "No",
     "no" => "No",
@@ -111,9 +110,8 @@ sub enforceYesNoForBoolean {
   if(defined($cv)) {
     return $obj->setValue($cv);
   }
-  print STDERR Dumper $obj;
 
-  die "Could not map value [$value] to Yes or No";
+  die "Could not map value [$value] to Yes or No\n" .  Dumper($obj);
 }
 
 
