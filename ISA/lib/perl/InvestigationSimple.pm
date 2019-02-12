@@ -220,8 +220,8 @@ sub parseStudy {
   my $fileName = $study->getFileName();
   my $fileHandle = $study->getFileHandle();
 
-  print STDERR "Processing study file $fileName\n";
   unless($fileHandle) {
+  	print STDERR "Processing study file $fileName\n";
     open($fileHandle,  $fileName) or die "Cannot open file $fileName for reading: $!";    
     $study->setFileHandle($fileHandle);
 
@@ -546,6 +546,21 @@ sub makeNodes {
 
     my $hash = { _value => $name };
     my $node = &makeObjectFromHash($class, $hash);
+		my $idObfuscationFunction = $studyXml->{node}->{$nodeName}->{idObfuscationFunction};
+		if($idObfuscationFunction){
+      my $functionsObj = $self->getFunctions();
+      eval {
+				$functionsObj->$idObfuscationFunction($node);
+      };
+      if ($@) {
+        $self->handleError("problem w/ function $idObfuscationFunction: $@");
+      }
+		}
+		if($self->{seenNodes}->{$node->getValue()}){
+			die "Duplicate node ID " . $node->getValue();
+		}
+		$self->{seenNodes}->{$node->getValue()} = 1;
+		
 
     my $materialType = $studyXml->{node}->{$nodeName}->{type};
     $materialType = $sourceMtOverride if($sourceMtOverride && $isaType eq 'Source');
