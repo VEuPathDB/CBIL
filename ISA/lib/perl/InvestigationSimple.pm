@@ -623,7 +623,7 @@ sub makeProtocols {
 
   foreach my $termName (keys %$ontologyMapping) {
     if($ontologyMapping->{$termName}->{$omType}) {
-      my $parent = $ontologyMapping->{$termName}->{$omType}->{parent};
+      my $parent = lc($ontologyMapping->{$termName}->{$omType}->{parent});
       my $sourceId = $ontologyMapping->{$termName}->{$omType}->{source_id};
 
       next unless($protocols->{$parent});
