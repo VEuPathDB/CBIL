@@ -522,9 +522,9 @@ sub makeNodes {
 
   my %nodes;
 
-	my %outputNames;
+	my %inputNames;
 	foreach my $edge ( @{$studyXml->{edge}} ){
-		$outputNames{ $edge->{output} } = 1;
+		$inputNames{ $edge->{input} } = 1;
 	}
 
 
@@ -564,7 +564,7 @@ sub makeNodes {
       }
 		}
 		my $nodeValue = $node->getValue();
-		if($outputNames{$nodeName}){
+		unless($inputNames{$nodeName}){
 			if($self->{seenNodes}->{$nodeValue}){
 				die "Duplicate node ID for $nodeName $oldNodeValue: " . $node->getValue();
 			}
