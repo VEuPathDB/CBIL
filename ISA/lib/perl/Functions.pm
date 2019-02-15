@@ -513,11 +513,11 @@ sub makeObjectFromHash {
   return $obj;
 }
 
-sub sha256_hex {
+sub digestSHAHex16 {
   my ($self, $obj) = @_;
   my $val = $obj->getValue();
   return unless defined($val);
-  return $obj->setValue(substr(Digest::SHA::sha256_hex($val),0,10));
+  return $obj->setValue(substr(Digest::SHA::sha1_hex($val),0,16));
 }
 
 
