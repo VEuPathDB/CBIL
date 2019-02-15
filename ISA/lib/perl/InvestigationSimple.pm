@@ -522,6 +522,12 @@ sub makeNodes {
 
   my %nodes;
 
+	my %outputNames;
+	foreach my $edge ( @{$studyXml->{edge}} ){
+		$outputNames{ $edge->{output} } = 1;
+	}
+
+
   foreach my $nodeName (keys %{$studyXml->{node}}) {
     my $isaType = defined($studyXml->{node}->{$nodeName}->{isaObject}) ? $studyXml->{node}->{$nodeName}->{isaObject} : $nodeName;
     my $class = "CBIL::ISA::StudyAssayEntity::$isaType";
@@ -547,6 +553,7 @@ sub makeNodes {
     my $hash = { _value => $name };
     my $node = &makeObjectFromHash($class, $hash);
 		my $idObfuscationFunction = $studyXml->{node}->{$nodeName}->{idObfuscationFunction};
+		my $oldNodeValue = $node->getValue();
 		if($idObfuscationFunction){
       my $functionsObj = $self->getFunctions();
       eval {
@@ -556,12 +563,13 @@ sub makeNodes {
         $self->handleError("problem w/ function $idObfuscationFunction: $@");
       }
 		}
-		if($self->{seenNodes}->{$node->getValue()}){
-			die "Duplicate node ID " . $node->getValue();
+		my $nodeValue = $node->getValue();
+		if($outputNames{$nodeName}){
+			if($self->{seenNodes}->{$nodeValue}){
+				die "Duplicate node ID for $nodeName $oldNodeValue: " . $node->getValue();
+			}
+			$self->{seenNodes}->{$nodeValue} = 1;
 		}
-		$self->{seenNodes}->{$node->getValue()} = 1;
-		
-
     my $materialType = $studyXml->{node}->{$nodeName}->{type};
     $materialType = $sourceMtOverride if($sourceMtOverride && $isaType eq 'Source');
     $materialType = $sampleMtOverride if($sampleMtOverride && $isaType eq 'Sample');
