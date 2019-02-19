@@ -220,8 +220,8 @@ sub parseStudy {
   my $fileName = $study->getFileName();
   my $fileHandle = $study->getFileHandle();
 
-  print STDERR "Processing study file $fileName\n";
   unless($fileHandle) {
+  	print STDERR "Processing study file $fileName\n";
     open($fileHandle,  $fileName) or die "Cannot open file $fileName for reading: $!";    
     $study->setFileHandle($fileHandle);
 
@@ -522,6 +522,12 @@ sub makeNodes {
 
   my %nodes;
 
+	my %inputNames;
+	foreach my $edge ( @{$studyXml->{edge}} ){
+		$inputNames{ $edge->{input} } = 1;
+	}
+
+
   foreach my $nodeName (keys %{$studyXml->{node}}) {
     my $isaType = defined($studyXml->{node}->{$nodeName}->{isaObject}) ? $studyXml->{node}->{$nodeName}->{isaObject} : $nodeName;
     my $class = "CBIL::ISA::StudyAssayEntity::$isaType";
@@ -546,7 +552,24 @@ sub makeNodes {
 
     my $hash = { _value => $name };
     my $node = &makeObjectFromHash($class, $hash);
-
+		my $idObfuscationFunction = $studyXml->{node}->{$nodeName}->{idObfuscationFunction};
+		my $oldNodeValue = $node->getValue();
+		if($idObfuscationFunction){
+      my $functionsObj = $self->getFunctions();
+      eval {
+				$functionsObj->$idObfuscationFunction($node);
+      };
+      if ($@) {
+        $self->handleError("problem w/ function $idObfuscationFunction: $@");
+      }
+		}
+		my $nodeValue = $node->getValue();
+		unless($inputNames{$nodeName}){
+			if($self->{seenNodes}->{$nodeValue}){
+				die "Duplicate node ID for $nodeName $oldNodeValue: " . $node->getValue();
+			}
+			$self->{seenNodes}->{$nodeValue} = 1;
+		}
     my $materialType = $studyXml->{node}->{$nodeName}->{type};
     $materialType = $sourceMtOverride if($sourceMtOverride && $isaType eq 'Source');
     $materialType = $sampleMtOverride if($sampleMtOverride && $isaType eq 'Sample');
@@ -608,7 +631,7 @@ sub makeProtocols {
 
   foreach my $termName (keys %$ontologyMapping) {
     if($ontologyMapping->{$termName}->{$omType}) {
-      my $parent = $ontologyMapping->{$termName}->{$omType}->{parent};
+      my $parent = lc($ontologyMapping->{$termName}->{$omType}->{parent});
       my $sourceId = $ontologyMapping->{$termName}->{$omType}->{source_id};
 
       next unless($protocols->{$parent});

@@ -4,7 +4,7 @@ require Exporter;
 
 @EXPORT_OK = qw(makeObjectFromHash makeOntologyTerm);
 
-use Scalar::Util 'blessed';
+use Scalar::Util qw/blessed looks_like_number/;
 
 use Date::Manip qw(Date_Init ParseDate UnixDate DateCalc);
 
@@ -16,6 +16,7 @@ use Date::Parse qw/strptime/;
 use File::Basename;
 
 use Data::Dumper;
+use Digest::SHA;
 
 sub getOntologyMapping {$_[0]->{_ontology_mapping} }
 sub getOntologySources {$_[0]->{_ontology_sources} }
@@ -483,6 +484,14 @@ sub formatNumeric {
   }
 }
 
+sub formatNumericFiltered {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  unless(looks_like_number($val)){
+    return $obj->setValue(undef);
+  }
+}
+
 sub formatFtoC {
   my ($self, $obj) = @_;
   my $val = $obj->getValue();
@@ -502,6 +511,13 @@ sub makeObjectFromHash {
   }
 
   return $obj;
+}
+
+sub digestSHAHex16 {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val);
+  return $obj->setValue(substr(Digest::SHA::sha1_hex($val),0,16));
 }
 
 
