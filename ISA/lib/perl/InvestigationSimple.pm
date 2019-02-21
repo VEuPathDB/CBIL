@@ -557,14 +557,16 @@ sub makeNodes {
 		if($idObfuscationFunction){
       my $functionsObj = $self->getFunctions();
       eval {
-				$functionsObj->$idObfuscationFunction($node);
+				$functionsObj->$idObfuscationFunction($node,$studyXml->{node}->{$nodeName}->{type});
       };
       if ($@) {
         $self->handleError("problem w/ function $idObfuscationFunction: $@");
       }
 		}
 		my $nodeValue = $node->getValue();
-		unless($inputNames{$nodeName}){
+		if($idObfuscationFunction && !defined($inputNames{$nodeName}) ){
+			## only check if id obfuscation is used and
+			## if this is is not an edge input (check only outputs)
 			if($self->{seenNodes}->{$nodeValue}){
 				die "Duplicate node ID for $nodeName $oldNodeValue: " . $node->getValue();
 			}
