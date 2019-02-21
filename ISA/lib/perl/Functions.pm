@@ -540,9 +540,10 @@ sub idObfuscateDate1 {
 		$id[1] = $formattedDate;
 	}
 	else {
-		die "MISSINGDELTA:$nodeId";
+		die "MISSINGDELTA:$type:$materialTypeSourceId:$nodeId";
 	}
 	my $newId = join("_", @id); 
+	# print STDERR "OBFUSCATED:$nodeId:$newId\n";
   return $node->setValue($newId);
 }
 
