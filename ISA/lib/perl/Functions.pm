@@ -499,6 +499,53 @@ sub formatFtoC {
   return $obj->setValue((($val - 32) * 5) / 9);
 }
 
+sub digestSHAHex16 {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val);
+  return $obj->setValue(substr(Digest::SHA::sha1_hex($val),0,16));
+}
+
+sub encryptSuffix1 {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val);
+	my ($prefix,$suffix1,@suffixN) = split(/_/, $val);
+	$suffix1 = substr(Digest::SHA::sha1_hex($suffix1),0,16);
+	my $newId = join("_", $prefix, $suffix1, @suffixN); 
+  return $obj->setValue($newId);
+}
+
+sub encryptSuffix2 {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val);
+	my @id = split(/_/, $val);
+	$id[2] = substr(Digest::SHA::sha1_hex($id[2]),0,16);
+	my $newId = join("_", @id); 
+  return $obj->setValue($newId);
+}
+
+sub idObfuscateDate1 {
+  my ($self, $node, $type) = @_;
+	my $materialTypeSourceId = $self->getOntologyMapping()->{$type}->{'materialType'}->{'source_id'};
+  my $nodeId = $node->getValue();
+  return unless defined($nodeId);
+	my @id = split(/_/, $nodeId);
+  my $dateObfuscation = $self->getDateObfuscation();
+  my $delta = $dateObfuscation->{$materialTypeSourceId}->{$nodeId};
+  if($delta) {
+	  my $date = DateCalc($id[1], $delta); 
+	  my $formattedDate = UnixDate($date, "%Y-%m-%d");
+		$id[1] = $formattedDate;
+	}
+	else {
+		die "MISSINGDELTA:$nodeId";
+	}
+	my $newId = join("_", @id); 
+  return $node->setValue($newId);
+}
+
 sub makeObjectFromHash {
   my ($class, $hash) = @_;
 
@@ -512,14 +559,6 @@ sub makeObjectFromHash {
 
   return $obj;
 }
-
-sub digestSHAHex16 {
-  my ($self, $obj) = @_;
-  my $val = $obj->getValue();
-  return unless defined($val);
-  return $obj->setValue(substr(Digest::SHA::sha1_hex($val),0,16));
-}
-
 
 1;
 
