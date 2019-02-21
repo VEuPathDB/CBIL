@@ -186,9 +186,9 @@ sub getCsForSampleIds {
 sub getRunIdsFromSraStudyId {
   my ($studyId) = @_;
 
-  my $utils = "https://www.ncbi.nlm.nih.gov/entrez/eutils";
+  my $utils = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
 
-  my $esearch = "$utils/esearch?db=sra&term=$studyId&usehistory=1&retmax=1";
+  my $esearch = "$utils/esearch?api_key=f2006d7a9fa4e92b2931d964bb75ada85a08&db=sra&term=$studyId&usehistory=1&retmax=1";
 
   my $esearch_result = get($esearch);
 
@@ -207,9 +207,9 @@ m|<Count>(\d+)</Count>.*<QueryKey>(\d+)</QueryKey>.*<WebEnv>(\S+)</WebEnv>|s;
 sub runEfetch {
   my ($Count, $QueryKey, $WebEnv) = @_;
 
-  my $utils = "https://www.ncbi.nlm.nih.gov/entrez/eutils";
+  my $utils = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
 
-  my $efetch = "$utils/efetch.fcgi?rettype=xml&retmode=text&retmax=$Count&db=sra&query_key=$QueryKey&WebEnv=$WebEnv";
+  my $efetch = "$utils/efetch.fcgi?api_key=f2006d7a9fa4e92b2931d964bb75ada85a08&rettype=xml&retmode=text&retmax=$Count&db=sra&query_key=$QueryKey&WebEnv=$WebEnv";
 
   my $efetch_result = get($efetch); 
 
@@ -268,12 +268,12 @@ sub runEfetch {
 sub getRunIdsFromSraSampleId { 
  my ($sid) = @_; 
 
- my $utils = "https://www.ncbi.nlm.nih.gov/entrez/eutils"; 
+ my $utils = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"; 
 
  my $db     = "sra"; 
  my $report = "xml"; 
 
- my $esearch = "$utils/esearch.fcgi?db=$db&retmax=1&usehistory=y&term="; 
+ my $esearch = "$utils/esearch.fcgi?api_key=f2006d7a9fa4e92b2931d964bb75ada85a08&db=$db&retmax=1&usehistory=y&term="; 
  my $esearch_result = get($esearch . $sid); 
 
 # print $esearch_result;
