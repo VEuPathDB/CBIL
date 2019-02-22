@@ -239,6 +239,7 @@ sub parseStudy {
 
   $self->addNodesAndEdgesToStudy($study, $fileHandle, $studyXml);
 
+
 #  my %nodeType;
 #  foreach(@{$study->getNodes()}) {
 #    my $type = $_->getMaterialType()->getTerm();
@@ -527,7 +528,7 @@ sub makeNodes {
 		$inputNames{ $edge->{input} } = 1;
 	}
 
-
+	my $idObfuscated = 0;
   foreach my $nodeName (keys %{$studyXml->{node}}) {
     my $isaType = defined($studyXml->{node}->{$nodeName}->{isaObject}) ? $studyXml->{node}->{$nodeName}->{isaObject} : $nodeName;
     my $class = "CBIL::ISA::StudyAssayEntity::$isaType";
@@ -553,7 +554,7 @@ sub makeNodes {
     my $hash = { _value => $name };
     my $node = &makeObjectFromHash($class, $hash);
 		my $idObfuscationFunction = $studyXml->{node}->{$nodeName}->{idObfuscationFunction};
-		my $oldNodeValue = $node->getValue();
+		my $oldNodeId = $node->getValue();
 		if($idObfuscationFunction){
       my $functionsObj = $self->getFunctions();
       eval {
@@ -563,14 +564,17 @@ sub makeNodes {
         $self->handleError("problem w/ function $idObfuscationFunction: $@");
       }
 		}
-		my $nodeValue = $node->getValue();
+		my $nodeId = $node->getValue();
 		if($idObfuscationFunction && !defined($inputNames{$nodeName}) ){
 			## only check if id obfuscation is used and
-			## if this is is not an edge input (check only outputs)
-			if($self->{seenNodes}->{$nodeValue}){
-				die "Duplicate node ID for $nodeName $oldNodeValue: " . $node->getValue();
+			## if this is is not an edge INPUT (PARENT); check only OUTPUTs or nodes without any edges
+			if($nodeId eq $oldNodeId){
+				die "Node ID not obfuscated: $oldNodeId = $nodeId";
 			}
-			$self->{seenNodes}->{$nodeValue} = 1;
+			if(defined($self->{seenNodes}->{$nodeId})){
+				die "Duplicate node ID for $nodeName $oldNodeId: $nodeId = " . $self->{seenNodes}->{$nodeId};
+			}
+			$self->{seenNodes}->{$nodeId} = $oldNodeId;
 		}
     my $materialType = $studyXml->{node}->{$nodeName}->{type};
     $materialType = $sourceMtOverride if($sourceMtOverride && $isaType eq 'Source');
@@ -660,6 +664,15 @@ sub makeProtocols {
   return \@rv;
 }
 
+sub writeObfuscatedIdFile {
+	my ($self) = @_;
+	my $file = $self->getInvestigationDirectory() . "/idObfuscation.txt";
+	open(FH, ">>$file") or die "Cannot write $file: $!";
+	while(my ($obfuscatedId,$originalId) = each(%{$self->{seenNodes}})){
+		printf FH ("%s\t%s\n", $originalId, $obfuscatedId);
+	}
+	close(FH);
+}
 
 #--------------------------------------------------------------------------------
 
