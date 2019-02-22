@@ -238,7 +238,6 @@ sub parseStudy {
   $study->{_edges} = [];
 
   $self->addNodesAndEdgesToStudy($study, $fileHandle, $studyXml);
-	$self->writeObfuscatedIdFile() if($self->{seenNodes});
 
 
 #  my %nodeType;
@@ -573,7 +572,6 @@ sub makeNodes {
 				die "Node ID not obfuscated: $oldNodeId = $nodeId";
 			}
 			if(defined($self->{seenNodes}->{$nodeId})){
-				$self->writeObfuscatedIdFile();
 				die "Duplicate node ID for $nodeName $oldNodeId: $nodeId = " . $self->{seenNodes}->{$nodeId};
 			}
 			$self->{seenNodes}->{$nodeId} = $oldNodeId;
