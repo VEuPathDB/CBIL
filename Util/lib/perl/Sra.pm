@@ -212,7 +212,7 @@ sub getRunIdsFromSraStudyId {
 
     my @ids = &runEfetch($Count, $QueryKey, $WebEnv);
 
-    if ($studyId =~ /^SRX/ ) {
+    if ($studyId =~ /^[SED]RX/ ) {
 	return @ids;
     } else {
 	my @single_id=();
@@ -324,7 +324,7 @@ sub getRunIdsFromSraSampleId {
 
  my @ids = &runEfetch($Count, $QueryKey, $WebEnv);
 
- if ($sid =~ /^SRX/ ) {
+ if ($sid =~ /^[SED]RX/ ) {
      return @ids;
  } else {
      my @single_id=();
