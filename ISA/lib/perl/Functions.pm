@@ -265,6 +265,7 @@ sub valueIsMappedValue {
   my ($self, $obj) = @_;
 
   my $value = $obj->getValue();
+	unless(defined($value)){ return; }
   my $qualSourceId = $obj->getQualifier();
 
   my $valueMapping = $self->getValueMapping();
@@ -280,11 +281,11 @@ sub valueIsMappedValue {
 
     my $newValue = $qualifierValues->{$lcValue};
 		if(defined($newValue)){
-    	if($newValue || $newValue eq '0') {
-  	    $obj->setValue($newValue);
-  	  }
-  	  elsif(uc($newValue) eq ":::UNDEF:::"){
+  	  if(uc($newValue) eq ':::UNDEF:::'){
   	    $obj->setValue(undef);
+  	  }
+    	elsif($newValue || $newValue eq '0') {
+  	    $obj->setValue($newValue);
   	  }
   	}
   }
@@ -534,28 +535,34 @@ sub idObfuscateDate1 {
   my $nodeId = $node->getValue();
   die unless defined($nodeId);
 	my $local = {};
-	($local->{dateOrig}) = $nodeId =~ /^[^_]+_([^_]+)/;
+	($local->{dateOrig}) = ($nodeId =~ /^[^_]+_([^_]+)/);
 	## OK I spent about 4 hours debugging this shit
 	## apparently a leading 0 in "09-07-2009" will cause ParseDate to read it as 2009-07-20
+	my $dateOrig = $local->{dateOrig}; # save this for regex replace
 	$local->{dateOrig} =~ s/^0//;
 	$local->{formattedDate} = "NOT SET";
-	print ("original: $local->{dateOrig}\n");
   my $dateObfuscation = $self->getDateObfuscation();
   my $delta = $dateObfuscation->{$materialTypeSourceId}->{$nodeId};
-	print ("original: $local->{dateOrig} with delta=$delta\n");
   if($delta) {
-  	$local->{unixDate} = ParseDate($local->{dateOrig});
-	  $local->{preDate} = UnixDate($local->{unixDate}, "%Y-%m-%d");
-	  $local->{date} = DateCalc($local->{unixDate}, $delta); 
-	  $local->{formattedDate} = UnixDate($local->{date}, "%Y-%m-%d");
+    Date_Init("DateFormat=US");
+    $local->{unixDate} = ParseDate($local->{dateOrig});
+    unless($local->{unixDate}){
+      Date_Init("DateFormat=non-US");
+      $local->{unixDate} = ParseDate($local->{dateOrig});
+    }
+    unless($local->{unixDate}){
+      die "Cannot parse date: " . $local->{dateOrig};
+    }
+    $local->{preDate} = UnixDate($local->{unixDate}, "%Y-%m-%d");
+    $local->{date} = DateCalc($local->{unixDate}, $delta);
+    $local->{formattedDate} = UnixDate($local->{date}, "%Y-%m-%d");
 	}
 	else {
 		die "MISSINGDELTA:$type:$materialTypeSourceId:$nodeId";
 	}
 	my $newId = $nodeId; 
-	$newId =~ s/$local->{dateOrig}/$local->{formattedDate}/;
-	##print Dumper $local;
-	##print "FINAL: $nodeId => $newId\n";
+	die "No date in $nodeId\n" . Dumper $local unless $local->{dateOrig} && $local->{formattedDate}; 
+	$newId =~ s/$dateOrig/$local->{formattedDate}/;
   return $node->setValue($newId);
 }
 
