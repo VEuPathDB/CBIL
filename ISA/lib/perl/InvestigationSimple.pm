@@ -665,9 +665,9 @@ sub makeProtocols {
 }
 
 sub writeObfuscatedIdFile {
-	my ($self) = @_;
-	my $file = $self->getInvestigationDirectory() . "/idObfuscation.txt";
-	open(FH, ">>$file") or die "Cannot write $file: $!";
+	my ($self,$file) = @_;
+	$file ||= $self->getInvestigationDirectory() . "/idObfuscation.txt";
+	open(FH, ">$file") or die "Cannot write $file: $!";
 	while(my ($obfuscatedId,$originalId) = each(%{$self->{seenNodes}})){
 		printf FH ("%s\t%s\n", $originalId, $obfuscatedId);
 	}
