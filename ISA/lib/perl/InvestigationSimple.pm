@@ -569,7 +569,7 @@ sub makeNodes {
 			## only check if id obfuscation is used and
 			## if this is is not an edge INPUT (PARENT); check only OUTPUTs or nodes without any edges
 			if($nodeId eq $oldNodeId){
-				die "Node ID not obfuscated: $oldNodeId = $nodeId";
+				warn "Node ID not obfuscated: $oldNodeId = $nodeId";
 			}
 			if(defined($self->{seenNodes}->{$nodeId})){
 				die "Duplicate node ID for $nodeName $oldNodeId: $nodeId = " . $self->{seenNodes}->{$nodeId};
@@ -668,6 +668,7 @@ sub writeObfuscatedIdFile {
 	my ($self,$file) = @_;
 	$file ||= $self->getInvestigationDirectory() . "/idObfuscation.txt";
 	open(FH, ">$file") or die "Cannot write $file: $!";
+		printf FH ("ObfuscatedID\tOriginalID\n");
 	while(my ($obfuscatedId,$originalId) = each(%{$self->{seenNodes}})){
 		printf FH ("%s\t%s\n", $originalId, $obfuscatedId);
 	}
