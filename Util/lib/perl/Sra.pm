@@ -42,7 +42,7 @@ sub getFastqForStudyId {
 
 sub getFastqForSampleIds {
   my($sids,$fileoutone,$fileouttwo,$dontdownload,$isPairedEnd) = @_;
-  print STDERR Dumper(@$sids);
+
   $fileoutone = $fileoutone ? $fileoutone : "reads_1.fastq";
   $fileouttwo = $fileouttwo ? $fileouttwo : "reads_2.fastq";
   my @rids;
@@ -184,34 +184,64 @@ sub getCsForSampleIds {
 }
 
 sub getRunIdsFromSraStudyId {
-  my ($studyId) = @_;
+    my ($studyId) = @_;
 
-  my $utils = "https://www.ncbi.nlm.nih.gov/entrez/eutils";
+    my $utils = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
 
-  my $esearch = "$utils/esearch?db=sra&term=$studyId&usehistory=1&retmax=1";
+    my $esearch = "$utils/esearch.fcgi?api_key=f2006d7a9fa4e92b2931d964bb75ada85a08&db=sra&retmax=1&usehistory=y&term=$studyId";
 
-  my $esearch_result = get($esearch);
+    my $esearch_result;
+    my $counter=0;
+    while (! defined $esearch_result) {
+	if ($counter==10) {
+	    die "esearch error. Could not access $esearch\n";
+	}
+	sleep 1;
+	$esearch_result = get($esearch);
+	$counter++;
+    }
 
-  $esearch_result =~ 
-m|<Count>(\d+)</Count>.*<QueryKey>(\d+)</QueryKey>.*<WebEnv>(\S+)</WebEnv>|s; 
+    $esearch_result =~ /<Count>(\d+)<\/Count>/s;
+    my $Count = $1; 
 
-  my $Count    = $1; 
-  my $QueryKey = $2; 
-  my $WebEnv   = $3; 
+    $esearch_result =~ /QueryKey>(\d+)<\/QueryKey>/s;
+    my $QueryKey = $1; 
 
-  my @ids = &runEfetch($Count, $QueryKey, $WebEnv);
+    $esearch_result =~ /<WebEnv>(\S+)<\/WebEnv>/s;
+    my $WebEnv = $1; 
 
-  return @ids;
+    my @ids = &runEfetch($Count, $QueryKey, $WebEnv);
+
+    if ($studyId =~ /^[SED]RX/ ) {
+	return @ids;
+    } else {
+	my @single_id=();
+	foreach my $a (@ids) {
+	    if ($a->[1] eq $sid) {
+		push(@single_id,$a);
+	    }
+	}
+	return @single_id;
+    }
 }
 
 sub runEfetch {
   my ($Count, $QueryKey, $WebEnv) = @_;
 
-  my $utils = "https://www.ncbi.nlm.nih.gov/entrez/eutils";
+  my $utils = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
 
-  my $efetch = "$utils/efetch.fcgi?rettype=xml&retmode=text&retmax=$Count&db=sra&query_key=$QueryKey&WebEnv=$WebEnv";
+  my $efetch = "$utils/efetch.fcgi?api_key=f2006d7a9fa4e92b2931d964bb75ada85a08&rettype=xml&retmode=text&retmax=$Count&db=sra&query_key=$QueryKey&WebEnv=$WebEnv";
 
-  my $efetch_result = get($efetch); 
+  my $efetch_result;
+  my $counter=0;
+  while (! defined $efetch_result) {
+      if ($counter==10) {
+	  die "runEfetch error. Could not access $efetch.\n";
+      }
+      sleep 1;
+      $efetch_result = get($efetch);
+      $counter++;
+  }
 
   my $root = XMLin($efetch_result);
 
@@ -268,26 +298,43 @@ sub runEfetch {
 sub getRunIdsFromSraSampleId { 
  my ($sid) = @_; 
 
- my $utils = "https://www.ncbi.nlm.nih.gov/entrez/eutils"; 
+ my $utils = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"; 
 
- my $db     = "sra"; 
- my $report = "xml"; 
+ my $esearch = "$utils/esearch.fcgi?api_key=f2006d7a9fa4e92b2931d964bb75ada85a08&db=sra&retmax=1&usehistory=y&term=$sid"; 
 
- my $esearch = "$utils/esearch.fcgi?db=$db&retmax=1&usehistory=y&term="; 
- my $esearch_result = get($esearch . $sid); 
+ my $esearch_result;
+ my $counter=0;
+ while (! defined $esearch_result) {
+     if ($counter==10) {
+	 die "esearch error. Could not access $esearch\n";
+     }
+     sleep 1;
+     $esearch_result = get($esearch);
+     $counter++;
+ }
 
-# print $esearch_result;
+ $esearch_result =~ /<Count>(\d+)<\/Count>/s;
+ my $Count = $1; 
 
- $esearch_result =~ 
-m|<Count>(\d+)</Count>.*<QueryKey>(\d+)</QueryKey>.*<WebEnv>(\S+)</WebEnv>|s; 
+ $esearch_result =~ /QueryKey>(\d+)<\/QueryKey>/s;
+ my $QueryKey = $1; 
 
- my $Count    = $1; 
- my $QueryKey = $2; 
- my $WebEnv   = $3; 
+ $esearch_result =~ /<WebEnv>(\S+)<\/WebEnv>/s;
+ my $WebEnv = $1; 
 
  my @ids = &runEfetch($Count, $QueryKey, $WebEnv);
- 
- return @ids;
+
+ if ($sid =~ /^[SED]RX/ ) {
+     return @ids;
+ } else {
+     my @single_id=();
+     foreach my $a (@ids) {
+	 if ($a->[1] eq $sid) {
+	     push(@single_id,$a);
+	 }
+     }
+     return @single_id;
+ }
 }
 
 ##do wget, then split files with fastq-dump, delete .sra when complete and also the barcode if relevant

@@ -4,11 +4,12 @@ require Exporter;
 
 @EXPORT_OK = qw(makeObjectFromHash makeOntologyTerm);
 
-use Scalar::Util 'blessed';
+use Scalar::Util qw/blessed looks_like_number/;
 
 use Date::Manip qw(Date_Init ParseDate UnixDate DateCalc);
 
 use strict;
+use warnings;
 
 use CBIL::ISA::OntologyTerm;
 use Date::Parse qw/strptime/;
@@ -16,6 +17,7 @@ use Date::Parse qw/strptime/;
 use File::Basename;
 
 use Data::Dumper;
+use Digest::SHA;
 
 sub getOntologyMapping {$_[0]->{_ontology_mapping} }
 sub getOntologySources {$_[0]->{_ontology_sources} }
@@ -263,6 +265,7 @@ sub valueIsMappedValue {
   my ($self, $obj) = @_;
 
   my $value = $obj->getValue();
+	unless(defined($value)){ return; }
   my $qualSourceId = $obj->getQualifier();
 
   my $valueMapping = $self->getValueMapping();
@@ -277,13 +280,14 @@ sub valueIsMappedValue {
     my $lcValue = lc($value);
 
     my $newValue = $qualifierValues->{$lcValue};
-
-    if($newValue || $newValue eq '0') {
-      $obj->setValue($newValue);
-    }
-    elsif(uc($newValue) eq ":::UNDEF:::"){
-      $obj->setValue(undef);
-    }
+		if(defined($newValue)){
+  	  if(uc($newValue) eq ':::UNDEF:::'){
+  	    $obj->setValue(undef);
+  	  }
+    	elsif($newValue || $newValue eq '0') {
+  	    $obj->setValue($newValue);
+  	  }
+  	}
   }
 }
 
@@ -347,9 +351,9 @@ sub splitUnitFromValue {
   my ($self, $obj) = @_;
 
   my $om = $self->getOntologyMapping();
-  my $value = $obj->getValue();
+  my $valueOrig = $obj->getValue();
 
-  my ($value, $unitString) = split(/\s+/, $value);
+  my ($value, $unitString) = split(/\s+/, $valueOrig);
   $obj->setValue($value);
 
   my $class = "CBIL::ISA::StudyAssayEntity::Unit";
@@ -483,11 +487,87 @@ sub formatNumeric {
   }
 }
 
+sub formatNumericFiltered {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  unless(looks_like_number($val)){
+    return $obj->setValue(undef);
+  }
+}
+
 sub formatFtoC {
   my ($self, $obj) = @_;
   my $val = $obj->getValue();
   return unless defined($val);
   return $obj->setValue((($val - 32) * 5) / 9);
+}
+
+sub digestSHAHex16 {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val);
+  return $obj->setValue(substr(Digest::SHA::sha1_hex($val),0,16));
+}
+
+sub encryptSuffix1 {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val);
+	my ($prefix,$suffix1,@suffixN) = split(/_/, $val);
+	$suffix1 = substr(Digest::SHA::sha1_hex($suffix1),0,16);
+	my $newId = join("_", $prefix, $suffix1, @suffixN); 
+  return $obj->setValue($newId);
+}
+
+sub encryptSuffix2 {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val);
+	my @id = split(/_/, $val);
+	$id[2] = substr(Digest::SHA::sha1_hex($id[2]),0,16);
+	my $newId = join("_", @id); 
+  return $obj->setValue($newId);
+}
+
+sub idObfuscateDate1 {
+  my ($self, $node, $type) = @_;
+	my $materialTypeSourceId = $self->getOntologyMapping()->{$type}->{'materialType'}->{'source_id'};
+  my $nodeId = $node->getValue();
+  die unless defined($nodeId);
+	my $local = {};
+	($local->{dateOrig}) = ($nodeId =~ /^[^_]+_([^_]+)/);
+	if($local->{dateOrig} eq "na"){
+		$nodeId =~ s/_na/_nax/; # make it different
+  	return $node->setValue($nodeId);
+	}
+	## OK I spent about 4 hours debugging this shit
+	## apparently a leading 0 in "09-07-2009" will cause ParseDate to read it as 2009-07-20
+	my $dateOrig = $local->{dateOrig}; # save this for regex replace
+	$local->{dateOrig} =~ s/^0//;
+	$local->{formattedDate} = "NOT SET";
+  my $dateObfuscation = $self->getDateObfuscation();
+  my $delta = $dateObfuscation->{$materialTypeSourceId}->{$nodeId};
+  if($delta) {
+    # Date_Init("DateFormat=US");
+    $local->{unixDate} = ParseDate($local->{dateOrig});
+    unless($local->{unixDate}){
+      Date_Init("DateFormat=US");
+      $local->{unixDate} = ParseDate($local->{dateOrig});
+    }
+    unless($local->{unixDate}){
+      warn "Cannot parse date: " . $local->{dateOrig};
+    }
+    $local->{preDate} = UnixDate($local->{unixDate}, "%Y-%m-%d");
+    $local->{date} = DateCalc($local->{unixDate}, $delta);
+    $local->{formattedDate} = UnixDate($local->{date}, "%Y-%m-%d");
+	}
+	else {
+		die "MISSINGDELTA:$type:$materialTypeSourceId:$nodeId";
+	}
+	my $newId = $nodeId; 
+	die "No date in $nodeId\n" . Dumper $local unless $local->{dateOrig} && $local->{formattedDate}; 
+	$newId =~ s/$dateOrig/$local->{formattedDate}/;
+  return $node->setValue($newId);
 }
 
 sub makeObjectFromHash {
@@ -503,7 +583,6 @@ sub makeObjectFromHash {
 
   return $obj;
 }
-
 
 1;
 

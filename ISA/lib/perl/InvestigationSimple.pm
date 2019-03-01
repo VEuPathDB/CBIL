@@ -220,8 +220,8 @@ sub parseStudy {
   my $fileName = $study->getFileName();
   my $fileHandle = $study->getFileHandle();
 
-  print STDERR "Processing study file $fileName\n";
   unless($fileHandle) {
+  	print STDERR "Processing study file $fileName\n";
     open($fileHandle,  $fileName) or die "Cannot open file $fileName for reading: $!";    
     $study->setFileHandle($fileHandle);
 
@@ -238,6 +238,7 @@ sub parseStudy {
   $study->{_edges} = [];
 
   $self->addNodesAndEdgesToStudy($study, $fileHandle, $studyXml);
+
 
 #  my %nodeType;
 #  foreach(@{$study->getNodes()}) {
@@ -522,6 +523,12 @@ sub makeNodes {
 
   my %nodes;
 
+	my %inputNames;
+	foreach my $edge ( @{$studyXml->{edge}} ){
+		$inputNames{ $edge->{input} } = 1;
+	}
+
+	my $idObfuscated = 0;
   foreach my $nodeName (keys %{$studyXml->{node}}) {
     my $isaType = defined($studyXml->{node}->{$nodeName}->{isaObject}) ? $studyXml->{node}->{$nodeName}->{isaObject} : $nodeName;
     my $class = "CBIL::ISA::StudyAssayEntity::$isaType";
@@ -546,7 +553,29 @@ sub makeNodes {
 
     my $hash = { _value => $name };
     my $node = &makeObjectFromHash($class, $hash);
-
+		my $idObfuscationFunction = $studyXml->{node}->{$nodeName}->{idObfuscationFunction};
+		my $oldNodeId = $node->getValue();
+		if($idObfuscationFunction){
+      my $functionsObj = $self->getFunctions();
+      eval {
+				$functionsObj->$idObfuscationFunction($node,$studyXml->{node}->{$nodeName}->{type});
+      };
+      if ($@) {
+        $self->handleError("problem w/ function $idObfuscationFunction: $@");
+      }
+		}
+		my $nodeId = $node->getValue();
+		if($idObfuscationFunction && !defined($inputNames{$nodeName}) ){
+			## only check if id obfuscation is used and
+			## if this is is not an edge INPUT (PARENT); check only OUTPUTs or nodes without any edges
+			if($nodeId eq $oldNodeId){
+				warn "Node ID not obfuscated: $oldNodeId = $nodeId";
+			}
+			if(defined($self->{seenNodes}->{$nodeId})){
+				die "Duplicate node ID for $nodeName $oldNodeId: $nodeId = " . $self->{seenNodes}->{$nodeId};
+			}
+			$self->{seenNodes}->{$nodeId} = $oldNodeId;
+		}
     my $materialType = $studyXml->{node}->{$nodeName}->{type};
     $materialType = $sourceMtOverride if($sourceMtOverride && $isaType eq 'Source');
     $materialType = $sampleMtOverride if($sampleMtOverride && $isaType eq 'Sample');
@@ -608,7 +637,7 @@ sub makeProtocols {
 
   foreach my $termName (keys %$ontologyMapping) {
     if($ontologyMapping->{$termName}->{$omType}) {
-      my $parent = $ontologyMapping->{$termName}->{$omType}->{parent};
+      my $parent = lc($ontologyMapping->{$termName}->{$omType}->{parent});
       my $sourceId = $ontologyMapping->{$termName}->{$omType}->{source_id};
 
       next unless($protocols->{$parent});
@@ -635,6 +664,16 @@ sub makeProtocols {
   return \@rv;
 }
 
+sub writeObfuscatedIdFile {
+	my ($self,$file) = @_;
+	$file ||= $self->getInvestigationDirectory() . "/idObfuscation.txt";
+	open(FH, ">$file") or die "Cannot write $file: $!";
+		printf FH ("ObfuscatedID\tOriginalID\n");
+	while(my ($obfuscatedId,$originalId) = each(%{$self->{seenNodes}})){
+		printf FH ("%s\t%s\n", $originalId, $obfuscatedId);
+	}
+	close(FH);
+}
 
 #--------------------------------------------------------------------------------
 
