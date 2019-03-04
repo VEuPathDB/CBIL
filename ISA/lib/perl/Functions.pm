@@ -536,6 +536,10 @@ sub idObfuscateDate1 {
   die unless defined($nodeId);
 	my $local = {};
 	($local->{dateOrig}) = ($nodeId =~ /^[^_]+_([^_]+)/);
+	if($local->{dateOrig} eq "na"){
+		$nodeId =~ s/_na/_nax/; # make it different
+  	return $node->setValue($nodeId);
+	}
 	## OK I spent about 4 hours debugging this shit
 	## apparently a leading 0 in "09-07-2009" will cause ParseDate to read it as 2009-07-20
 	my $dateOrig = $local->{dateOrig}; # save this for regex replace
@@ -544,14 +548,14 @@ sub idObfuscateDate1 {
   my $dateObfuscation = $self->getDateObfuscation();
   my $delta = $dateObfuscation->{$materialTypeSourceId}->{$nodeId};
   if($delta) {
-    Date_Init("DateFormat=US");
+    # Date_Init("DateFormat=US");
     $local->{unixDate} = ParseDate($local->{dateOrig});
     unless($local->{unixDate}){
-      Date_Init("DateFormat=non-US");
+      Date_Init("DateFormat=US");
       $local->{unixDate} = ParseDate($local->{dateOrig});
     }
     unless($local->{unixDate}){
-      die "Cannot parse date: " . $local->{dateOrig};
+      warn "Cannot parse date: " . $local->{dateOrig};
     }
     $local->{preDate} = UnixDate($local->{unixDate}, "%Y-%m-%d");
     $local->{date} = DateCalc($local->{unixDate}, $delta);
