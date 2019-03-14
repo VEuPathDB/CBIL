@@ -505,6 +505,14 @@ sub formatNumericFiltered {
   }
 }
 
+sub formatClinicalFtoC {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val);
+	return unless $val > 65;
+  return $obj->setValue((($val - 32) * 5) / 9);
+}
+
 sub formatFtoC {
   my ($self, $obj) = @_;
   my $val = $obj->getValue();
