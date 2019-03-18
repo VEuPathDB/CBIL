@@ -152,7 +152,7 @@ sub internalDateWithObfuscation {
   my $value = $obj->getValue();
 
   # deal with "Mon Year" values by setting the day to the first day of the month
-  if($value =~ /^\w{3}\s*\d{2}(\d{2})?$/) {
+  if(defined($value) && ($value =~ /^\w{3}\s*\d{2}(\d{2})?$/)) {
     $value = "1 " . $value;
   }
 
@@ -503,6 +503,14 @@ sub formatNumericFiltered {
   unless(looks_like_number($val)){
     return $obj->setValue(undef);
   }
+}
+
+sub formatClinicalFtoC {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val);
+	return unless $val > 65;
+  return $obj->setValue((($val - 32) * 5) / 9);
 }
 
 sub formatFtoC {
