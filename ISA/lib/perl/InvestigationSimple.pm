@@ -529,7 +529,6 @@ sub makeNodes {
     $inputNames{ $edge->{input} } = 1;
   }
 
-  my $idObfuscated = 0;
   foreach my $nodeName (keys %{$studyXml->{node}}) {
     my $isaType = defined($studyXml->{node}->{$nodeName}->{isaObject}) ? $studyXml->{node}->{$nodeName}->{isaObject} : $nodeName;
     my $class = "CBIL::ISA::StudyAssayEntity::$isaType";

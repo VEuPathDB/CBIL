@@ -72,6 +72,7 @@ sub new {
     while(<FILE>) {
       chomp;
       my ($recordTypeSourceId, $recordPrimaryKey, $delta) = split(/\t/, $_);
+			#die("$dateObfuscationFile has a bad format: [$recordTypeSourceId] [$recordPrimaryKey] [$delta]\n") unless($recordTypeSourceId && $recordPrimaryKey && $delta);
       $dateObfuscation->{$recordTypeSourceId}->{$recordPrimaryKey} = $delta;
     }
     close FILE;
@@ -219,8 +220,8 @@ sub internalDateWithObfuscation {
   unless($value){
     return $value;
   }
-  unless($formattedDate) {
-    die "Date Format not supported for [$value], OR bad date obfuscation file\n" . $obj->getAlternativeQualifier . "\n";
+  unless(defined($formattedDate)) {
+    die "Date Format not supported for [$value]=[$formattedDate], OR bad date obfuscation file\n" . $obj->getAlternativeQualifier . "\n" . Dumper($obj);
   }
 
   return $formattedDate;
