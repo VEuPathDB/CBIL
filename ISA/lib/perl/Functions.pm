@@ -72,7 +72,7 @@ sub new {
     while(<FILE>) {
       chomp;
       my ($recordTypeSourceId, $recordPrimaryKey, $delta) = split(/\t/, $_);
-			#die("$dateObfuscationFile has a bad format: [$recordTypeSourceId] [$recordPrimaryKey] [$delta]\n") unless($recordTypeSourceId && $recordPrimaryKey && $delta);
+      #die("$dateObfuscationFile has a bad format: [$recordTypeSourceId] [$recordPrimaryKey] [$delta]\n") unless($recordTypeSourceId && $recordPrimaryKey && $delta);
       $dateObfuscation->{$recordTypeSourceId}->{$recordPrimaryKey} = $delta;
     }
     close FILE;
@@ -493,6 +493,7 @@ sub formatTitleCase {
 sub formatNumeric {
   my ($self, $obj) = @_;
   my $val = $obj->getValue();
+    return unless defined($val);
   if($val =~ /^na$/i){
     return $obj->setValue(undef);
   }
@@ -510,7 +511,7 @@ sub formatClinicalFtoC {
   my ($self, $obj) = @_;
   my $val = $obj->getValue();
   return unless defined($val);
-	return unless $val > 65;
+  return unless $val > 65;
   return $obj->setValue((($val - 32) * 5) / 9);
 }
 
