@@ -192,7 +192,10 @@ sub internalDateWithObfuscation {
           }
           # I had a parent, but it didn't have a delta
           unless($delta) {
-            die "No delta available for $nodeId";
+          #  die "No delta available for $nodeId";
+          #  TODO set a property for a fallback callback
+         	  $delta = $self->calculateDelta();
+         	  $self->cacheDelta($materialTypeSourceId, $nodeId, $delta);
           }
         }
 
@@ -556,8 +559,8 @@ sub idObfuscateDate1 {
   die unless defined($nodeId);
   my $local = {};
   ($local->{dateOrig}) = ($nodeId =~ /^[^_]+_([^_]+)/);
-  if($local->{dateOrig} eq "na"){
-    $nodeId =~ s/_na/_nax/; # make it different
+  if(lc($local->{dateOrig}) eq "na"){
+    $nodeId =~ s/_na/_nax/i; # make it different
     return $node->setValue($nodeId);
   }
   ## OK I spent about 4 hours debugging this shit
