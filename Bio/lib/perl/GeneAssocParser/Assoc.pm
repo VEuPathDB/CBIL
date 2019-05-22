@@ -38,6 +38,7 @@ sub parse{
 	$self->setDBObjectType($columns[11]);
 	$self->setTaxon($columns[12]);
 	$self->setDate($columns[13]);
+	$self->setDataSource($columns[14]);
 	
     }
     else{
@@ -144,6 +145,11 @@ sub setDate{
     $self->{Date} = $value;
 }
 
+sub setDataSource{
+    my ($self, $value) = @_;
+    $self->{DataSource} = $value;
+}
+
 sub getDB{
     my ($self) = @_;
     return $self->{DB};
@@ -214,6 +220,11 @@ sub getTaxon{
 sub getEntryDate{
     my ($self) = @_;
     return $self->{Date};
+}
+
+sub getDataSource{
+    my ($self) = @_;
+    return $self->{DataSource};
 }
 
 
