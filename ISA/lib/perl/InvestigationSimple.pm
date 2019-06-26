@@ -78,6 +78,7 @@ sub new {
     }
     elsif(ref($ot->{name}) eq "HASH"){
       @names = map { $_->{content} } values %{$ot->{name}};
+      $ot->{name} = \@names;
     }
     else {
       die "Cannot read names from ontologyTerm $sourceId in $ontologyMappingFile\n"
