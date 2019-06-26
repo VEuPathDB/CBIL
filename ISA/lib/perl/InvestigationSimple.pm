@@ -72,8 +72,17 @@ sub new {
   foreach my $ot (@{$ontologyMapping->{ontologyTerm}}) {
     my $sourceId = $ot->{source_id};
     $ontologyMapping{lc($sourceId)}->{$ot->{type}} = $ot;
-
-    foreach my $name (@{$ot->{name}}) {
+    my @names;
+    if(ref($ot->{name}) eq "ARRAY"){
+      @names = @{$ot->{name}};
+    }
+    elsif(ref($ot->{name}) eq "HASH"){
+      @names = map { $_->{content} } values %{$ot->{name}};
+    }
+    else {
+      die "Cannot read names from ontologyTerm $sourceId in $ontologyMappingFile\n"
+    }
+    foreach my $name (@names) {
       $ontologyMapping{lc($name)}->{$ot->{type}} = $ot;
     }
 
