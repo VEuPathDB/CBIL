@@ -12,8 +12,6 @@ use Data::Dumper;
 my $PROTOCOL_NAME = 'MetaCycle';
 
 #-------------------------------------------------------------------------------
-
-
 #sub getInputFile       { $_[0]->{inputFile} }
 #sub setInputFile       { $_[0]->{inputFile} = $_[1]}
 
@@ -23,13 +21,12 @@ my $PROTOCOL_NAME = 'MetaCycle';
 
 sub new {
     my ($class, $args) = @_;
-
    # my $requiredParams = ['inputFile'];
-    
     my $self = $class->SUPER::new($args);
-    
+
     return $self;
 }
+
 sub munge {
   my ($self) = @_;
   
@@ -49,72 +46,55 @@ sub munge {
 
 
   foreach my $result (@files){   
-
-  ######################################## ARSER file  (@names)   ##############################
+      ######################### ARSER file  (@names)   
       if($result =~ /^ARSresult_$inputFile/){
-
 	  push(@names,$result);
-	  
 	  my $new_ARSER_result = &formatARSERtable($result, $mainDirectory);
-	  
       }
       
- ##########################################JTK file (@names)  ##############################   
+      ########################  JTK file (@names)   
       if($result =~ /^JTKresult_$inputFile/){
-	  
 	  push(@names,$result);
-
 	  my $new_JTK_result = &formatJTKtable($result, $mainDirectory);
-
       }
- ########################################## ARSER file (@fileNames)  ##############################   
+      ######################### ARSER file (@fileNames)   
 
       if($result =~ /^new_arser_ARSresult_$inputFile/){
-	  
 	  push(@fileNames,$result);
-
       }
       
- ##########################################JTK file (@fileNames) ##############################   
+      ########################## JTK file (@fileNames)   
       if($result =~ /^new_jtk_JTKresult_$inputFile/){
-	  
 	  push(@fileNames,$result);
-
       }
-      
   }
 
 
   unless($self->getDoNotLoad()) {
       $self->setNames([@names]);                                                                                                  
-      $self->setFileNames([@fileNames]);################## FileNames!!!!!!!!!!!!!!!!   
+      $self->setFileNames([@fileNames]);
       $self->setProtocolName($PROTOCOL_NAME);
       $self->setSourceIdType("gene");
   }
   
- 
   $self->createConfigFile();
-
- 
+  
 }
 
 sub makeTempROutputFile {
     
     my ($self, $inputFile, $mainDirectory) = @_;
-
+    
     my ($rFh, $rFile) = tempfile();
-
+    
     my $rCode = <<"RCODE";
     library(MetaCycle);
-    meta2d(infile="$mainDirectory/$inputFile", outdir ="$mainDirectory", filestyle = "txt", timepoints = "line1", minper = 20, maxper = 28, 
-	   cycMethod= c("ARS","JTK"), analysisStrategy = "auto", outputFile = TRUE);
+    meta2d(infile="$mainDirectory/$inputFile", outdir ="$mainDirectory", filestyle = "txt", timepoints = "line1", minper = 20, maxper = 28, cycMethod= c("ARS","JTK"), analysisStrategy = "auto", outputFile = TRUE);
 RCODE
     print $rFh $rCode;
     close $rFh;
 return $rFile;
 }
-
-
 
 
 sub formatARSERtable{
