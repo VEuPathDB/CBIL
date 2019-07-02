@@ -291,6 +291,19 @@ sub valueIsMappedValue {
     my $lcValue = lc($value);
 
     my $newValue = $qualifierValues->{$lcValue};
+    unless(defined($newValue)){
+      foreach my $regex ( grep { /^{{.*}}$/ } keys %$qualifierValues){
+        my ($test) = ($regex =~ /^\{\{(.*)\}\}$/);
+        $test = qr/$test/;
+        if($lcValue =~ $test){
+          $newValue = $qualifierValues->{$regex};
+          last;
+        }
+        else {
+          printf STDERR ("NO MATCH $lcValue =~ $test\n");
+        }
+      }
+    }
     if(defined($newValue)){
       if(uc($newValue) eq ':::UNDEF:::'){
         $obj->setValue(undef);
