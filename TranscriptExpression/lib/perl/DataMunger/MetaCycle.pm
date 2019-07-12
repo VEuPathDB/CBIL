@@ -1,5 +1,5 @@
 package CBIL::TranscriptExpression::DataMunger::MetaCycle;
-use base qw(CBIL::TranscriptExpression::DataMunger::Loadable);
+use base qw(CBIL::TranscriptExpression::DataMunger::Profiles);
 
 use strict;
 use CBIL::TranscriptExpression::Error;
@@ -12,16 +12,22 @@ use Data::Dumper;
 my $PROTOCOL_NAME = 'MetaCycle';
 
 #-------------------------------------------------------------------------------
-#sub getInputFile       { $_[0]->{inputFile} }
-#sub setInputFile       { $_[0]->{inputFile} = $_[1]}
 
-#sub getMainDirectory       { $_[0]->{mainDirectory} }
-#sub setMainDirectory       { $_[0]->{mainDirectory} = $_[1]}
-
+sub getInputSuffix              { $_[0]->{inputSuffix} }
 
 sub new {
     my ($class, $args) = @_;
-   # my $requiredParams = ['inputFile'];
+
+    my $outputFile = $args->{profileSetName};
+    $outputFile =~ s/ /_/g;
+
+    $args->{doNotLoad} = 1;
+    $args->{outputFile} = $outputFile;
+
+    unless($args->{inputSuffix}) {
+      CBIL::TranscriptExpression::Error->new("Missing required argument [inputSuffix]")->throw();
+    }
+
     my $self = $class->SUPER::new($args);
 
     return $self;
@@ -29,8 +35,19 @@ sub new {
 
 sub munge {
   my ($self) = @_;
+
+  $self->SUPER::munge();
   
-  my $inputFile = $self->getInputFile();
+  my $samplesHash = $self->groupListHashRef($self->getSamples());
+
+  my %inputs;
+  foreach(keys %$samplesHash) {
+    foreach(@{$samplesHash->{$_}}) {
+      $inputs{$_} = 1;
+    }
+  }
+
+  my $inputFile = $self->getOutputFile();
   my $mainDirectory = $self->getMainDirectory();
 
   my $rFile = $self->makeTempROutputFile($inputFile,  $mainDirectory);
@@ -69,13 +86,18 @@ sub munge {
       }
   }
 
-
-  unless($self->getDoNotLoad()) {
-      $self->setNames([@names]);                                                                                                  
-      $self->setFileNames([@fileNames]);
-      $self->setProtocolName($PROTOCOL_NAME);
-      $self->setSourceIdType("gene");
+  my %inputProtocolAppNodesHash;
+  foreach(@names) {
+    push @{$inputProtocolAppNodesHash{$_}}, map { $_ . " " . $self->getInputSuffix() } keys %inputs;
   }
+
+  $self->setInputProtocolAppNodesHash(\%inputProtocolAppNodesHash);
+  $self->setNames(\@names);                                                                                                  
+  $self->setFileNames(\@fileNames);
+  $self->setProtocolName($PROTOCOL_NAME);
+  $self->setSourceIdType("gene");
+
+  $self->{doNotLoad} = 0;
   
   $self->createConfigFile();
   
