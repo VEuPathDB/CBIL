@@ -48,6 +48,8 @@ sub munge {
   }
 
   my $inputFile = $self->getOutputFile();
+
+
   my $mainDirectory = $self->getMainDirectory();
 
   my $rFile = $self->makeTempROutputFile($inputFile,  $mainDirectory);
@@ -58,38 +60,33 @@ sub munge {
 
   my @files = readdir DIR ;
 
+  closedir DIR;
+
   my @names;
   my @fileNames;
 
-
   foreach my $result (@files){   
-      ######################### ARSER file  (@names)   
+
+      ######################### ARSER file  (@names)(@fileNames)   
       if($result =~ /^ARSresult_$inputFile/){
 	  push(@names,$result);
+	  push(@fileNames,"new_arser_ARSresult_$inputFile");
 	  my $new_ARSER_result = &formatARSERtable($result, $mainDirectory);
       }
-      
-      ########################  JTK file (@names)   
+      ########################  JTK file (@names)(@fileNames)   
       if($result =~ /^JTKresult_$inputFile/){
 	  push(@names,$result);
+	  push(@fileNames,"new_jtk_JTKresult_$inputFile");
 	  my $new_JTK_result = &formatJTKtable($result, $mainDirectory);
-      }
-      ######################### ARSER file (@fileNames)   
-
-      if($result =~ /^new_arser_ARSresult_$inputFile/){
-	  push(@fileNames,$result);
-      }
-      
-      ########################## JTK file (@fileNames)   
-      if($result =~ /^new_jtk_JTKresult_$inputFile/){
-	  push(@fileNames,$result);
       }
   }
 
   my %inputProtocolAppNodesHash;
   foreach(@names) {
     push @{$inputProtocolAppNodesHash{$_}}, map { $_ . " " . $self->getInputSuffix() } keys %inputs;
+    #print $_ . "\n";
   }
+
 
   $self->setInputProtocolAppNodesHash(\%inputProtocolAppNodesHash);
   $self->setNames(\@names);                                                                                                  
@@ -100,7 +97,7 @@ sub munge {
   $self->{doNotLoad} = 0;
   
   $self->createConfigFile();
-  
+ 
 }
 
 sub makeTempROutputFile {
@@ -111,7 +108,7 @@ sub makeTempROutputFile {
     
     my $rCode = <<"RCODE";
     library(MetaCycle);
-    meta2d(infile="$mainDirectory/$inputFile", outdir ="$mainDirectory", filestyle = "txt", timepoints = "line1", minper = 20, maxper = 28, cycMethod= c("ARS","JTK"), analysisStrategy = "auto", outputFile = TRUE);
+    meta2d(infile="$mainDirectory/$inputFile", outdir ="$mainDirectory", filestyle = "txt", timepoints = "line1", minper = 20, maxper = 28, cycMethod= c("ARS","JTK"), analysisStrategy = "auto", outputFile = TRUE, outIntegration = "noIntegration");
 RCODE
     print $rFh $rCode;
     close $rFh;
