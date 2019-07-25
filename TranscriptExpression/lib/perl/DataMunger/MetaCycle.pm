@@ -70,12 +70,11 @@ sub munge {
       #(1)######################## ARSER file  (@names)(@fileNames)   
       if($result =~ /^ARSresult_$inputFile/){
 	  push(@names,$result);
-	  push(@fileNames,"new_arser_ARSresult_$inputFile");
+	  push(@fileNames,"new_arser_meta2d_$inputFile");
       }
 
       #(2)######################## format ARSER file   
       if($result =~ /^meta2d_$inputFile/){
-	  
 	  my $new_ARSER_result = &formatARSERtable($result, $mainDirectory);
       }
 
