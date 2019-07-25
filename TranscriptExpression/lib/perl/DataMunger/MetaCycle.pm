@@ -67,18 +67,29 @@ sub munge {
 
   foreach my $result (@files){   
 
-      ######################### ARSER file  (@names)(@fileNames)   
+      #(1)######################## ARSER file  (@names)(@fileNames)   
       if($result =~ /^ARSresult_$inputFile/){
 	  push(@names,$result);
-	  push(@fileNames,"new_arser_ARSresult_$inputFile");
+	  push(@fileNames,"new_arser_meta2d_$inputFile");
+      }
+
+      #(2)######################## format ARSER file   
+      if($result =~ /^meta2d_$inputFile/){
 	  my $new_ARSER_result = &formatARSERtable($result, $mainDirectory);
       }
-      ########################  JTK file (@names)(@fileNames)   
+
+      #(3)#######################  JTK file (@names)(@fileNames)   
       if($result =~ /^JTKresult_$inputFile/){
 	  push(@names,$result);
 	  push(@fileNames,"new_jtk_JTKresult_$inputFile");
+
+      #(4)#######################  format JTK file    
 	  my $new_JTK_result = &formatJTKtable($result, $mainDirectory);
+      
       }
+  
+
+
   }
 
   my %inputProtocolAppNodesHash;
@@ -108,7 +119,7 @@ sub makeTempROutputFile {
     
     my $rCode = <<"RCODE";
     library(MetaCycle);
-    meta2d(infile="$mainDirectory/$inputFile", outdir ="$mainDirectory", filestyle = "txt", timepoints = "line1", minper = 20, maxper = 28, cycMethod= c("ARS","JTK"), analysisStrategy = "auto", outputFile = TRUE, outIntegration = "noIntegration");
+    meta2d(infile="$mainDirectory/$inputFile", outdir ="$mainDirectory", filestyle = "txt", timepoints = "line1", minper = 20, maxper = 28, cycMethod= c("ARS","JTK"), analysisStrategy = "auto", outputFile = TRUE, outIntegration = "both",ARSmle = "auto",ARSdefaultPer = 24);
 RCODE
     print $rFh $rCode;
     close $rFh;
@@ -120,8 +131,8 @@ sub formatARSERtable{
     my ($arserTable,  $mainDirectory) = @_;
     
     my $rCode = <<"RCODE";
-    old_arser<-read.delim("$mainDirectory/$arserTable"); ## need to know the 1)'file name' and 2)'file path'
-    new_arser<-old_arser[c(1,5,6,12)];
+    meta2d_Integration<-read.delim("$mainDirectory/$arserTable"); ## need to know the 1)'file name' and 2)'file path'
+    new_arser<-meta2d_Integration[c(1,4,6,2)];
     colnames(new_arser) <- c("CycID","Period", "Amplitude", "Pvalue");
 
     write.table(new_arser,"$mainDirectory/new_arser_$arserTable", row.names=F,col.names=T,quote=F,sep="\t");
