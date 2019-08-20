@@ -276,7 +276,6 @@ sub valueIsMappedValue {
   my ($self, $obj) = @_;
 
   my $value = $obj->getValue();
-  unless(defined($value)){ return; }
   my $qualSourceId = $obj->getQualifier();
 
   my $valueMapping = $self->getValueMapping();
@@ -287,9 +286,11 @@ sub valueIsMappedValue {
     $qualifierValues = $valueMapping->{$qualName};
   }
 
+
   if($qualifierValues) {
     my $lcValue = lc($value);
-
+    unless(defined($value) || defined($qualifierValues->{':::undef:::'})){ return; }
+    unless(defined($lcValue)){ $lcValue = ':::undef:::';}
     my $newValue = $qualifierValues->{$lcValue};
     unless(defined($newValue)){
       foreach my $regex ( grep { /^{{.*}}$/ } keys %$qualifierValues){
@@ -536,6 +537,22 @@ sub formatFtoC {
   my $val = $obj->getValue();
   return unless defined($val);
   return $obj->setValue((($val - 32) * 5) / 9);
+}
+
+sub formatQuotation {
+  my ($self, $obj) = @_;
+  return $obj->setValue(sprintf("\"%s\"",$obj->getValue()));
+}
+
+sub parseDmsCoordinate {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  my ($decVal,$min,$sec) = ( $val =~ m/([+-]?\d+\.?\d*)/g );
+  my ($card) = ($val =~ /([NSEWnsew])/);
+  if($min){ $decVal += $min/60; }
+  if($sec){ $decVal += $sec/3600; }
+  if(defined($card) && $card =~ /[SWsw]/) { $decVal = -$decVal; }
+  return $obj->setValue($decVal);
 }
 
 sub digestSHAHex16 {
