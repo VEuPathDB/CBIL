@@ -252,7 +252,7 @@ sub dealWithAllOntologies {
 
 
     unless(($accession && $source) || blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::Characteristic' || blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::ParameterValue') {
-      $self->handleError("OntologyTerm $term is required to have accession and source.");
+      $self->handleError("OntologyTerm '$term' (context: ".$ontologyTerm->getContext().") is required to have accession and source.");
     }
   }
 }

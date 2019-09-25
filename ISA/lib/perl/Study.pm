@@ -226,7 +226,9 @@ sub makeStudyObjectsFromHash {
       }
 
       foreach my $n (keys %otHash) {
-        my $ontologyTerm = CBIL::ISA::OntologyTerm->new($otHash{$n});
+        my $otHash = $otHash{$n};
+        $otHash->{_context} = join ', ',  map { "$_=$hash{$_}" } keys %hash;
+        my $ontologyTerm = CBIL::ISA::OntologyTerm->new($otHash);
         eval {
           $obj->$setterName($ontologyTerm);
 
