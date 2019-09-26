@@ -63,6 +63,9 @@ sub read {
     # split and remove leading and trailing quotes
     my @a = map { s/^"(.*)"$/$1/; $_; } split($delimiter, $_);
 
+    # skip completely empty lines
+    next unless (length(join '', @a)>0);
+
     $studyIdentifier = $a[1] if(uc $a[0] eq 'STUDY IDENTIFIER');
     if(&isContextSwitch($a[0])) {
       $lineContext = uc $a[0];
