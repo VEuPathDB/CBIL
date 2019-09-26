@@ -226,15 +226,16 @@ sub makeStudyObjectsFromHash {
       }
 
       foreach my $n (keys %otHash) {
-        my $otHash = $otHash{$n};
-        $otHash->{_context} = join ', ',  map { "$_=$hash{$_}" } keys %hash;
-        my $ontologyTerm = CBIL::ISA::OntologyTerm->new($otHash);
-        eval {
-          $obj->$setterName($ontologyTerm);
-
-        };
-        if ($@) {
-          die "Unable to $setterName for class $class: $@";
+        # don't create and attach a term if the term free text is empty
+        if (defined $otHash{$n}{_term} && length($otHash{$n}{_term})) {
+          my $ontologyTerm = CBIL::ISA::OntologyTerm->new($otHash{$n});
+          $ontologyTerm->setDebugContext(join ', ',  map { "$_=$hash{$_}" } keys %hash);
+          eval {
+            $obj->$setterName($ontologyTerm);
+          };
+          if ($@) {
+            die "Unable to $setterName for class $class: $@";
+          }
         }
       }
     }

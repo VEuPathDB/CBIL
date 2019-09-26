@@ -18,14 +18,15 @@ sub getTermAccessionNumber { $_[0]->{_term_accession_number} }
 sub setTermSourceRef { $_[0]->{_term_source_ref} = $_[1] }
 sub getTermSourceRef { $_[0]->{_term_source_ref} }
 
-=head2 get/setContext
+=head2 getDebugContext setDebugContext
 
-
+Getter/setter for a string that gives an idea where the ontology term was attempted to be loaded from.
+This can help debugging poorly constructed ISA-Tab.
 
 =cut
 
-sub setContext { $_[0]->{_context} = $_[1] }
-sub getContext { $_[0]->{_context} }
+sub setDebugContext { $_[0]->{_debug_context} = $_[1] }
+sub getDebugContext { $_[0]->{_debug_context} }
 
 sub new {
   my ($class, $args) = @_;
@@ -34,7 +35,7 @@ sub new {
 
   my $self = bless {}, $class;
 
-  $self->setContext(delete $args->{_context});
+  $self->setDebugContext(delete $args->{_debug_context});
 
   foreach my $key (keys %$args) {
     if($key =~ /term_source_ref/) {
