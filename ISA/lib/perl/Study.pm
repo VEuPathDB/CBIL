@@ -210,7 +210,6 @@ sub makeStudyObjectsFromHash {
       my $setterName = $setOrAdd . join("", map { ucfirst } split("_", $otRegex));
 
       my %initOtHash = map { $_ => $hash->{$_}->[$i] } @{$otKeys{$otRegex}};
-
       my %otHash;
 
       if($otIsList) {
@@ -226,9 +225,10 @@ sub makeStudyObjectsFromHash {
       }
 
       foreach my $n (keys %otHash) {
-        # don't create and attach a term if the term free text is empty
-        if (defined $otHash{$n}{_term} && length($otHash{$n}{_term})) {
-          my $ontologyTerm = CBIL::ISA::OntologyTerm->new($otHash{$n});
+        my $otHash = $otHash{$n};
+        # don't create and attach a term if all values (name, accession, source) are empty.
+        if (length(join '', values %$otHash)>0) {
+          my $ontologyTerm = CBIL::ISA::OntologyTerm->new($otHash);
           $ontologyTerm->setDebugContext(join ', ',  map { "$_=$hash{$_}" } keys %hash);
           eval {
             $obj->$setterName($ontologyTerm);
