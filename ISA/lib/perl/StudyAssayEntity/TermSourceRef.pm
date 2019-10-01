@@ -8,7 +8,7 @@ sub getAttributeNames {
 }
 
 sub getParents {
-  return ["Characteristic", "MaterialType", "FactorValue", "ParameterValue", "Unit"];
+  return ["Characteristic", "MaterialType", "FactorValue", "ParameterValue", "Unit", "Observable", "Attribute"];
 }
 
 

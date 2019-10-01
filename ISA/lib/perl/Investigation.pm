@@ -187,7 +187,19 @@ sub parseStudy {
   }
 
   foreach my $file (@{$study->getAssayDataFiles()}) {
-    warn "would like to load ".$file->getValue()." for ".$study." now!\n";
+    # only process phenotype (p_*) and genotype (g_*) ISA-like files
+    if ($file->getValue() =~ /^(?:p_|g_)/) {
+      my $assayDataFileName = $investigationDirectory . "/" . $file->getValue();
+      warn "About to load $assayDataFileName...\n";
+
+      my $assayDataFileReader = CBIL::ISA::StudyAssayFileReader->new($assayDataFileName, $delimiter);
+
+      while($assayDataFileReader->hasNextLine()) {
+        my $dataObjects = $assayDataFileReader->readLineToObjects();
+        $study->addNodesAndEdges($dataObjects, $assayDataFileName);
+      }
+      $assayDataFileReader->closeFh();
+    }
   }
 
   $study->setHasMoreData(0);
@@ -255,7 +267,7 @@ sub dealWithAllOntologies {
     my $term = $ontologyTerm->getTerm();
 
 
-    unless(($accession && $source) || blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::Characteristic' || blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::ParameterValue') {
+    unless(($accession && $source) or not $ontologyTerm->requiresAccessionedTerm()) {
       $self->handleError("OntologyTerm '$term' (context: ".$ontologyTerm->getDebugContext().") is required to have accession and source.");
     }
   }

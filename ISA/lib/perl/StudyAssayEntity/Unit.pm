@@ -4,7 +4,7 @@ use base qw(CBIL::ISA::OntologyTerm);
 use strict;
 
 sub getParents {
-  return ["Characteristic", "FactorValue", "ParameterValue"];
+  return ["Characteristic", "FactorValue", "ParameterValue", "Value"];
 }
 
 1;

@@ -52,4 +52,8 @@ sub qualifierContextMethod {
   return "addCharacteristic";
 }
 
+sub requiresAccessionedTerm {
+  return 0;
+}
+
 1;

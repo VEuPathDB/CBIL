@@ -4,8 +4,8 @@ use base qw(CBIL::ISA::StudyAssayEntity::Fileable);
 =head1
 
 This class has been added to allow Description and Characteristics
-attributes (as used in VectorBase PopBio) to be attached to "Assay"
-entities.
+attributes (as used in VectorBase PopBio) to be attached to "Assay",
+"Phenotype" and "Genotype" entities.
 
 =cut
 
@@ -20,7 +20,7 @@ sub getCharacteristics { $_[0]->{_characteristics}  || [] }
 sub getAttributeNames {
   my ($self) = @_;
 
-  my @attributeQualifiers = ("Characteristic", "Description", "File");
+  my @attributeQualifiers = ("Characteristic", "Description");
 
   my $attrs = $self->SUPER::getAttributeNames();
 

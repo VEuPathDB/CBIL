@@ -70,4 +70,15 @@ sub getValue { $_[0]->getTerm() }
 sub setValue { $_[0]->setTerm($_[1]) }
 
 
+#
+# if this column must contain a fully specified ontology term
+# then return true
+#
+# e.g. Characteristics and Parameter Value columns will override this to return false,
+# because they can contain free text and/or numbers+units
+#
+sub requiresAccessionedTerm {
+  return 1;
+}
+
 1;
