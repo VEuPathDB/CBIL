@@ -164,6 +164,7 @@ sub addEdge {
     }
   }
 
+  warn "adding edge $input -> $output\n";
   push @{$self->{_edges}}, $edge; 
   return $edge;
 }

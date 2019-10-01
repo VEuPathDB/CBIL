@@ -10,7 +10,7 @@ sub getAttributeNames {
 }
 
 sub getParents {
-  return ["Source", "Sample", "Extract", "LabeledExtract"];
+  return ["Source", "Sample", "Extract", "LabeledExtract", "Assay"];
 }
 
 
