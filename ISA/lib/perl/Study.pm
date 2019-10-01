@@ -164,11 +164,30 @@ sub addEdge {
     }
   }
 
-  warn "adding edge $input -> $output\n";
   push @{$self->{_edges}}, $edge; 
   return $edge;
 }
 sub getEdges { $_[0]->{_edges} or [] }
+
+#
+# used to remember which File entities, such as "Raw Data File"
+# have been encountered while parsing assay files
+#
+sub getAssayDataFiles { $_[0]->{_assay_data_files} or [] }
+sub addAssayDataFile {
+  my ($self, $fileObj) = @_;
+
+  # check it's not already there
+  # can't use "$obj->equals($other)" because attributes
+  # are not nodes and are "never equal"
+  # so we just use the value (the filename)
+  foreach (@{$self->getAssayDataFiles()}) {
+    return $_ if ($fileObj->getValue() eq $_->getValue());
+  }
+  push @{$self->{_assay_data_files}}, $fileObj;
+  return $fileObj;
+}
+
 
 
 # Handle a chunk of the Investigation File
@@ -283,6 +302,10 @@ sub addNodesAndEdges {
 
     $start = 1;
     $wasNodeContext = $entity->isNode();
+
+    # now keep a track of all File entities
+    # for later processing by PopBio Genotype/Phenotype handler
+    map { $self->addAssayDataFile($_) } @{$entity->getFiles()} if ($entity->can('getFiles'));
   }
 }
 

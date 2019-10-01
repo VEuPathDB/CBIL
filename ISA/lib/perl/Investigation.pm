@@ -186,6 +186,10 @@ sub parseStudy {
     $assayFileReader->closeFh();
   }
 
+  foreach my $file (@{$study->getAssayDataFiles()}) {
+    warn "would like to load ".$file->getValue()." for ".$study." now!\n";
+  }
+
   $study->setHasMoreData(0);
 }
 
