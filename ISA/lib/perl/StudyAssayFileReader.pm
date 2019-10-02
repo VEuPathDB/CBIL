@@ -133,6 +133,10 @@ sub readLineToObjects {
       die "Unable to create class $class: $@";
     }
 
+    if ($obj->can('setDebugContext')) {
+      $obj->setDebugContext("Column: $i, entity: $entityNames[$i], qualifier: ".($qualifierNames[$i]||'').", value: $lineValue, file: ".$self->getStudyAssayFile());
+    }
+
     if(my $qualifierName = $qualifierNames[$i]) {
       $obj->setQualifier($qualifierName);
     }
