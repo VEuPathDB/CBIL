@@ -27,6 +27,11 @@ sub getEntityNames { $_[0]->{_entity_names} }
 sub setQualifierNames { $_[0]->{_qualifier_names} = $_[1] }
 sub getQualifierNames { $_[0]->{_qualifier_names} }
 
+sub setAlternativeQualifierNames { $_[0]->{_alternative_qualifier_names} = $_[1] }
+sub getAlternativeQualifierNames { $_[0]->{_alternative_qualifier_names} }
+
+
+
 sub new {
   my ($class, $file, $delimiter) = @_;
 
@@ -47,6 +52,7 @@ sub new {
 
   my @entityNames;
   my @qualifierNames;
+  my @alternativeQualifierNames;
 
   foreach my $headerValue (@$header) {
     my ($entity, $junk, $qualifier) = $headerValue =~ m/([\w|\s]+)(\[(.+)\])?/;
@@ -61,11 +67,20 @@ sub new {
     $entity = "ArrayDesignFile" if($entity eq "ArrayDesignRef");
     
     push @entityNames, $entity;
-    push @qualifierNames, $qualifier;
+
+    # parse a source_id "ONTO:0012345" from heading of the format "Characteristics [human readable (ONTO:0012345)]"
+    if (defined $qualifier && $qualifier =~ m/\((\w+:\d+)\)/) {
+      push @qualifierNames, $1;
+      push @alternativeQualifierNames, $qualifier;
+    } else {
+      push @qualifierNames, $qualifier;
+      push @alternativeQualifierNames, undef;
+    }
   }
 
   $self->setEntityNames(\@entityNames);
   $self->setQualifierNames(\@qualifierNames);
+  $self->setAlternativeQualifierNames(\@alternativeQualifierNames);
 
   return $self;
 }
@@ -114,6 +129,7 @@ sub readLineToObjects {
 
   my @entityNames = @{$self->getEntityNames()};
   my @qualifierNames=  @{$self->getQualifierNames()};
+  my @alternativeQualifierNames=  @{$self->getAlternativeQualifierNames()};
 
   my $lineValues = $self->readNextLine();
 
@@ -139,6 +155,9 @@ sub readLineToObjects {
 
     if(my $qualifierName = $qualifierNames[$i]) {
       $obj->setQualifier($qualifierName);
+      if (my $alternativeQualifierName = $alternativeQualifierNames[$i]) {
+        $obj->setAlternativeQualifier($alternativeQualifierName);
+      }
     }
 
     my $found;
