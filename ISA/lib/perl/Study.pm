@@ -7,6 +7,7 @@ use CBIL::ISA::Publication;
 use CBIL::ISA::Contact;
 use CBIL::ISA::OntologyTerm;
 use CBIL::ISA::StudyDesign;
+use CBIL::ISA::Tag;
 use CBIL::ISA::StudyFactor;
 use CBIL::ISA::StudyAssay;
 use CBIL::ISA::Protocol;
@@ -91,7 +92,21 @@ sub setStudyDesigns {
   return $self->getStudyDesigns();
 }
 sub getStudyDesigns { $_[0]->{_study_designs}  || [] }
-sub addStudyDesign { push @{$_[0]->{_study_design}}, $_[1] }
+sub addStudyDesign { push @{$_[0]->{_study_designs}}, $_[1] }
+
+
+sub setTags { 
+  my ($self, $hash, $columnCount) = @_;
+
+  my $otRegexs = ["_tag"];
+  my $otIsList = [ 0 ];
+  $self->{_tags} = $self->makeStudyObjectsFromHash($hash, $columnCount, "CBIL::ISA::Tag", $otRegexs, $otIsList);
+
+  return $self->getTags();
+}
+sub getTags { $_[0]->{_tags}  || [] }
+sub addTag { push @{$_[0]->{_tags}}, $_[1] }
+
 
 sub setStudyFactors { 
   my ($self, $hash, $columnCount) = @_;
@@ -400,6 +415,14 @@ inherited from L<CBIL::ISA::Commentable>
 =item C<getStudyDesigns>
 
 @return array of L<CBIL::ISA::StudyDesign>
+
+=item C<addTag>
+
+@param L<CBIL::ISA::Tag>
+
+=item C<getTags>
+
+@return array of L<CBIL::ISA::Tag>
 
 =item C<addStudyFactor>
 

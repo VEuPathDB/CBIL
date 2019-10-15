@@ -26,6 +26,7 @@ my $STUDY_PROTOCOLS = "STUDY PROTOCOLS";
 my $STUDY_FACTORS = "STUDY FACTORS";
 my $STUDY_PUBLICATIONS = "STUDY PUBLICATIONS";
 my $STUDY_ASSAYS = "STUDY ASSAYS";
+my $STUDY_TAGS = "STUDY TAGS"; # extension introduced by VectorBase
 
 
 sub setDebug {$_[0]->{_debug} = $_[1]}
@@ -109,6 +110,9 @@ sub makeStudy {
 
   $study->setProtocols($hash->{$STUDY_PROTOCOLS}, 
                          $columnCounts->{$STUDY_PROTOCOLS});
+
+  $study->setTags($hash->{$STUDY_TAGS}, 
+                            $columnCounts->{$STUDY_TAGS});
 
   return $study;
 }

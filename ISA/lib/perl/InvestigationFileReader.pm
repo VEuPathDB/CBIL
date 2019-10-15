@@ -30,6 +30,7 @@ my @CONTEXTS = ("ONTOLOGY SOURCE REFERENCE",
                 "STUDY ASSAYS",
                 "STUDY PROTOCOLS",
                 "STUDY CONTACTS",
+                "STUDY TAGS", # extension by VectorBase
     );
 
 sub new {
