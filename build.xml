@@ -1,24 +1,5 @@
 <project name="CBIL" default="Installation" basedir=".">
 
-  <!-- ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooo  Dependencies  oooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-
-  
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooo    Checkout    oooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-
-  <target name="CBIL-ChildCheckout" />
-  
-  
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooo    Update    oooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-
-  <target name="CBIL-ChildUpdate" />
-
-
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
@@ -30,23 +11,23 @@
                                             CBIL/HQ-Installation,
                                             CBIL/TranscriptExpression-Installation,
                                             CBIL/ISA-Installation,
-                                            CBIL/ObjectMapper-Installation" >
+                                            CBIL/ObjectMapper-Installation">
 
-    <ant target="defaultProjectInstall"/>
+    <ant target="defaultProjectInstall" />
 
-  </target>  
-   
+  </target>
+
 
   <!-- oooooooooooooooooo  Installation Postprocess  ooooooooooooooooooooo -->
 
   <target name="CBIL-Installation-postprocess">
-    <echo message="Postprocessing the CBIL installation"/>
+    <echo message="Postprocessing the CBIL installation" />
 
-    <replace dir="${targetDir}/bin" 
-             propertyFile="${targetDir}/config/replacements.prop" > 
+    <replace dir="${targetDir}/bin"
+             propertyFile="${targetDir}/config/replacements.prop">
       <include name="**/*" />
-      <replacefilter token="@perl@" property="perl"/>
-    </replace> 
+      <replacefilter token="@perl@" property="perl" />
+    </replace>
 
   </target>
 
@@ -55,58 +36,58 @@
 
   <target name="CBIL/Bio-Installation">
     <ant target="defaultComponentInstall">
-      <property name="project" value="CBIL"/>
-      <property name="component" value="Bio"/>
+      <property name="project" value="CBIL" />
+      <property name="component" value="Bio" />
     </ant>
-  </target>  
+  </target>
 
   <target name="CBIL/CSP-Installation">
     <ant target="defaultComponentInstall">
-      <property name="project" value="CBIL"/>
-      <property name="component" value="CSP"/>
-      <property name="skipJava" value="true"/>
+      <property name="project" value="CBIL" />
+      <property name="component" value="CSP" />
+      <property name="skipJava" value="true" />
     </ant>
-  </target>  
+  </target>
 
   <target name="CBIL/Util-Installation">
     <ant target="defaultComponentInstall">
-      <property name="project" value="CBIL"/>
-      <property name="component" value="Util"/>
+      <property name="project" value="CBIL" />
+      <property name="component" value="Util" />
     </ant>
-  </target>  
+  </target>
 
   <target name="CBIL/Cider-Installation">
     <ant target="defaultComponentInstall">
-      <property name="project" value="CBIL"/>
-      <property name="component" value="Cider"/>
+      <property name="project" value="CBIL" />
+      <property name="component" value="Cider" />
     </ant>
-  </target>  
+  </target>
 
   <target name="CBIL/ObjectMapper-Installation">
     <ant target="defaultComponentInstall">
-      <property name="project" value="CBIL"/>
-      <property name="component" value="ObjectMapper"/>
+      <property name="project" value="CBIL" />
+      <property name="component" value="ObjectMapper" />
     </ant>
-  </target>  
+  </target>
 
   <target name="CBIL/HQ-Installation">
     <ant target="defaultComponentInstall">
-      <property name="project" value="CBIL"/>
-      <property name="component" value="HQ"/>
+      <property name="project" value="CBIL" />
+      <property name="component" value="HQ" />
     </ant>
-  </target>  
+  </target>
 
   <target name="CBIL/TranscriptExpression-Installation">
     <ant target="defaultComponentInstall">
-      <property name="project" value="CBIL"/>
-      <property name="component" value="TranscriptExpression"/>
+      <property name="project" value="CBIL" />
+      <property name="component" value="TranscriptExpression" />
     </ant>
-  </target>  
+  </target>
 
   <target name="CBIL/ISA-Installation">
     <ant target="defaultComponentInstall">
-      <property name="project" value="CBIL"/>
-      <property name="component" value="ISA"/>
+      <property name="project" value="CBIL" />
+      <property name="component" value="ISA" />
     </ant>
   </target>
 
@@ -115,12 +96,12 @@
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
   <target name="CBIL-Release">
-    
+
     <ant target="defaultProjectRelease">
-      <property name="tag" value="v1-4-0"/>
-      <property name="cvsroot" value="/files/cbil/cvs/cvsroot"/>
+      <property name="tag" value="v1-4-0" />
+      <property name="cvsroot" value="/files/cbil/cvs/cvsroot" />
     </ant>
-  </target>  
+  </target>
 
 
 </project>
