@@ -286,6 +286,7 @@ sub valueIsMappedValue {
     $qualifierValues = $valueMapping->{$qualName};
   }
 
+  unless(defined($value) && ($value ne "")){ return }
 
   if($qualifierValues) {
     my $lcValue = lc($value);
