@@ -1,19 +1,14 @@
 package CBIL::ISA::StudyAssayFileReader;
+use base qw(CBIL::ISA::Reader);
 
 use strict;
+use warnings;
 
 use Scalar::Util qw(blessed);
-use Text::CSV_XS;
 use Data::Dumper;
 
 sub setStudyAssayFile { $_[0]->{_study_assay_file} = $_[1] }
 sub getStudyAssayFile { $_[0]->{_study_assay_file} }
-
-sub getFh {$_[0]->{_fh}}
-sub setFh {$_[0]->{_fh} = $_[1]}
-
-sub setDelimiter { $_[0]->{_delimiter} = $_[1] }
-sub getDelimiter { $_[0]->{_delimiter} }
 
 sub setStudyAssayHash { $_[0]->{_study_assay_hash} = $_[1] }
 sub getStudyAssayHash { $_[0]->{_study_assay_hash} }
@@ -32,13 +27,7 @@ sub new {
 
   my $self = bless {}, $class;
 
-  $self->setDelimiter($delimiter);
-  my $csv = Text::CSV_XS->new({
-    binary => 1,
-    sep_char => $delimiter,
-    quote_char => '"'
-  }) or die "Cannot use CSV: " . Text::CSV_XS->error_diag ();
-  $self->setLineParser($csv);
+  $self->initReader($delimiter);
   $self->setStudyAssayFile($file);
 
   my ($fh);
@@ -82,59 +71,6 @@ sub hasNextLine {
   my $fh = $self->getFh();
 
   return !eof($fh);
-}
-
-sub getLineParser {
-  my ($self) = @_;
-
-  return $self->{_line_parser};
-}
-
-sub setLineParser {
-  my ($self, $lp) = @_;
-
-  $self->{_line_parser} = $lp;
-}
-
-sub splitLine {
-  my ($self, $line) = @_;
-
-  my $csv = $self->getLineParser();
-
-  my @columns;
-  if($csv->parse($line)) {
-    @columns = $csv->fields();
-  }
-  else {
-      my $error= "" . $csv->error_diag;
-    die "Could not parse line: $error";
-  }
-  return wantarray ? @columns : \@columns;
-}
-
-sub readNextLine {
-  my ($self) = @_;
-
-  my $fh = $self->getFh();
-
-  # handle empty lines or whatever
-  while(!eof($fh)) {
-    my $line = readline($fh);
-    chomp($line);
-    my $row = $self->splitLine($line);
-    return $row;
-  }
-
-  $self->closeFh();
-  return(0);
-}
-
-
-sub closeFh {
-  my $self = shift;
-
-  my $fh = $self->getFh();
-  close $fh;
 }
 
 sub readLineToObjects {
