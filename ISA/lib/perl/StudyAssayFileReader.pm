@@ -68,8 +68,10 @@ sub new {
     
     push @entityNames, $entity;
 
-    # parse a source_id "ONTO:0012345" from heading of the format "Characteristics [human readable (ONTO:0012345)]"
-    if (defined $qualifier && $qualifier =~ m/\((\w+:\d+)\)/) {
+    # parse a source_id "FOO_0012345" from heading of the format "Characteristics [human readable (ABC:FOO_0012345)]"
+    # there is an alternative format ABC:DEF:0123456 which should yield DEF:0123456 (seems that SO terms are identified this way in GUS?)
+    if (defined $qualifier &&
+        ($qualifier =~ m/\(\w+:(\w+)\)/ || $qualifier =~ m/\(\w+:(\w+:\d+)\)/)) {
       push @qualifierNames, $1;
       push @alternativeQualifierNames, $qualifier;
     } else {
