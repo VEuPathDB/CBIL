@@ -1,4 +1,5 @@
 package CBIL::ISA::InvestigationFileReader;
+use base qw(CBIL::ISA::Reader);
 
 use strict;
 
@@ -34,12 +35,10 @@ my @CONTEXTS = ("ONTOLOGY SOURCE REFERENCE",
 
 sub new {
   my ($class, $investigationFile, $delimiter) = @_;
-
   my $self = bless {}, $class;
-
   $self->setDelimiter($delimiter);
   $self->setInvestigationFile($investigationFile);
-
+  $self->initReader($delimiter);
   return $self;
 }
 
@@ -51,17 +50,20 @@ sub read {
 
   my $iHash = {};
   my $columnCounts = {};
+  my ($fh);
 
-  open(FILE, $investigationFile) or die "Cannot open file $investigationFile for Reading: $!";
+  open($fh, $investigationFile) or die "Cannot open file $investigationFile for Reading: $!";
+  $self->setFh($fh);
 
   my ($lineContext, $studyIdentifier);
 
   my $studiesKey = "_studies";
 
-  while(<FILE>) {
-    chomp;
+  my $line = 0;
+  while(my $fields = $self->readNextLine()) {
     # split and remove leading and trailing quotes
-    my @a = map { s/^"(.*)"$/$1/; $_; } split($delimiter, $_);
+    #my @a = map { s/^"(.*)"$/$1/; $_; } $self->splitLine($line);
+    my @a = @$fields;
 
     $studyIdentifier = $a[1] if(uc $a[0] eq 'STUDY IDENTIFIER');
     if(&isContextSwitch($a[0])) {
@@ -87,14 +89,13 @@ sub read {
       push @{$iHash->{$lineContext}->{$header}}, @a;
       push @{$columnCounts->{$lineContext}}, scalar @a;
     }
+    $line++;
+    printf STDERR ("done reading %d\n", $line);
+    #last if eof($fh);
   }
 
-  close FILE;
-
-  
-
+  close $fh;
   my $maxColumnCounts = {};
-  
 
   foreach my $col (keys %$columnCounts) {
     if(ref($columnCounts->{$col}) eq 'ARRAY') {
@@ -102,7 +103,6 @@ sub read {
       $maxColumnCounts->{$col} = $max;
     }
   }
-
  
   foreach my $studyId (keys %{$columnCounts->{$studiesKey}}) {
     foreach my $lineContext (keys %{$columnCounts->{$studiesKey}->{$studyId}}) {
@@ -129,3 +129,5 @@ sub isContextSwitch {
   }
   return 0;
 }
+
+1;
