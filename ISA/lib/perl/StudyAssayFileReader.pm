@@ -65,6 +65,7 @@ sub new {
     $entity = "Characteristic" if($entity eq "Characteristics");
     $entity = "ProtocolApplication" if($entity eq "ProtocolRef");
     $entity = "ArrayDesignFile" if($entity eq "ArrayDesignRef");
+    $entity = "PhenotypeValue" if($entity eq "Value");
     
     push @entityNames, $entity;
 

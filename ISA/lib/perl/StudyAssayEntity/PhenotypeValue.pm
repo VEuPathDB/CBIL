@@ -1,4 +1,4 @@
-package CBIL::ISA::StudyAssayEntity::Value;
+package CBIL::ISA::StudyAssayEntity::PhenotypeValue;
 use base qw(CBIL::ISA::OntologyTerm);
 
 use strict;
