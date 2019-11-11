@@ -302,7 +302,7 @@ sub valueIsMappedValue {
           last;
         }
         else {
-          printf STDERR ("NO MATCH $lcValue =~ $test\n");
+          #printf STDERR ("NO MATCH $lcValue =~ $test\n");
         }
       }
     }
@@ -497,6 +497,7 @@ sub formatTimeHHMMtoDecimal {
   my ($self, $obj) = @_;
   my $value = $obj->getValue();
   return unless defined $value;
+  $value =~ s/^(\d\d):(\d\d)$/$1$2/;
   my $hr = sprintf("%d", $value / 100);
   my $min = $value % 100;
   $min = $min / 60;
