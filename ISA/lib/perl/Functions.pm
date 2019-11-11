@@ -461,19 +461,48 @@ sub formatTime {
   my ($self, $obj) = @_;
 
   my $value = $obj->getValue();
-  $value =~ s/^0:(\d\d\w\w)$/12:$1/;
-
-  Date_Init("DateFormat=US"); 
-
-  my $formattedTime = UnixDate(ParseDate($value), "%H%M");
-
-  $obj->setValue($formattedTime);
-
-  unless($formattedTime) {
-    die "(formatTime) Format not supported for $value\n" . Dumper $obj;
+  if($value =~ /^0:(\d\d\w\w)$/){ 
+    $value =~ s/^0:(\d\d\w\w)$/12:$1/;
+    Date_Init("DateFormat=US"); 
+    my $formattedTime = UnixDate(ParseDate($value), "%H%M");
+    $obj->setValue($formattedTime);
+    unless($formattedTime) {
+      die "(formatTime) Format not supported for $value\n" . Dumper $obj;
+    }
+    return $formattedTime;
   }
+  elsif($value =~ /^\d{4}$/){
+   #my $newvalue =~ s/^(\d\d)(\d\d)/\1:\2$/;
+    my $hour = $value / 100;
+    my $min = $value % 100;
+    my $formattedTime = sprintf("%02d:%02d", $hour, $min);
+    $obj->setValue($formattedTime);
+    unless($formattedTime) {
+      die "(formatTime) Format not supported for $value\n" . Dumper $obj;
+    }
+    return $formattedTime;
+  }
+  else {
+    Date_Init("DateFormat=US"); 
+    my $formattedTime = UnixDate(ParseDate($value), "%H:%M");
+    $obj->setValue($formattedTime);
+    unless($formattedTime) {
+      die "(formatTime) Format not supported for $value\n" . Dumper $obj;
+    }
+    return $formattedTime;
+  }
+}
 
-  return $formattedTime;
+sub formatTimeHHMMtoDecimal {
+  my ($self, $obj) = @_;
+  my $value = $obj->getValue();
+  return unless defined $value;
+  my $hr = sprintf("%d", $value / 100);
+  my $min = $value % 100;
+  $min = $min / 60;
+  my $time = sprintf('%.03f',$hr + $min);
+  $obj->setValue($time);
+  return $time;
 }
 
 sub makeOntologyTerm {
@@ -514,6 +543,14 @@ sub formatNumeric {
     return unless defined($val);
   if($val =~ /^na$/i){
     return $obj->setValue(undef);
+  }
+}
+sub formatInteger {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val);
+  if(looks_like_number($val)){
+    return $obj->setValue(sprintf("%d",$val);
   }
 }
 
