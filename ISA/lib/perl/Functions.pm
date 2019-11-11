@@ -550,7 +550,7 @@ sub formatInteger {
   my $val = $obj->getValue();
   return unless defined($val);
   if(looks_like_number($val)){
-    return $obj->setValue(sprintf("%d",$val);
+    return $obj->setValue(sprintf("%d",$val));
   }
 }
 
