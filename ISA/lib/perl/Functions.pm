@@ -523,6 +523,12 @@ sub makeOntologyTerm {
   
 }
 
+sub formatUppercase {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return $obj->setValue(uc($val)) if(defined($val));
+}
+
 sub formatSentenceCase {
   my ($self, $obj) = @_;
   my $val = $obj->getValue();
@@ -561,6 +567,14 @@ sub formatNumericFiltered {
   unless(looks_like_number($val)){
     return $obj->setValue(undef);
   }
+}
+
+sub formatFloat4 {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless(looks_like_number($val));
+  $val = sprintf("%0.04f", $val);
+  return $obj->setValue($val);
 }
 
 sub formatClinicalFtoC {
@@ -623,11 +637,24 @@ sub encryptSuffix2 {
 
 sub idObfuscateDate1 {
   my ($self, $node, $type) = @_;
+  return $self->idObfuscateDateN($node,$type,1);
+}
+
+sub idObfuscateDate2 {
+  my ($self, $node, $type) = @_;
+  return $self->idObfuscateDateN($node,$type,2);
+}
+
+sub idObfuscateDateN {
+  my ($self, $node, $type, $offset) = @_;
   my $materialTypeSourceId = $self->getOntologyMapping()->{$type}->{'materialType'}->{'source_id'};
   my $nodeId = $node->getValue();
   die unless defined($nodeId);
   my $local = {};
-  ($local->{dateOrig}) = ($nodeId =~ /^[^_]+_([^_]+)/);
+  my @id = split(/_/, $nodeId);
+  unless(length($id[$offset])){return}
+  $local->{dateOrig} = $id[$offset];
+  #($local->{dateOrig}) = ($nodeId =~ /^[^_]+_([^_]+)/);
   if(lc($local->{dateOrig}) eq "na"){
     $nodeId =~ s/_na/_nax/i; # make it different
     return $node->setValue($nodeId);
@@ -648,6 +675,7 @@ sub idObfuscateDate1 {
     }
     unless($local->{unixDate}){
       warn "Cannot parse date: " . $local->{dateOrig};
+      return;
     }
     $local->{preDate} = UnixDate($local->{unixDate}, "%Y-%m-%d");
     $local->{date} = DateCalc($local->{unixDate}, $delta);
