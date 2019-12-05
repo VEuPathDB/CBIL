@@ -35,7 +35,7 @@ sub new {
 
   my $self = bless {}, $class;
 
-  $self->setDebugContext(delete $args->{_debug_context});
+  $self->setDebugContext(delete $args->{_debug_context}) if ($args->{_debug_context});
 
   foreach my $key (keys %$args) {
     if($key =~ /term_source_ref/) {

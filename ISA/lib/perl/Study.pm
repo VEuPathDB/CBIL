@@ -264,7 +264,7 @@ sub makeStudyObjectsFromHash {
         # don't create and attach a term if all values (name, accession, source) are empty.
         if (length(join '', values %$otHash)>0) {
           my $ontologyTerm = CBIL::ISA::OntologyTerm->new($otHash);
-          $ontologyTerm->setDebugContext(join ', ',  map { "$_=$hash{$_}" } keys %hash);
+          # $ontologyTerm->setDebugContext(join ', ',  map { "$_=$hash{$_}" } keys %hash);
           eval {
             $obj->$setterName($ontologyTerm);
           };
