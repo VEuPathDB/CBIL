@@ -577,6 +577,10 @@ sub makeNodes {
       if ($@) {
         $self->handleError("problem w/ function $idObfuscationFunction: $@");
       }
+      else{
+        my $nodeId = $node->getValue();
+        $self->{idMap}->{$nodeId} = $oldNodeId;
+      }
     }
     my $nodeId = $node->getValue();
     if($idObfuscationFunction && !defined($inputNames{$nodeName}) ){
@@ -683,7 +687,7 @@ sub writeObfuscatedIdFile {
   $file ||= $self->getInvestigationDirectory() . "/idObfuscation.txt";
   open(FH, ">$file") or die "Cannot write $file: $!";
     printf FH ("ObfuscatedID\tOriginalID\n");
-  while(my ($obfuscatedId,$originalId) = each(%{$self->{seenNodes}})){
+  while(my ($obfuscatedId,$originalId) = each(%{$self->{idMap}})){
     printf FH ("%s\t%s\n", $originalId, $obfuscatedId);
   }
   close(FH);
