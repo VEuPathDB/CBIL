@@ -461,6 +461,7 @@ sub formatTime {
   my ($self, $obj) = @_;
 
   my $value = $obj->getValue();
+  return unless($value);
   if($value =~ /^0:(\d\d\w\w)$/){ 
     $value =~ s/^0:(\d\d\w\w)$/12:$1/;
     Date_Init("DateFormat=US"); 
@@ -504,6 +505,17 @@ sub formatTimeHHMMtoDecimal {
   my $time = sprintf('%.03f',$hr + $min);
   $obj->setValue($time);
   return $time;
+}
+
+sub formatStataInteger2Date {
+  ## Stata saves dates as days since January 1, 1960
+  my ($self, $obj) = @_;
+  my $value = $obj->getValue();
+  return unless($value);
+  Date_Init("DateFormat=non-US"); 
+  my $date = UnixDate(DateCalc("1960-01-01", "0:0:0:$value:0:0:0"), "%Y-%m-%d");
+  $obj->setValue($date);
+  return $date;
 }
 
 sub makeOntologyTerm {
@@ -595,6 +607,15 @@ sub formatFtoC {
 sub formatQuotation {
   my ($self, $obj) = @_;
   return $obj->setValue(sprintf("\"%s\"",$obj->getValue()));
+}
+
+sub _SCRAP_ERRORS {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  if($val =~ /^USER_ERROR/){
+    my @values = split(/\|/, $val);
+    return $obj->setValue($values[1]);
+  }
 }
 
 sub parseDmsCoordinate {
