@@ -236,6 +236,7 @@ sub formatEuroDate {
   my ($self, $obj, $parentObj) = @_;
 
   my $value = $obj->getValue();
+  return unless $value;
 
   # deal with "Mon Year" values by setting the day to the first day of the month
   if($value =~ /^\w{3}\s*\d{2}(\d{2})?$/) {
@@ -431,6 +432,7 @@ sub formatDate {
   my ($self, $obj) = @_;
 
   my $value = $obj->getValue();
+  return unless $value;
 
   Date_Init("DateFormat=US"); 
 
