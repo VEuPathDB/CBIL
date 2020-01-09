@@ -1,43 +1,68 @@
 package CBIL::Util::Sra;
-
+use autodie qw/system/; # requires 'IPC::System::Simple';
 use LWP::Simple; 
 use XML::Simple; 
-use Data::Dumper; 
+use Data::Dumper;
 
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(getRunIdsFromSraSampleIds getFastqForSraRunId getFastqForSampleIds getCsForSampleIds getRunIdsFromSraStudyId getFastqForStudyId runEfetch);
+use strict;
+use warnings;
 
 sub getFastqForStudyId {
-  my($studyId, $isPairedEnd, $dontDownload, $deflineVars) = @_;
-  print STDERR "fetching runIds from studyId: $studyId\n";
-  my @runs = &getRunIdsFromSraStudyId($studyId);
+  my($studyId, $isPairedEndDerp, $dontDownload, $deflineVars) = @_;
+  print STDERR "fetching runs for study: $studyId\n";
+  my @runs = &getRunsForStudy($studyId);
+  print STDERR sprintf("fetched %s runs for study $studyId\n", scalar @runs);
 
-  my %done;
   my %sampleCount;
 
-  foreach my $run (@runs) {
-    my $runId = $run->[1];
+  FASTQ_FOR_RUN:
+  for my $run (@runs) {
+    my ($sampleId, $runId, $libraryLayout) = @$run;
 
-    if ($done{$runId}) {
-      print STDERR "WARNING: already retrieved '$runId' .. skipping\n";
-      next;
+    # Derp the per-study $isPairedEnd, and meanwhile use it for a warning if $libraryLayout disagrees with it
+    if (defined $isPairedEndDerp && (($isPairedEndDerp eq 'false' and $libraryLayout eq 'PAIRED') or ($isPairedEndDerp ne 'false' and $libraryLayout eq 'SINGLE'))){
+      warn "getFastqForStudyId $studyId has \$isPairedEnd=$isPairedEndDerp but $runId has library layout $libraryLayout";
     }
 
-    print STDERR Dumper("current runId:" . $runId . "\n");
     next if $dontDownload;
-    &getFastqForSraRunId($runId, $isPairedEnd, $deflineVars);
-    $done{$runId} = 1;
 
-    #in case of technical replicates
-    my $sampleId = $run->[0];
-    if ($isPairedEnd) {
+    if ($libraryLayout eq 'PAIRED') {
+      my $isPairedEnd = 1;
+      next FASTQ_FOR_RUN if -f "$sampleId.${runId}_1.fastq" and -f "$sampleId.${runId}_2.fastq";
+      getFastqForSraRunId($runId, $isPairedEnd , $deflineVars);
       rename("${runId}_1.fastq", "$sampleId.${runId}_1.fastq");
       rename("${runId}_2.fastq", "$sampleId.${runId}_2.fastq");
-    } else {
+    } elsif ($libraryLayout eq 'SINGLE') {
+      my $isPairedEnd = 0;
+      next FASTQ_FOR_RUN if -f "$sampleId.${runId}.fastq";
+      getFastqForSraRunId($runId, $isPairedEnd , $deflineVars);
       rename("${runId}_1.fastq", "$sampleId.${runId}.fastq"); 
+    } else {
+      die "Unknown library layout: $libraryLayout";
     }
   }
+}
+
+# The SRA payload has 15 MB and all the fields, doesn't let you slice it, and XML::Simple is too simple for it
+# Locality doesn't matter when we're not downloading fastqs so use ENA instead
+sub getRunsForStudy {
+  my ($study_id) = @_;
+  my $url = "https://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=$study_id&result=read_run&fields=secondary_sample_accession,run_accession,library_layout";
+  my $text = get ($url);
+  die "No data for URL: $url" unless $text;
+  open (my $fh, "<", \$text) or die $!;
+  die "Bad header: $url" unless (my $header = <$fh>) eq "secondary_sample_accession\trun_accession\tlibrary_layout\n";
+  my @result;
+  while(<$fh>){
+     chomp;
+     my ($sampleId, $runId, $libraryLayout) = split "\t";
+     die "Bad line: $_" unless ($sampleId =~ /^[SED]RS\d+$/ and $runId =~ /^[SED]RR\d+$/ and $libraryLayout =~ /^SINGLE|PAIRED$/);
+     push @result, [$sampleId, $runId, $libraryLayout];
+  }
+  return @result;
 }
 
 sub getFastqForSampleIds {
@@ -184,6 +209,7 @@ sub getCsForSampleIds {
 }
 
 sub getRunIdsFromSraStudyId {
+    warn __PACKAGE__ . " getRunIdsFromSraStudyId is derped, check out getRunsForStudy";
     my ($studyId) = @_;
 
     my $utils = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
@@ -217,7 +243,7 @@ sub getRunIdsFromSraStudyId {
     } else {
 	my @single_id=();
 	foreach my $a (@ids) {
-	    if ($a->[1] eq $sid) {
+	    if ($a->[1] eq $studyId) {
 		push(@single_id,$a);
 	    }
 	}
@@ -345,11 +371,13 @@ sub getRunIdsFromSraSampleId {
 
 sub getFastqForSraRunId {
     my($runId,$isPairedEnd,$deflineVars) = @_;
+
     my $file = "$runId.sra";
+    print STDERR "getFastqForSraRunId run $runId paired? $isPairedEnd\n";
+
     unlink("$runId.sra") if -e "$runId.sra";
     ###  replacing wget with prefetch       my $cmd = "wget https://ftp-private.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/".substr($runId,0,3)."/".substr($runId,0,6)."/$runId/$file";
     my $cmd = "prefetch -O . $runId";
-    print STDERR "retrieving $runId with $cmd\n";
     #TODO test with something paired end, since not 100% sure how those files are named
     if (! -f "${runId}_1.fastq") {
       system($cmd);
@@ -357,7 +385,6 @@ sub getFastqForSraRunId {
     if($?){
 	die "ERROR ($?): Unable to fetch sra file for $runId\n";
     }
-    print STDERR "extracting fastq file(s)...";
     if ($isPairedEnd) {
         if (defined $deflineVars) {
           system("fastq-dump -B -I --defline-seq '$deflineVars' --split-files ./$file");
@@ -366,7 +393,6 @@ sub getFastqForSraRunId {
         }
     }
     else {
-	print STDERR "data is not paired end!\n";
         if (defined $deflineVars) {
           system("fastq-dump --defline-seq '$deflineVars' --split-spot --skip-technical ./$file");
         } else {
