@@ -19,6 +19,8 @@ use File::Basename;
 use Data::Dumper;
 use Digest::SHA;
 
+use Switch;
+
 sub getOntologyMapping {$_[0]->{_ontology_mapping} }
 sub getOntologySources {$_[0]->{_ontology_sources} }
 sub getValueMappingFile {$_[0]->{_valueMappingFile} }
@@ -294,7 +296,7 @@ sub valueIsMappedValue {
     unless(defined($value) || defined($qualifierValues->{':::undef:::'})){ return; }
     unless(defined($lcValue)){ $lcValue = ':::undef:::';}
     my $newValue = $qualifierValues->{$lcValue};
-    unless(defined($newValue)){
+    unless(defined($newValue) && length($newValue)){
       foreach my $regex ( grep { /^{{.*}}$/ } keys %$qualifierValues){
         my ($test) = ($regex =~ /^\{\{(.*)\}\}$/);
         $test = qr/$test/;
@@ -459,6 +461,52 @@ sub formatEuroDateWithObfuscation {
   $self->internalDateWithObfuscation($obj, $parentObj, $parentInputObjs, "DateFormat=non-US");
 }
 
+sub resolveDateFormats {
+  my ($self, $obj, $parentObj, $parentInputObjs) = @_;
+  my $value = $obj->getValue();
+  return unless $value;
+  $value =~ s/^USER_ERROR_//;
+  my $finalDate;
+# USER_ERROR_22sep13:00:00:00|22/sep/13|9/22/2013|2013-09-22|22sep2013
+  my %monthnum;
+  @monthnum{qw/jan feb mar apr may jun jul aug sep oct nov dec/} = 1 .. 12;
+  foreach my $dval ( split(/\|/, $value)){
+    my ($day,$mon,$yr);
+    switch($dval){
+      case /^na$/ { $dval = undef }
+      case /^\d{1,2}\W?[a-z]{3}\W?\d{2,4}(\W\d\d:\d\d:\d\d)?$/ {
+        ($day,$mon,$yr) = ($dval =~ m/^(\d{1,2})\W?([a-z]{3})\W?(\d{2,4})(\W\d\d:\d\d:\d\d)?$/);
+        if($yr < 1000){
+          if($yr > 20){ $yr += 1900 }
+          else { $yr += 2000 }
+        }
+        $mon=$monthnum{$mon};
+      }
+      case /^\d{1,2}\W?\d{1,2}\W?\d{2,4}$/ {
+        ($mon,$day,$yr) = ($dval =~ m/^(\d{1,2})\W?(\d{1,2})\W?(\d{2,4})$/);
+        if($yr < 1000){
+          if($yr > 20){ $yr += 1900 }
+          else { $yr += 2000 }
+        }
+      }
+      case /^\d{4}\W?\d{2}\W?\d{2}$/ {
+        ($yr,$mon,$day) = ($dval =~ m/^(\d{4})\W?(\d{2})\W?(\d{2})$/);
+      }
+      else { die "date format not supported in $dval" }
+    }
+    next unless($dval);
+    #printf STDERR "$dval = day $day, mon $mon, yr $yr\n";
+    my $date = sprintf("%02d-%02d-%04d", $mon, $day, $yr);
+    $finalDate ||= $date;
+    if($finalDate ne $date){
+      warn "Cannot resolve date $date != $finalDate in $value\n" . Dumper $obj;
+      return;
+    }
+  }
+  $obj->setValue($finalDate);
+  return $finalDate;
+}
+
 sub formatTime {
   my ($self, $obj) = @_;
 
@@ -500,10 +548,11 @@ sub formatTimeHHMMtoDecimal {
   my ($self, $obj) = @_;
   my $value = $obj->getValue();
   return unless defined $value;
-  $value =~ s/^(\d\d):(\d\d)$/$1$2/;
-  my $hr = sprintf("%d", $value / 100);
-  my $min = $value % 100;
+  my($hr,$min,$half) = ($value =~ m/^(\d{1,2}):?(\d\d)(am|pm)?$/i);
   $min = $min / 60;
+  if(defined($half) && ($half eq 'pm') && ($hr < 12)){
+    $hr = ($hr + 12) % 24;
+  }
   my $time = sprintf('%.03f',$hr + $min);
   $obj->setValue($time);
   return $time;
