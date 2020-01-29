@@ -153,6 +153,8 @@ sub internalDateWithObfuscation {
   my ($self, $obj, $parentObj, $parentInputObjs, $dateFormat) = @_;
 
   my $value = $obj->getValue();
+  $value && $value =~ s/^\s*(.*)\s$/$1/;
+  return unless $value;
 
   # deal with "Mon Year" values by setting the day to the first day of the month
   if(defined($value) && ($value =~ /^\w{3}\s*\d{2}(\d{2})?$/)) {
@@ -505,6 +507,16 @@ sub resolveDateFormats {
   }
   $obj->setValue($finalDate);
   return $finalDate;
+}
+
+sub fixDateMissingDayMonth {
+  my ($self, $obj, $parentObj, $parentInputObjs) = @_;
+  my $value = $obj->getValue();
+  return unless $value;
+  $value =~ s/^0{1,2}(\W)0{1,3}(\W\d{2,4})$/02${1}07$2/; 
+  $value =~ s/^0{1,2}(\W(\d{1,2}|[a-z]{3})\W\d{2,4})$/15$1/; 
+  $obj->setValue($value);
+  return $value;
 }
 
 sub formatTime {
