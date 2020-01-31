@@ -6,6 +6,7 @@ use strict;
 use File::Temp qw/ tempfile /;
 
 use CBIL::TranscriptExpression::Error;
+use Data::Dumper;
 
 # The Default is that Each File contains 2 columns tab delim (U_ID \t VALUE)
 # Each value in the analysis config can specify a display name for the output && optinally a specific column to cut out
@@ -16,6 +17,9 @@ sub setHasHeader     {$_[0]->{hasHeader} = $_[1]}
 
 sub getHeaders     {$_[0]->{headers}}
 sub setHeaders     {$_[0]->{headers} = $_[1]}
+
+sub getSampleNameAsDir {$_[0]->{sampleNameAsDir}}
+sub setSampleNameAsDir {$_[0]->{sampleNameAsDir} = $_[1]}
 
 sub new {
   my ($class, $args) = @_;
@@ -79,7 +83,13 @@ sub readDataHash {
     push @headers, $fn;
     push @samples, "$display|$fn";
 
-    my $fullFileName = defined($fileSuffix) ? $fn . $fileSuffix : $fn;
+    my $fullFileName;
+    my $sampleNameAsDir = $self->getSampleNameAsDir();
+    if (defined $sampleNameAsDir) {
+        $fullFileName = defined($fileSuffix) ? "$fn/$fileSuffix" : $fn;
+    } else {
+        $fullFileName = defined($fileSuffix) ? $fn . $fileSuffix : $fn;
+    }
 
     open(FILE, $fullFileName) or CBIL::TranscriptExpression::Error->new("Cannot open File $fullFileName for reading: $!")->throw();
 
