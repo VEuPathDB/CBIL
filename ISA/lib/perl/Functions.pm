@@ -3,16 +3,15 @@ require Exporter;
 @ISA = qw(Exporter);
 
 @EXPORT_OK = qw(makeObjectFromHash makeOntologyTerm);
-
-use Scalar::Util qw/blessed looks_like_number/;
-
-use Date::Manip qw(Date_Init ParseDate UnixDate DateCalc);
-
 use strict;
 use warnings;
 
+use Scalar::Util qw/blessed looks_like_number/;
+use Date::Manip qw(Date_Init ParseDate UnixDate DateCalc);
+
 use CBIL::ISA::OntologyTerm;
 use Date::Parse qw/strptime/;
+use Carp;
 
 use File::Basename;
 
@@ -362,7 +361,7 @@ sub valueIsOntologyTerm {
   my $om = $self->getOntologyMapping();
   my $os = $self->getOntologySources();
 
-  if($os->{lc($valuePrefix)}) {
+  if(defined $valuePrefix and $os->{lc($valuePrefix)}) {
     $obj->setTermAccessionNumber($value);
     $obj->setTermSourceRef($valuePrefix);
   }
@@ -584,9 +583,13 @@ sub formatStataInteger2Date {
 sub makeOntologyTerm {
   my ($sourceId, $termName, $class) = @_;
 
-  my ($termSource) = $sourceId =~ /^(\w+)_|:/;
+  $class //= "CBIL::ISA::OntologyTerm";
 
-  $class = "CBIL::ISA::OntologyTerm" unless($class);
+  my ($termSource) = $sourceId =~ /^(\w+)_|:/;
+  unless (defined $termSource){
+     $termSource = "";
+     carp "makeOntologyTerm sourceId=$sourceId termName=$termName class=$class can not determine \$termSource as sourceId doesn't match " . '/^(\w+)_|:/';
+  }
 
   my $hash = {term_source_ref => $termSource,
               term_accession_number => $sourceId,
