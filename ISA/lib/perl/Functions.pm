@@ -512,6 +512,7 @@ sub fixDateMissingDayMonth {
   my ($self, $obj, $parentObj, $parentInputObjs) = @_;
   my $value = $obj->getValue();
   return unless $value;
+  $value =~ s/^na$//;
   $value =~ s/^0{1,2}(\W)0{1,3}(\W\d{2,4})$/02${1}07$2/; 
   $value =~ s/^0{1,2}(\W(\d{1,2}|[a-z]{3})\W\d{2,4})$/15$1/; 
   $obj->setValue($value);
@@ -559,7 +560,10 @@ sub formatTimeHHMMtoDecimal {
   my ($self, $obj) = @_;
   my $value = $obj->getValue();
   return unless defined $value;
-  my($hr,$min,$half) = ($value =~ m/^(\d{1,2}):?(\d\d)(am|pm)?$/i);
+  unless($value =~ /^(\d{1,2})[\W:]?(\d\d)[\W_]?(am|pm)?$/i){
+    die "Time format does not match: [$value]"
+  }
+  my($hr,$min,$half) = ($value =~ m/^(\d{1,2})[\W:]?(\d\d)[\W_]?(am|pm)?$/i);
   $min = $min / 60;
   if(defined($half) && ($half eq 'pm') && ($hr < 12)){
     $hr = ($hr + 12) % 24;
