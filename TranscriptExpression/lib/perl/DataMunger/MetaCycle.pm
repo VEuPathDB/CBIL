@@ -24,9 +24,9 @@ sub new {
     $args->{doNotLoad} = 1;
     $args->{outputFile} = $outputFile;
 
-    unless($args->{inputSuffix}) {
-      CBIL::TranscriptExpression::Error->new("Missing required argument [inputSuffix]")->throw();
-    }
+    #unless($args->{inputSuffix}) {
+    #  CBIL::TranscriptExpression::Error->new("Missing required argument [inputSuffix]")->throw();
+    #}
 
     my $self = $class->SUPER::new($args);
 
