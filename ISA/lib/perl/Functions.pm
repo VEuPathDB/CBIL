@@ -49,7 +49,10 @@ sub new {
     while(<FILE>) {
       chomp;
 
-      my ($qualName, $qualSourceId, $in, $out) = split(/\t/, $_);
+      my ($qualName, $qualSourceId, $in, $out, $termId) = split(/\t/, $_);
+      if($termId){ $termId =~ s/[\{\}]//g }
+      # term ID is the ontology term source ID for the value, referenced in GUS by Study.Characteristic.ONTOLOGY_TERM_ID
+      # not to be confused with Qualifier_ID or Unit_ID
 
       my $lcIn = lc($in);
 
@@ -60,6 +63,8 @@ sub new {
         my $lcQualName = lc $qualName;
         $valueMapping->{$lcQualName}->{$lcIn} = $out;
       }
+      if($termId){ $valueMapping->{_TERMS_}->{$qualSourceId}->{$lcIn}=$termId }
+      # This maps a term to the ORIGINAL value (not mapped value)
     }
     close FILE;
   }
@@ -289,6 +294,7 @@ sub valueIsMappedValue {
     my $qualName = $obj->getAlternativeQualifier();
     $qualifierValues = $valueMapping->{$qualName};
   }
+  my $terms = $valueMapping->{_TERMS_}->{$qualSourceId};
 
   unless(defined($value) && ($value ne "")){ return }
 
@@ -298,7 +304,7 @@ sub valueIsMappedValue {
     unless(defined($lcValue)){ $lcValue = ':::undef:::';}
     my $newValue = $qualifierValues->{$lcValue};
     unless(defined($newValue) && length($newValue)){
-      foreach my $regex ( grep { /^{{.*}}$/ } keys %$qualifierValues){
+      foreach my $regex ( grep { /^\{\{.*\}\}$/ } keys %$qualifierValues){
         my ($test) = ($regex =~ /^\{\{(.*)\}\}$/);
         $test = qr/$test/;
         if($lcValue =~ $test){
@@ -317,6 +323,12 @@ sub valueIsMappedValue {
       elsif($newValue || $newValue eq '0') {
         $obj->setValue($newValue);
       }
+    }
+    if(keys %{$terms} && defined($terms->{$lcValue})){
+      my $termSourceId = $terms->{$lcValue};
+      $obj->setTermAccessionNumber($termSourceId);
+      my ($termSource) = $termSourceId =~ /^(\w+)_|:/;
+      $obj->setTermSourceRef($termSource);
     }
   }
 }
@@ -611,6 +623,13 @@ sub formatUppercase {
   return $obj->setValue(uc($val)) if(defined($val));
 }
 
+sub trimWhitespace {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined $val && length $val;
+  $val =~ s/^\s*(.*)\s*$/$1/;
+  return $obj->setValue($val) if(defined($val));
+}
 sub formatSentenceCase {
   my ($self, $obj) = @_;
   my $val = $obj->getValue();
@@ -745,7 +764,8 @@ sub idObfuscateDateN {
   my @id = split(/_/, $nodeId);
   unless(length($id[$offset])){return}
   $local->{dateOrig} = $id[$offset];
-  #($local->{dateOrig}) = ($nodeId =~ /^[^_]+_([^_]+)/);
+  ## Support only date format YYYY-
+  return unless($local->{dateOrig} =~ /^\d{4}[\W]\d{2}[\W]\d{2}$/);
   if(lc($local->{dateOrig}) eq "na"){
     $nodeId =~ s/_na/_nax/i; # make it different
     return $node->setValue($nodeId);
