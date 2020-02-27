@@ -3,6 +3,8 @@ use base qw(CBIL::TranscriptExpression::DataMunger::Loadable);
 
 use strict;
 
+use utf8;
+
 use File::Basename;
 
 use CBIL::TranscriptExpression::Error;
@@ -276,7 +278,7 @@ if($makePercentiles) {
 quit("no");
 RString
 
-
+  binmode $rfh, ':utf8';
   print $rfh $rString;
 
   close $rfh;
