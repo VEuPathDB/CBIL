@@ -1,5 +1,7 @@
 package CBIL::TranscriptExpression::DataMunger::Loadable;
 use base qw(CBIL::TranscriptExpression::DataMunger);
+use locale;
+use open ':locale';
 
 use Data::Dumper;
 
