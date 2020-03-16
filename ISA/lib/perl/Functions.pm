@@ -572,8 +572,13 @@ sub formatTimeHHMMtoDecimal {
   my ($self, $obj) = @_;
   my $value = $obj->getValue();
   return unless defined $value;
+  if(looks_like_number($value) && (int($value) < 1200)){
+    my $time = sprintf('%.03f',$value / 60);
+    $obj->setValue($time);
+    return $time;
+  }
   unless($value =~ /^(\d{1,2})[\W:]?(\d\d)[\W_]?(am|pm)?$/i){
-    die "Time format does not match: [$value]"
+    die "Time format does not match: [$value] in " . Dumper $obj;
   }
   my($hr,$min,$half) = ($value =~ m/^(\d{1,2})[\W:]?(\d\d)[\W_]?(am|pm)?$/i);
   $min = $min / 60;
