@@ -580,6 +580,7 @@ sub makeNodes {
       else{
         my $nodeId = $node->getValue();
         $self->{idMap}->{$nodeId} = $oldNodeId;
+        # printf STDERR ("OBFUSCATED\t%s\t%s\n", $nodeId, $oldNodeId);
       }
     }
     my $nodeId = $node->getValue();
@@ -587,7 +588,7 @@ sub makeNodes {
       ## only check if id obfuscation is used and
       ## if this is is not an edge INPUT (PARENT); check only OUTPUTs or nodes without any edges
       if($nodeId eq $oldNodeId){
-        warn "Node ID not obfuscated: $oldNodeId = $nodeId";
+        #warn "Node ID not obfuscated: $oldNodeId = $nodeId";
       }
       if(defined($self->{seenNodes}->{$nodeId})){
         die "Duplicate node ID for $nodeName $oldNodeId: $nodeId = " . $self->{seenNodes}->{$nodeId};
