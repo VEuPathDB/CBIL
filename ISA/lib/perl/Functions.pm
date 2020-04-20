@@ -577,10 +577,10 @@ sub formatTimeHHMMtoDecimal {
     $obj->setValue($time);
     return $time;
   }
-  unless($value =~ /^(\d{1,2})[\W:]?(\d\d)[\W_]?(am|pm)?$/i){
+  unless($value =~ /^(\d{1,2})[\W:]?(\d\d)(:\d\d)?[\W_]?(am|pm)?$/i){
     die "Time format does not match: [$value] in " . Dumper $obj;
   }
-  my($hr,$min,$half) = ($value =~ m/^(\d{1,2})[\W:]?(\d\d)[\W_]?(am|pm)?$/i);
+  my($hr,$min,$sec,$half) = ($value =~ m/^(\d{1,2})[\W:]?(\d\d)(:\d\d)?[\W_]?(am|pm)?$/i);
   $min = $min / 60;
   if(defined($half) && ($half eq 'pm') && ($hr < 12)){
     $hr = ($hr + 12) % 24;
