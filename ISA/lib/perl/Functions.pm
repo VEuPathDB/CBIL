@@ -239,6 +239,40 @@ sub internalDateWithObfuscation {
 }
 
 
+sub setDeltaForNode {
+  my ($self, $nodeObj, $parentInputObjs) = @_;
+  unless($self->getDateObfuscationFile()) {
+    die "No dateObfuscationFile was not provided";
+  }
+  my $dateObfuscation = $self->getDateObfuscation();
+  my $delta;
+  my $nodeId = $nodeObj->getValue();
+
+  my $materialType = $nodeObj->getMaterialType();
+  my $materialTypeSourceId = $materialType->getTermAccessionNumber();
+  $delta = $dateObfuscation->{$materialTypeSourceId}->{$nodeId};
+  return 1 if $delta;
+  if(scalar @$parentInputObjs) {
+  # if I have inputs and one of my inputs has a delta, cache that and use for self
+    foreach my $input(@$parentInputObjs) {
+      my $inputNodeId = $input->getValue();
+
+      my $inputMaterialType = $input->getMaterialType();
+      my $inputMaterialTypeSourceId = $inputMaterialType->getTermAccessionNumber();
+
+      if($delta && $delta ne $dateObfuscation->{$inputMaterialTypeSourceId}->{$inputNodeId}) {
+        die "2 deltas found for parents of $nodeId" if($dateObfuscation->{$inputMaterialTypeSourceId}->{$inputNodeId});
+      }
+
+      $delta = $dateObfuscation->{$inputMaterialTypeSourceId}->{$inputNodeId};
+      last;
+    }
+  }
+  $delta ||= $self->calculateDelta();
+  $self->cacheDelta($materialTypeSourceId, $nodeId, $delta);
+  return 1;
+}
+
 
 sub formatEuroDate {
   my ($self, $obj, $parentObj) = @_;
@@ -330,6 +364,18 @@ sub valueIsMappedValue {
       my ($termSource) = $termSourceId =~ /^(\w+)_|:/;
       $obj->setTermSourceRef($termSource);
     }
+  }
+}
+
+sub mappedValueRequired {
+  my ($self, $obj) = @_;
+  my $oldval = $obj->getValue();
+  $self->valueIsMappedValue($obj);
+  my $newval = $obj->getValue();
+  if($oldval eq $newval){
+    my $qualSourceId = $obj->getQualifier();
+    my $qualName = $obj->getAlternativeQualifier();
+    print STDERR ("VALUE_MAP_ERROR\t$qualSourceId|$qualName\t{{$oldval}}\n");
   }
 }
 
