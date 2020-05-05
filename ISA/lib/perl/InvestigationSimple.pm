@@ -291,6 +291,10 @@ sub addNodesAndEdgesToStudy {
 
     my ($protocolAppHash, $nodeIOHash) = $self->makeEdges($studyXml, $study, $nodesHash);
 
+    if($studyXml->{allNodesGetDeltas}){
+      $self->allNodesGetDeltas($nodesHash, $nodeIOHash);
+    }
+
     my $leftoverColumns = $self->addCharacteristicsToNodes($nodesHash, \%valuesHash, $nodeIOHash);
 
     my $missingColumns = $self->addProtocolParametersToEdges($protocolAppHash, \%valuesHash, $leftoverColumns, $nodeIOHash);
@@ -681,6 +685,15 @@ sub makeProtocols {
   }
 
   return \@rv;
+}
+
+sub allNodesGetDeltas {
+  my ($self, $nodesHash, $nodeIOHash) = @_;
+  my $functionsObj = $self->getFunctions();
+  foreach my $node (values %$nodesHash){
+    my $nodeName=$node->getValue();
+    $functionsObj->setDeltaForNode($node,$nodeIOHash->{$nodeName} || []);
+  }
 }
 
 sub writeObfuscatedIdFile {
