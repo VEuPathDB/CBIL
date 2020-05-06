@@ -1,5 +1,5 @@
 package CBIL::Util::Sra;
-use autodie qw/system/; # requires 'IPC::System::Simple';
+#use autodie qw/system/; # requires 'IPC::System::Simple';
 use LWP::Simple; 
 use XML::Simple; 
 use Data::Dumper;
