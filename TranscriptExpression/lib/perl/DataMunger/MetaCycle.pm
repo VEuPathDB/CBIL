@@ -29,7 +29,6 @@ sub new {
    #   CBIL::TranscriptExpression::Error->new("Missing required argument [inputSuffix]")->throw();
    # }
 
-
     my $self = $class->SUPER::new($args);
 
     return $self;

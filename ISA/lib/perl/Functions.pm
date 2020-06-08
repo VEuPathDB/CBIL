@@ -3,21 +3,22 @@ require Exporter;
 @ISA = qw(Exporter);
 
 @EXPORT_OK = qw(makeObjectFromHash makeOntologyTerm);
-
-use Scalar::Util qw/blessed looks_like_number/;
-
-use Date::Manip qw(Date_Init ParseDate UnixDate DateCalc);
-
 use strict;
 use warnings;
 
+use Scalar::Util qw/blessed looks_like_number/;
+use Date::Manip qw(Date_Init ParseDate UnixDate DateCalc);
+
 use CBIL::ISA::OntologyTerm;
 use Date::Parse qw/strptime/;
+use Carp;
 
 use File::Basename;
 
 use Data::Dumper;
 use Digest::SHA;
+
+use Switch;
 
 sub getOntologyMapping {$_[0]->{_ontology_mapping} }
 sub getOntologySources {$_[0]->{_ontology_sources} }
@@ -48,7 +49,10 @@ sub new {
     while(<FILE>) {
       chomp;
 
-      my ($qualName, $qualSourceId, $in, $out) = split(/\t/, $_);
+      my ($qualName, $qualSourceId, $in, $out, $termId) = split(/\t/, $_);
+      if($termId){ $termId =~ s/[\{\}]//g }
+      # term ID is the ontology term source ID for the value, referenced in GUS by Study.Characteristic.ONTOLOGY_TERM_ID
+      # not to be confused with Qualifier_ID or Unit_ID
 
       my $lcIn = lc($in);
 
@@ -59,6 +63,8 @@ sub new {
         my $lcQualName = lc $qualName;
         $valueMapping->{$lcQualName}->{$lcIn} = $out;
       }
+      if($termId){ $valueMapping->{_TERMS_}->{$qualSourceId}->{$lcIn}=$termId }
+      # This maps a term to the ORIGINAL value (not mapped value)
     }
     close FILE;
   }
@@ -151,6 +157,8 @@ sub internalDateWithObfuscation {
   my ($self, $obj, $parentObj, $parentInputObjs, $dateFormat) = @_;
 
   my $value = $obj->getValue();
+  $value && $value =~ s/^\s*(.*)\s$/$1/;
+  return unless $value;
 
   # deal with "Mon Year" values by setting the day to the first day of the month
   if(defined($value) && ($value =~ /^\w{3}\s*\d{2}(\d{2})?$/)) {
@@ -231,11 +239,46 @@ sub internalDateWithObfuscation {
 }
 
 
+sub setDeltaForNode {
+  my ($self, $nodeObj, $parentInputObjs) = @_;
+  unless($self->getDateObfuscationFile()) {
+    die "No dateObfuscationFile was not provided";
+  }
+  my $dateObfuscation = $self->getDateObfuscation();
+  my $delta;
+  my $nodeId = $nodeObj->getValue();
+
+  my $materialType = $nodeObj->getMaterialType();
+  my $materialTypeSourceId = $materialType->getTermAccessionNumber();
+  $delta = $dateObfuscation->{$materialTypeSourceId}->{$nodeId};
+  return 1 if $delta;
+  if(scalar @$parentInputObjs) {
+  # if I have inputs and one of my inputs has a delta, cache that and use for self
+    foreach my $input(@$parentInputObjs) {
+      my $inputNodeId = $input->getValue();
+
+      my $inputMaterialType = $input->getMaterialType();
+      my $inputMaterialTypeSourceId = $inputMaterialType->getTermAccessionNumber();
+
+      if($delta && $delta ne $dateObfuscation->{$inputMaterialTypeSourceId}->{$inputNodeId}) {
+        die "2 deltas found for parents of $nodeId" if($dateObfuscation->{$inputMaterialTypeSourceId}->{$inputNodeId});
+      }
+
+      $delta = $dateObfuscation->{$inputMaterialTypeSourceId}->{$inputNodeId};
+      last;
+    }
+  }
+  $delta ||= $self->calculateDelta();
+  $self->cacheDelta($materialTypeSourceId, $nodeId, $delta);
+  return 1;
+}
+
 
 sub formatEuroDate {
   my ($self, $obj, $parentObj) = @_;
 
   my $value = $obj->getValue();
+  return unless $value;
 
   # deal with "Mon Year" values by setting the day to the first day of the month
   if($value =~ /^\w{3}\s*\d{2}(\d{2})?$/) {
@@ -285,6 +328,7 @@ sub valueIsMappedValue {
     my $qualName = $obj->getAlternativeQualifier();
     $qualifierValues = $valueMapping->{$qualName};
   }
+  my $terms = $valueMapping->{_TERMS_}->{$qualSourceId};
 
   unless(defined($value) && ($value ne "")){ return }
 
@@ -293,8 +337,8 @@ sub valueIsMappedValue {
     unless(defined($value) || defined($qualifierValues->{':::undef:::'})){ return; }
     unless(defined($lcValue)){ $lcValue = ':::undef:::';}
     my $newValue = $qualifierValues->{$lcValue};
-    unless(defined($newValue)){
-      foreach my $regex ( grep { /^{{.*}}$/ } keys %$qualifierValues){
+    unless(defined($newValue) && length($newValue)){
+      foreach my $regex ( grep { /^\{\{.*\}\}$/ } keys %$qualifierValues){
         my ($test) = ($regex =~ /^\{\{(.*)\}\}$/);
         $test = qr/$test/;
         if($lcValue =~ $test){
@@ -314,6 +358,24 @@ sub valueIsMappedValue {
         $obj->setValue($newValue);
       }
     }
+    if(keys %{$terms} && defined($terms->{$lcValue})){
+      my $termSourceId = $terms->{$lcValue};
+      $obj->setTermAccessionNumber($termSourceId);
+      my ($termSource) = $termSourceId =~ /^(\w+)_|:/;
+      $obj->setTermSourceRef($termSource);
+    }
+  }
+}
+
+sub mappedValueRequired {
+  my ($self, $obj) = @_;
+  my $oldval = $obj->getValue();
+  $self->valueIsMappedValue($obj);
+  my $newval = $obj->getValue();
+  if($oldval eq $newval){
+    my $qualSourceId = $obj->getQualifier();
+    my $qualName = $obj->getAlternativeQualifier();
+    print STDERR ("VALUE_MAP_ERROR\t$qualSourceId|$qualName\t{{$oldval}}\n");
   }
 }
 
@@ -357,7 +419,7 @@ sub valueIsOntologyTerm {
   my $om = $self->getOntologyMapping();
   my $os = $self->getOntologySources();
 
-  if($os->{lc($valuePrefix)}) {
+  if(defined $valuePrefix and $os->{lc($valuePrefix)}) {
     $obj->setTermAccessionNumber($value);
     $obj->setTermSourceRef($valuePrefix);
   }
@@ -431,6 +493,7 @@ sub formatDate {
   my ($self, $obj) = @_;
 
   my $value = $obj->getValue();
+  return unless $value;
 
   Date_Init("DateFormat=US"); 
 
@@ -457,10 +520,68 @@ sub formatEuroDateWithObfuscation {
   $self->internalDateWithObfuscation($obj, $parentObj, $parentInputObjs, "DateFormat=non-US");
 }
 
+sub resolveDateFormats {
+  my ($self, $obj, $parentObj, $parentInputObjs) = @_;
+  my $value = $obj->getValue();
+  return unless $value;
+  $value =~ s/^USER_ERROR_//;
+  my $finalDate;
+# USER_ERROR_22sep13:00:00:00|22/sep/13|9/22/2013|2013-09-22|22sep2013
+  my %monthnum;
+  @monthnum{qw/jan feb mar apr may jun jul aug sep oct nov dec/} = 1 .. 12;
+  foreach my $dval ( split(/\|/, $value)){
+    my ($day,$mon,$yr);
+    switch($dval){
+      case /^na$/ { $dval = undef }
+      case /^\d{1,2}\W?[a-z]{3}\W?\d{2,4}(\W\d\d:\d\d:\d\d)?$/ {
+        ($day,$mon,$yr) = ($dval =~ m/^(\d{1,2})\W?([a-z]{3})\W?(\d{2,4})(\W\d\d:\d\d:\d\d)?$/);
+        if($yr < 1000){
+          if($yr > 20){ $yr += 1900 }
+          else { $yr += 2000 }
+        }
+        $mon=$monthnum{$mon};
+      }
+      case /^\d{1,2}\W?\d{1,2}\W?\d{2,4}$/ {
+        ($mon,$day,$yr) = ($dval =~ m/^(\d{1,2})\W?(\d{1,2})\W?(\d{2,4})$/);
+        if($yr < 1000){
+          if($yr > 20){ $yr += 1900 }
+          else { $yr += 2000 }
+        }
+      }
+      case /^\d{4}\W?\d{2}\W?\d{2}$/ {
+        ($yr,$mon,$day) = ($dval =~ m/^(\d{4})\W?(\d{2})\W?(\d{2})$/);
+      }
+      else { die "date format not supported in $dval" }
+    }
+    next unless($dval);
+    #printf STDERR "$dval = day $day, mon $mon, yr $yr\n";
+    my $date = sprintf("%02d-%02d-%04d", $mon, $day, $yr);
+    $finalDate ||= $date;
+    if($finalDate ne $date){
+      warn "Cannot resolve date $date != $finalDate in $value\n" . Dumper $obj;
+      return;
+    }
+  }
+  $obj->setValue($finalDate);
+  return $finalDate;
+}
+
+sub fixDateMissingDayMonth {
+  my ($self, $obj, $parentObj, $parentInputObjs) = @_;
+  my $value = $obj->getValue();
+  return unless $value;
+  $value =~ s/^na$//;
+  $value =~ s/^0{1,2}(\W)0{1,3}(\W\d{2,4})$/02${1}07$2/; 
+  $value =~ s/^0{1,2}(\W(\d{1,2}|[a-z]{3})\W\d{2,4})$/15$1/; 
+  $obj->setValue($value);
+  return $value;
+}
+
 sub formatTime {
   my ($self, $obj) = @_;
 
   my $value = $obj->getValue();
+  return unless($value);
   if($value =~ /^0:(\d\d\w\w)$/){ 
     $value =~ s/^0:(\d\d\w\w)$/12:$1/;
     Date_Init("DateFormat=US"); 
@@ -497,21 +618,45 @@ sub formatTimeHHMMtoDecimal {
   my ($self, $obj) = @_;
   my $value = $obj->getValue();
   return unless defined $value;
-  $value =~ s/^(\d\d):(\d\d)$/$1$2/;
-  my $hr = sprintf("%d", $value / 100);
-  my $min = $value % 100;
+  if(looks_like_number($value) && (int($value) < 1200)){
+    my $time = sprintf('%.03f',$value / 60);
+    $obj->setValue($time);
+    return $time;
+  }
+  unless($value =~ /^(\d{1,2})[\W:]?(\d\d)(:\d\d)?[\W_]?(am|pm)?$/i){
+    die "Time format does not match: [$value] in " . Dumper $obj;
+  }
+  my($hr,$min,$sec,$half) = ($value =~ m/^(\d{1,2})[\W:]?(\d\d)(:\d\d)?[\W_]?(am|pm)?$/i);
   $min = $min / 60;
+  if(defined($half) && ($half eq 'pm') && ($hr < 12)){
+    $hr = ($hr + 12) % 24;
+  }
   my $time = sprintf('%.03f',$hr + $min);
   $obj->setValue($time);
   return $time;
 }
 
+sub formatStataInteger2Date {
+  ## Stata saves dates as days since January 1, 1960
+  my ($self, $obj) = @_;
+  my $value = $obj->getValue();
+  return unless($value);
+  Date_Init("DateFormat=non-US"); 
+  my $date = UnixDate(DateCalc("1960-01-01", "0:0:0:$value:0:0:0"), "%Y-%m-%d");
+  $obj->setValue($date);
+  return $date;
+}
+
 sub makeOntologyTerm {
   my ($sourceId, $termName, $class) = @_;
 
-  my ($termSource) = $sourceId =~ /^(\w+)_|:/;
+  $class //= "CBIL::ISA::OntologyTerm";
 
-  $class = "CBIL::ISA::OntologyTerm" unless($class);
+  my ($termSource) = $sourceId =~ /^(\w+)_|:/;
+  unless (defined $termSource){
+     $termSource = "";
+     carp "makeOntologyTerm sourceId=$sourceId termName=$termName class=$class can not determine \$termSource as sourceId doesn't match " . '/^(\w+)_|:/';
+  }
 
   my $hash = {term_source_ref => $termSource,
               term_accession_number => $sourceId,
@@ -529,6 +674,13 @@ sub formatUppercase {
   return $obj->setValue(uc($val)) if(defined($val));
 }
 
+sub trimWhitespace {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined $val && length $val;
+  $val =~ s/^\s*(.*)\s*$/$1/;
+  return $obj->setValue($val) if(defined($val));
+}
 sub formatSentenceCase {
   my ($self, $obj) = @_;
   my $val = $obj->getValue();
@@ -597,6 +749,15 @@ sub formatQuotation {
   return $obj->setValue(sprintf("\"%s\"",$obj->getValue()));
 }
 
+sub _SCRAP_ERRORS {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  if($val =~ /^USER_ERROR/){
+    my @values = split(/\|/, $val);
+    return $obj->setValue($values[1]);
+  }
+}
+
 sub parseDmsCoordinate {
   my ($self, $obj) = @_;
   my $val = $obj->getValue();
@@ -654,7 +815,8 @@ sub idObfuscateDateN {
   my @id = split(/_/, $nodeId);
   unless(length($id[$offset])){return}
   $local->{dateOrig} = $id[$offset];
-  #($local->{dateOrig}) = ($nodeId =~ /^[^_]+_([^_]+)/);
+  ## Support only date format YYYY-
+  return unless($local->{dateOrig} =~ /^\d{4}[\W]\d{2}[\W]\d{2}$/);
   if(lc($local->{dateOrig}) eq "na"){
     $nodeId =~ s/_na/_nax/i; # make it different
     return $node->setValue($nodeId);
