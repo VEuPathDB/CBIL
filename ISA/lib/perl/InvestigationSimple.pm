@@ -299,17 +299,11 @@ sub addNodesAndEdgesToStudy {
 
     my $missingColumns = $self->addProtocolParametersToEdges($protocolAppHash, \%valuesHash, $leftoverColumns, $nodeIOHash);
 
-    if(scalar @$missingColumns > 0 && $count == 1) {
-      my $specialColumns = $self->getStudySpecialColumns();
+    if($count == 1) {
+      my %specialColumns = map {lc($_) => 1 } @{$self->getStudySpecialColumns()};
 
-      foreach my $mc (@$missingColumns) {
-
-        my $isSpecial;
-        foreach my $sc (@$specialColumns) {
-          $isSpecial = 1 if(lc($mc) eq lc($sc));
-        }
-
-        $self->handleError("Unmapped Column Header:  $mc") unless($isSpecial);
+      for my $mc (grep {not $specialColumns{lc($_)}} @$missingColumns) {
+        $self->handleError("Unmapped Column Header:  $mc");
       }
     }
     $count++;
