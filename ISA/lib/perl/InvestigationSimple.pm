@@ -271,7 +271,7 @@ sub addNodesAndEdgesToStudy {
   my $isReporterMode = $self->getIsReporterMode();
 
   my $rowCount = 0;
-
+  my $reportedMissingColumns;
   while(my $line = <$fileHandle>) {
     chomp $line;
 
@@ -299,11 +299,12 @@ sub addNodesAndEdgesToStudy {
 
     my $missingColumns = $self->addProtocolParametersToEdges($protocolAppHash, \%valuesHash, $leftoverColumns, $nodeIOHash);
 
-    if($count == 1) {
+    if(not $reportedMissingColumns) {
       my %specialColumns = map {lc($_) => 1 } @{$self->getStudySpecialColumns()};
-
-      for my $mc (grep {not $specialColumns{lc($_)}} @$missingColumns) {
-        $self->handleError("Unmapped Column Header:  $mc");
+      my @missingColumns = sort grep {not $specialColumns{lc($_)}} @$missingColumns;
+      if(@missingColumns){
+        $self->handleError("Unmapped column headers:  ". join (", ", @missingColumns));
+        $reportedMissingColumns++;
       }
     }
     $count++;
