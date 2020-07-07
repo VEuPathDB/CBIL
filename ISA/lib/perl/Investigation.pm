@@ -26,6 +26,7 @@ my $STUDY_PROTOCOLS = "STUDY PROTOCOLS";
 my $STUDY_FACTORS = "STUDY FACTORS";
 my $STUDY_PUBLICATIONS = "STUDY PUBLICATIONS";
 my $STUDY_ASSAYS = "STUDY ASSAYS";
+my $STUDY_TAGS = "STUDY TAGS"; # extension introduced by VectorBase
 
 
 sub setDebug {$_[0]->{_debug} = $_[1]}
@@ -110,6 +111,9 @@ sub makeStudy {
   $study->setProtocols($hash->{$STUDY_PROTOCOLS}, 
                          $columnCounts->{$STUDY_PROTOCOLS});
 
+  $study->setTags($hash->{$STUDY_TAGS}, 
+                            $columnCounts->{$STUDY_TAGS});
+
   return $study;
 }
 
@@ -186,6 +190,22 @@ sub parseStudy {
     $assayFileReader->closeFh();
   }
 
+  foreach my $file (@{$study->getAssayDataFiles()}) {
+    # only process phenotype (p_*) and genotype (g_*) ISA-like files
+    if ($file->getValue() =~ /^(?:p_|g_)/) {
+      my $assayDataFileName = $investigationDirectory . "/" . $file->getValue();
+      warn "About to load $assayDataFileName...\n";
+
+      my $assayDataFileReader = CBIL::ISA::StudyAssayFileReader->new($assayDataFileName, $delimiter);
+
+      while($assayDataFileReader->hasNextLine()) {
+        my $dataObjects = $assayDataFileReader->readLineToObjects();
+        $study->addNodesAndEdges($dataObjects, $assayDataFileName);
+      }
+      $assayDataFileReader->closeFh();
+    }
+  }
+
   $study->setHasMoreData(0);
 }
 
@@ -251,8 +271,8 @@ sub dealWithAllOntologies {
     my $term = $ontologyTerm->getTerm();
 
 
-    unless(($accession && $source) || blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::Characteristic' || blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::ParameterValue') {
-      $self->handleError("OntologyTerm $term is required to have accession and source.");
+    unless(($accession && $source) or not $ontologyTerm->requiresAccessionedTerm()) {
+      $self->handleError("OntologyTerm '$term' (context: ".$ontologyTerm->getDebugContext().") is required to have accession and source.");
     }
   }
 }

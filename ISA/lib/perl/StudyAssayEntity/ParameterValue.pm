@@ -31,4 +31,8 @@ sub qualifierContextMethod {
   return "addParameterValue";
 }
 
+sub requiresAccessionedTerm {
+  return 0;
+}
+
 1;

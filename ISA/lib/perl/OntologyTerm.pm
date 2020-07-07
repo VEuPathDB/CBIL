@@ -18,12 +18,24 @@ sub getTermAccessionNumber { $_[0]->{_term_accession_number} }
 sub setTermSourceRef { $_[0]->{_term_source_ref} = $_[1] }
 sub getTermSourceRef { $_[0]->{_term_source_ref} }
 
+=head2 getDebugContext setDebugContext
+
+Getter/setter for a string that gives an idea where the ontology term was attempted to be loaded from.
+This can help debugging poorly constructed ISA-Tab.
+
+=cut
+
+sub setDebugContext { $_[0]->{_debug_context} = $_[1] }
+sub getDebugContext { $_[0]->{_debug_context} }
+
 sub new {
   my ($class, $args) = @_;
 
   my $seenTerm;
 
   my $self = bless {}, $class;
+
+  $self->setDebugContext(delete $args->{_debug_context}) if ($args->{_debug_context});
 
   foreach my $key (keys %$args) {
     if($key =~ /term_source_ref/) {
@@ -57,5 +69,16 @@ sub getAttributeNames {
 sub getValue { $_[0]->getTerm() }
 sub setValue { $_[0]->setTerm($_[1]) }
 
+
+#
+# if this column must contain a fully specified ontology term
+# then return true
+#
+# e.g. Characteristics and Parameter Value columns will override this to return false,
+# because they can contain free text and/or numbers+units
+#
+sub requiresAccessionedTerm {
+  return 1;
+}
 
 1;

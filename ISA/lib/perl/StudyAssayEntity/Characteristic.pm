@@ -4,7 +4,7 @@ use base qw(CBIL::ISA::OntologyTermWithQualifier);
 use strict;
 
 sub getParents {
-  return ["Source", "Sample", "Extract", "LabeledExtract" ];
+  return ["Source", "Sample", "Extract", "LabeledExtract", "Assay", "Phenotype", "Genotype" ];
 }
 
 # @override
@@ -50,6 +50,10 @@ sub getAttributeNames {
 
 sub qualifierContextMethod {
   return "addCharacteristic";
+}
+
+sub requiresAccessionedTerm {
+  return 0;
 }
 
 1;

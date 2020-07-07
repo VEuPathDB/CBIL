@@ -31,6 +31,7 @@ my @CONTEXTS = ("ONTOLOGY SOURCE REFERENCE",
                 "STUDY ASSAYS",
                 "STUDY PROTOCOLS",
                 "STUDY CONTACTS",
+                "STUDY TAGS", # extension by VectorBase
     );
 
 sub new {
@@ -64,6 +65,9 @@ sub read {
     # split and remove leading and trailing quotes
     #my @a = map { s/^"(.*)"$/$1/; $_; } $self->splitLine($line);
     my @a = @$fields;
+
+    # skip completely empty lines
+    next unless (length(join '', @a)>0);
 
     $studyIdentifier = $a[1] if(uc $a[0] eq 'STUDY IDENTIFIER');
     if(&isContextSwitch($a[0])) {

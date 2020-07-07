@@ -7,6 +7,7 @@ use CBIL::ISA::Publication;
 use CBIL::ISA::Contact;
 use CBIL::ISA::OntologyTerm;
 use CBIL::ISA::StudyDesign;
+use CBIL::ISA::Tag;
 use CBIL::ISA::StudyFactor;
 use CBIL::ISA::StudyAssay;
 use CBIL::ISA::Protocol;
@@ -91,7 +92,21 @@ sub setStudyDesigns {
   return $self->getStudyDesigns();
 }
 sub getStudyDesigns { $_[0]->{_study_designs}  || [] }
-sub addStudyDesign { push @{$_[0]->{_study_design}}, $_[1] }
+sub addStudyDesign { push @{$_[0]->{_study_designs}}, $_[1] }
+
+
+sub setTags { 
+  my ($self, $hash, $columnCount) = @_;
+
+  my $otRegexs = ["_tag"];
+  my $otIsList = [ 0 ];
+  $self->{_tags} = $self->makeStudyObjectsFromHash($hash, $columnCount, "CBIL::ISA::Tag", $otRegexs, $otIsList);
+
+  return $self->getTags();
+}
+sub getTags { $_[0]->{_tags}  || [] }
+sub addTag { push @{$_[0]->{_tags}}, $_[1] }
+
 
 sub setStudyFactors { 
   my ($self, $hash, $columnCount) = @_;
@@ -169,6 +184,26 @@ sub addEdge {
 }
 sub getEdges { $_[0]->{_edges} or [] }
 
+#
+# used to remember which File entities, such as "Raw Data File"
+# have been encountered while parsing assay files
+#
+sub getAssayDataFiles { $_[0]->{_assay_data_files} or [] }
+sub addAssayDataFile {
+  my ($self, $fileObj) = @_;
+
+  # check it's not already there
+  # can't use "$obj->equals($other)" because attributes
+  # are not nodes and are "never equal"
+  # so we just use the value (the filename)
+  foreach (@{$self->getAssayDataFiles()}) {
+    return $_ if ($fileObj->getValue() eq $_->getValue());
+  }
+  push @{$self->{_assay_data_files}}, $fileObj;
+  return $fileObj;
+}
+
+
 
 # Handle a chunk of the Investigation File
 #  Each section is made into an object
@@ -210,7 +245,6 @@ sub makeStudyObjectsFromHash {
       my $setterName = $setOrAdd . join("", map { ucfirst } split("_", $otRegex));
 
       my %initOtHash = map { $_ => $hash->{$_}->[$i] } @{$otKeys{$otRegex}};
-
       my %otHash;
 
       if($otIsList) {
@@ -226,13 +260,17 @@ sub makeStudyObjectsFromHash {
       }
 
       foreach my $n (keys %otHash) {
-        my $ontologyTerm = CBIL::ISA::OntologyTerm->new($otHash{$n});
-        eval {
-          $obj->$setterName($ontologyTerm);
-
-        };
-        if ($@) {
-          die "Unable to $setterName for class $class: $@";
+        my $otHash = $otHash{$n};
+        # don't create and attach a term if all values (name, accession, source) are empty.
+        if (length(join '', values %$otHash)>0) {
+          my $ontologyTerm = CBIL::ISA::OntologyTerm->new($otHash);
+          # $ontologyTerm->setDebugContext(join ', ',  map { "$_=$hash{$_}" } keys %hash);
+          eval {
+            $obj->$setterName($ontologyTerm);
+          };
+          if ($@) {
+            die "Unable to $setterName for class $class: $@";
+          }
         }
       }
     }
@@ -279,6 +317,10 @@ sub addNodesAndEdges {
 
     $start = 1;
     $wasNodeContext = $entity->isNode();
+
+    # now keep a track of all File entities
+    # for later processing by PopBio Genotype/Phenotype handler
+    map { $self->addAssayDataFile($_) } @{$entity->getFiles()} if ($entity->can('getFiles'));
   }
 }
 
@@ -373,6 +415,14 @@ inherited from L<CBIL::ISA::Commentable>
 =item C<getStudyDesigns>
 
 @return array of L<CBIL::ISA::StudyDesign>
+
+=item C<addTag>
+
+@param L<CBIL::ISA::Tag>
+
+=item C<getTags>
+
+@return array of L<CBIL::ISA::Tag>
 
 =item C<addStudyFactor>
 
