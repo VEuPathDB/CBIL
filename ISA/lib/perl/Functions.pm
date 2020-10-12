@@ -138,17 +138,12 @@ sub cacheDelta {
 
 sub calculateDelta {
   my ($self) = @_;
-
-  my $plusOrMinusDays = 7; # TODO: parameterize this
-
+  my $params = $self->getFunctionParams();
+  my $plusOrMinusDays = $params->{plusOrMinusDays} || 7; # TODO: parameterize this
   my $direction = int (rand(2)) ? 1 : -1;
-
   my $magnitude = 1 + int(rand($plusOrMinusDays));
-
   my $days = $direction * $magnitude; 
-
   my $deltaString = "0:0:0:$days:0:0:0";
-
   return $deltaString;
 }
 
@@ -168,6 +163,25 @@ sub internalDateWithObfuscation {
   Date_Init($dateFormat); 
 
   my $formattedDate;
+  
+  my $params = $self->getFunctionParams();
+ 
+  my $dateValue = ParseDate($value);
+  if($params->{minDate}){
+    my $minDate = ParseDate($params->{minDate});
+    my @delta = split(/:/, DateCalc($minDate,$dateValue));
+    if( $delta[4] <= 0 ){ # abort, make no change to value and do not create a date delta
+      return;
+    }
+  }
+  if($params->{maxDate}){
+    my $maxDate = ParseDate($params->{maxDate});
+    my @delta = split(/:/, DateCalc($maxDate,$dateValue));
+    if( $delta[4] >= 0 ){ # abort, make no change to value and do not create a date delta
+      return;
+    }
+  }
+ 
   if($self->getDateObfuscationFile()) {
     my $dateObfuscation = $self->getDateObfuscation();
 
@@ -520,6 +534,12 @@ sub formatEuroDateWithObfuscation {
   $self->internalDateWithObfuscation($obj, $parentObj, $parentInputObjs, "DateFormat=non-US");
 }
 
+sub formatDateWithObfuscationMin1900 {
+  my ($self, $obj, $parentObj, $parentInputObjs) = @_;
+  $self->{_functionParams}->{internalDateWithObfuscation}->{minDate}='1900-01-01';
+  $self->internalDateWithObfuscation($obj, $parentObj, $parentInputObjs, "DateFormat=US");
+}
+
 sub resolveDateFormats {
   my ($self, $obj, $parentObj, $parentInputObjs) = @_;
   my $value = $obj->getValue();
@@ -641,6 +661,7 @@ sub formatStataInteger2Date {
   my ($self, $obj) = @_;
   my $value = $obj->getValue();
   return unless($value);
+  return unless(looks_like_number($value));
   Date_Init("DateFormat=non-US"); 
   my $date = UnixDate(DateCalc("1960-01-01", "0:0:0:$value:0:0:0"), "%Y-%m-%d");
   $obj->setValue($date);
@@ -678,7 +699,7 @@ sub trimWhitespace {
   my ($self, $obj) = @_;
   my $val = $obj->getValue();
   return unless defined $val && length $val;
-  $val =~ s/^\s*(.*)\s*$/$1/;
+  $val =~ s/^\s+|\s+$//g;
   return $obj->setValue($val) if(defined($val));
 }
 sub formatSentenceCase {
@@ -850,6 +871,14 @@ sub idObfuscateDateN {
   die "No date in $nodeId\n" . Dumper $local unless $local->{dateOrig} && $local->{formattedDate}; 
   $newId =~ s/$dateOrig/$local->{formattedDate}/;
   return $node->setValue($newId);
+}
+
+sub getFunctionParams {
+  my($self) = @_;
+  return {} unless $self->{_functionParams};
+  my (undef,undef,undef,$subName) = caller(1);
+  $subName =~ s/^.*:://;
+  return $self->{_functionParams}->{$subName};
 }
 
 sub makeObjectFromHash {
