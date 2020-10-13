@@ -39,10 +39,14 @@ sub _calcRPK {
     my($geneLengths, $countHash, $rpkSum) = @_;
     my $rpkHash;
     while (my ($geneId, $count) = each %{$countHash}) {
-        my $geneLength = $geneLengths->{$geneId}/1000;
-        my $rpk = $count/$geneLength;
-        $rpkSum += $rpk;
-        $rpkHash->{$geneId} = $rpk;
+        if ($geneLengths->{$geneId}) {
+            my $geneLength = $geneLengths->{$geneId}/1000;
+            my $rpk = $count/$geneLength;
+            $rpkSum += $rpk;
+            $rpkHash->{$geneId} = $rpk;
+        } else {
+            print STDERR "WARNING: Gene $geneId was not found in footprint file. No data will be loaded for this gene.\n";
+        }
     }
     return ($rpkSum, $rpkHash);
 }
