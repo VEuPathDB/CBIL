@@ -50,7 +50,7 @@ sub getFastqForStudyId {
 # Locality doesn't matter when we're not downloading fastqs so use ENA instead
 sub getRunsForStudy {
   my ($study_id) = @_;
-  my $url = "https://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=$study_id&result=read_run&fields=secondary_sample_accession,run_accession,library_layout";
+  my $url = "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=$study_id&result=read_run&fields=secondary_sample_accession,run_accession,library_layout";
   my $text = get ($url);
   die "No data for URL: $url" unless $text;
   open (my $fh, "<", \$text) or die $!;
