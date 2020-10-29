@@ -50,16 +50,16 @@ sub getFastqForStudyId {
 # Locality doesn't matter when we're not downloading fastqs so use ENA instead
 sub getRunsForStudy {
   my ($study_id) = @_;
-  my $url = "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=$study_id&result=read_run&fields=secondary_sample_accession,run_accession,library_layout";
+  my $url = "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=$study_id&result=read_run&fields=sample_accession,secondary_sample_accession,run_accession,library_layout";
   my $text = get ($url);
   die "No data for URL: $url" unless $text;
   open (my $fh, "<", \$text) or die $!;
-  die "Bad header: $url" unless (my $header = <$fh>) eq "secondary_sample_accession\trun_accession\tlibrary_layout\n";
+  die "Bad header: $url" unless (my $header = <$fh>) eq "sample_accession\tsecondary_sample_accession\trun_accession\tlibrary_layout\n";
   my @result;
   while(<$fh>){
      chomp;
-     my ($sampleId, $runId, $libraryLayout) = split "\t";
-     die "Bad line: $_" unless ($sampleId =~ /^[SED]RS\d+$/ and $runId =~ /^[SED]RR\d+$/ and $libraryLayout =~ /^SINGLE|PAIRED$/);
+     my ($theOtherSampleId, $sampleId, $runId, $libraryLayout) = split "\t";
+     die "Bad line: $_" unless ($theOtherSampleId =~ /^SAMN\d+$/ and $sampleId =~ /^[SED]RS\d+$/ and $runId =~ /^[SED]RR\d+$/ and $libraryLayout =~ /^SINGLE|PAIRED$/);
      push @result, [$sampleId, $runId, $libraryLayout];
   }
   return @result;
