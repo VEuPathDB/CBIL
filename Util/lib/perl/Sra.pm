@@ -377,7 +377,7 @@ sub getFastqForSraRunId {
 
     unlink("$runId.sra") if -e "$runId.sra";
     ###  replacing wget with prefetch       my $cmd = "wget https://ftp-private.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/".substr($runId,0,3)."/".substr($runId,0,6)."/$runId/$file";
-    my $cmd = "prefetch -O . $runId";
+    my $cmd = "prefetch -X 9999999999999 -O . $runId";
     #TODO test with something paired end, since not 100% sure how those files are named
     if (! -f "${runId}_1.fastq") {
       system($cmd);
@@ -416,7 +416,7 @@ sub getCsForSraRunId {
   my $file = "$runId.sra";
   unlink("$runId.sra") if -e "$runId.sra";
   #####  replacing wget with prefetch      my $cmd = "wget https://ftp-private.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/".substr($runId,0,3)."/".substr($runId,0,6)."/$runId/$file";
-  my $cmd = "prefetch -O . $runId";
+  my $cmd = "prefetch -X 9999999999999 -O . $runId";
   print STDERR "retrieving $runId with $cmd\n";
   system($cmd);
   if($?){
