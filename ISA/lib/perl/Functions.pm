@@ -51,10 +51,14 @@ sub new {
 
       my ($qualName, $qualSourceId, $in, $out, $termId) = split(/\t/, $_);
       if($termId){ $termId =~ s/[\{\}]//g }
-      # term ID is the ontology term source ID for the value, referenced in GUS by Study.Characteristic.ONTOLOGY_TERM_ID
+      # term ID is the ontology term source ID (IRI) for the value, referenced in GUS by Study.Characteristic.ONTOLOGY_TERM_ID
       # not to be confused with Qualifier_ID or Unit_ID
+      #
+      my $lcIn = lc($in); # value hash key, matching is not case-sensitive
+      if( $lcIn =~ /^:::function:/ ){ ## bypass case-insensitivity for embedded functions
+        $lcIn = $in;
+      }
 
-      my $lcIn = lc($in);
 
       # I think case for source_ids matters so these need to match exactly
       $valueMapping->{$qualSourceId}->{$lcIn} = $out;
@@ -337,7 +341,12 @@ sub valueIsMappedValue {
 
   my $valueMapping = $self->getValueMapping();
 
+  ## First look for a rule matching the IRI (or other term which this column is mapped to)
+  ## This is found in column 2 of valueMap.txt
   my $qualifierValues = $valueMapping->{$qualSourceId};
+  ## If not matched (which means the codebook for this file and/or column may be special 
+  ## get the mapping for this particular file and/or column
+  ## This is found in column 1 of valueMap.txt
   unless($qualifierValues){
     my $qualName = $obj->getAlternativeQualifier();
     $qualifierValues = $valueMapping->{$qualName};
@@ -346,10 +355,15 @@ sub valueIsMappedValue {
 
   unless(defined($value) && ($value ne "")){ return }
 
-  if($qualifierValues) {
-    my $lcValue = lc($value);
-    unless(defined($value) || defined($qualifierValues->{':::undef:::'})){ return; }
-    unless(defined($lcValue)){ $lcValue = ':::undef:::';}
+  ## $qualifierValues = { hashref of value=>mapped value/term }
+  if($qualifierValues) { ## there is some row for this variable
+    my $lcValue = lc($value); ## matching is not case-sensitive
+    ## Skip rows where 
+## <CLEAN-UP qualifierValues->{:::undef:::} tried to use this to insert a value, didn't work
+    # unless(defined($value) || defined($qualifierValues->{':::undef:::'})){ return; }
+    # unless(defined($value)){ return; }
+    # unless(defined($lcValue)){ $lcValue = ':::undef:::';}
+## CLEAN-UP>
     my $newValue = $qualifierValues->{$lcValue};
     unless(defined($newValue) && length($newValue)){
       foreach my $regex ( grep { /^\{\{.*\}\}$/ } keys %$qualifierValues){
@@ -372,6 +386,23 @@ sub valueIsMappedValue {
         $obj->setValue($newValue);
       }
     }
+    ## After matching value and applying mapping
+    ## Check whether there are functions in valueMap.txt
+    ## Functions are normally added in ontologyMapping.xml
+    ## but it may be convenient to add them in valueMap.txt
+    my @mappedFunctions = map { /^:::function:(.*)$/; $1 } grep { /^:::function:/ } keys %$qualifierValues;
+    foreach my $func (@mappedFunctions){
+      if($self->can($func)){
+        ## Get param(s) from mapped value column
+        ## Leave it up to the function to parse it
+        my $param = $qualifierValues->{$func};
+        $self->$func($obj,$param);
+      }
+      else{
+printf STDERR "$func is not defined\n";
+      }
+    }
+    
     if(keys %{$terms} && defined($terms->{$lcValue})){
       my $termSourceId = $terms->{$lcValue};
       $obj->setTermAccessionNumber($termSourceId);
@@ -379,6 +410,11 @@ sub valueIsMappedValue {
       $obj->setTermSourceRef($termSource);
     }
   }
+}
+
+sub excludeColumn {
+  my ($self, $obj) = @_;
+  return $obj->setValue(undef);
 }
 
 sub mappedValueRequired {
