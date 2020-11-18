@@ -547,7 +547,15 @@ sub makeNodes {
     my $class = "CBIL::ISA::StudyAssayEntity::$isaType";
 
     my $idColumn = lc($studyXml->{node}->{$nodeName}->{idColumn}) || "name";
-    my $name = $valuesHash->{$idColumn}->[0];
+    my $name;
+    if($idColumn =~ /:::/){
+      my @cols = split(/:::/, $idColumn);
+      my @keys = map { $valuesHash->{$_}->[0] } @cols;
+      $name = join("_", @keys);
+    }
+    else { 
+      $name = $valuesHash->{$idColumn}->[0];
+    }
     $self->addStudySpecialColumn($idColumn); # housekeeping
 
     my $description = $valuesHash->{description}->[0];
