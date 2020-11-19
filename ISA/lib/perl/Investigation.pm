@@ -242,8 +242,8 @@ sub dealWithAllOntologies {
     $ontologyTerms->{$ontologyTerm->getTermSourceRef()}->{$ontologyTerm->getTermAccessionNumber()}++ if($hasAccession);
 
     # Characteristic Qualifiers are a special case.  Their term/accession/source is not defined in the investigation file
-    if(blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::Characteristic') {
-      $ontologyTerms->{"CHARACTERISTIC_QUALIFIER"}->{$ontologyTerm->getQualifier()}++;
+    if(blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::Characteristic' || blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::ParameterValue') {
+      $ontologyTerms->{"QUALIFIER"}->{$ontologyTerm->getQualifier()}++;
     }
 
     my $accession = $ontologyTerm->getTermAccessionNumber();
