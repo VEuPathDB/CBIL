@@ -54,7 +54,7 @@ sub new {
       # term ID is the ontology term source ID (IRI) for the value, referenced in GUS by Study.Characteristic.ONTOLOGY_TERM_ID
       # not to be confused with Qualifier_ID or Unit_ID
       #
-      my $lcIn = lc($in); # value hash key, matching is not case-sensitive
+      my $lcIn = lc($in) if(defined($in)); # value hash key, matching is not case-sensitive
       if( $lcIn =~ /^:::function:/ ){ ## bypass case-insensitivity for embedded functions
         $lcIn = $in;
       }
@@ -558,6 +558,15 @@ sub formatDate {
   return $formattedDate;
 }
 
+sub killNA {
+  my ($self, $obj) = @_;
+  my $value = $obj->getValue();
+  return unless $value;
+  if($value =~ /^na$/i){ $obj->setValue(undef); return }
+}
+  
+
+
 sub formatDateWithObfuscation {
   my ($self, $obj, $parentObj, $parentInputObjs) = @_;
 
@@ -704,6 +713,19 @@ sub formatStataInteger2Date {
   return $date;
 }
 
+sub formatUnixInteger2Date {
+  ## Stata saves dates as days since January 1, 1960
+  my ($self, $obj) = @_;
+  my $value = $obj->getValue();
+  return unless($value);
+  return unless(looks_like_number($value));
+  Date_Init("DateFormat=non-US"); 
+  my $scalarTime = localtime($value);
+  my $date = UnixDate($scalarTime, "%Y-%m-%d");
+  $obj->setValue($date);
+  return $date;
+}
+
 sub makeOntologyTerm {
   my ($sourceId, $termName, $class) = @_;
 
@@ -778,6 +800,16 @@ sub formatNumericFiltered {
   }
 }
 
+sub formatDateAsInteger {
+# use for merging unequal dates from different variables; not for production
+# use after formatting date as YYYY-MM-DD
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val) && length($val);
+  $val =~ s/-//g;
+  return $obj->setValue($val);
+}
+
 sub formatFloat4 {
   my ($self, $obj) = @_;
   my $val = $obj->getValue();
@@ -809,6 +841,7 @@ sub formatQuotation {
 sub _SCRAP_ERRORS {
   my ($self, $obj) = @_;
   my $val = $obj->getValue();
+  return unless $val;
   if($val =~ /^USER_ERROR/){
     my @values = split(/\|/, $val);
     return $obj->setValue($values[1]);
