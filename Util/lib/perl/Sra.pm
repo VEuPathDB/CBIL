@@ -11,15 +11,19 @@ use strict;
 use warnings;
 
 sub getFastqForStudyId {
-  my($studyId, $isPairedEndDerp, $dontDownload, $deflineVars) = @_;
+  my ($studyId, @args) = @_;
   print STDERR "fetching runs for study: $studyId\n";
   my @runs = &getRunsForStudy($studyId);
   print STDERR sprintf("fetched %s runs for study $studyId\n", scalar @runs);
+  return getFastqForStudyRuns(\@runs, @args);
+}
+sub getFastqForStudyRuns {
+  my ($runs, $isPairedEndDerp, $dontDownload, $deflineVars) = @_;
 
   my %sampleCount;
 
   FASTQ_FOR_RUN:
-  for my $run (@runs) {
+  for my $run (@{$runs}) {
     my ($sampleId, $runId, $libraryLayout) = @$run;
 
     # Derp the per-study $isPairedEnd, and meanwhile use it for a warning if $libraryLayout disagrees with it
