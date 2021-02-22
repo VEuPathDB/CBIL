@@ -28,7 +28,7 @@ sub getFastqForStudyRuns {
 
     # Derp the per-study $isPairedEnd, and meanwhile use it for a warning if $libraryLayout disagrees with it
     if (defined $isPairedEndDerp && (($isPairedEndDerp eq 'false' and $libraryLayout eq 'PAIRED') or ($isPairedEndDerp ne 'false' and $libraryLayout eq 'SINGLE'))){
-      warn "getFastqForStudyId $studyId has \$isPairedEnd=$isPairedEndDerp but $runId has library layout $libraryLayout";
+      warn "getFastqForStudyId $sampleId has \$isPairedEnd=$isPairedEndDerp but $runId has library layout $libraryLayout";
     }
 
     next if $dontDownload;
