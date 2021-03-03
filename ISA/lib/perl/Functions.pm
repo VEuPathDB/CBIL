@@ -730,8 +730,7 @@ sub makeOntologyTerm {
   my ($sourceId, $termName, $class) = @_;
 
   $class //= "CBIL::ISA::OntologyTerm";
-
-  my ($termSource) = $sourceId =~ /^(\w+)_|:/;
+  my ($termSource) = $sourceId ? $sourceId =~ /^(\w+)_|:/: ();
   unless (defined $termSource){
      $termSource = "";
      carp "makeOntologyTerm sourceId=$sourceId termName=$termName class=$class can not determine \$termSource as sourceId doesn't match " . '/^(\w+)_|:/';

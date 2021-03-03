@@ -37,6 +37,7 @@ sub getHasErrors {$_[0]->{_has_errors} }
 
 sub new {
   my ($class, $investigationFile, $investigationDirectory, $delimiter) = @_;
+  $delimiter //= "\t";
 
   @allOntologyTerms = ();
 
