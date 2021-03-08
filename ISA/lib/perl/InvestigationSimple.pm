@@ -6,6 +6,7 @@ use XML::Simple;
 
 use Scalar::Util 'blessed';
 use CBIL::ISA::OntologyTerm qw(@allOntologyTerms);
+use ApiCommonData::Load::OntologyMapping;
 use File::Basename;
 use CBIL::ISA::Functions qw(makeObjectFromHash makeOntologyTerm);
 
@@ -57,8 +58,14 @@ sub new {
   my $investigationDirectory = dirname $investigationFile;
 
   my $investigationXml = XMLin($investigationFile, ForceArray => 1);
-  my $ontologyMapping = XMLin($ontologyMappingFile, ForceArray => 1);
-
+  my $ontologyMapping;
+  if($ontologyMappingFile =~ /.owl$/i){
+    my $om = ApiCommonData::Load::OntologyMapping->new($ontologyMappingFile);
+    $ontologyMapping = $om->getOntologyMapping();
+  }
+  else{
+    $ontologyMapping = XMLin($ontologyMappingFile, ForceArray => 1);
+  }
 
   my %ontologyMapping;
   my %ontologySources;
