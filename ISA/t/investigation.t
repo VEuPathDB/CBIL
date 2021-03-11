@@ -7,6 +7,7 @@ use Test::More;
 use CBIL::ISA::InvestigationSimple;
 use File::Temp qw/tempdir/;
 use File::Slurp qw/write_file/;
+use YAML;
 
 
 my $dir = tempdir(CLEANUP => 1);
@@ -19,11 +20,11 @@ EOF
 my $studyFile = "study.txt";
 write_file("$dir/$studyFile", $studyTsv);
 
-my $dataset = "DATASET_NAME";
+my $datasetName = "DATASET_NAME";
 my $investigationXml = <<"EOF";
 <investigation identifierRegex="..*" identifierIsDirectoryName="true">
   <study fileName="$studyFile" identifierSuffix="-1" sampleRegex=".+">
-    <dataset>$dataset</dataset>
+    <dataset>$datasetName</dataset>
 
     <node name="Source" type="host" suffix="Source"/>
     <node name="Sample" type="sample from organism"/>
@@ -83,6 +84,20 @@ my $ontologyMappingXml = <<"EOF";
   <ontologyTerm source_id="UBERON_0000061" type="characteristicQualifier" parent="Sample">
     <name>body_site</name>
   </ontologyTerm>
+
+  <ontologyTerm source_id="TMP_1" type="characteristicQualifier" parent="DataTransformation">
+      <name>abundance_amplicon</name>
+    </ontologyTerm>
+  <ontologyTerm source_id="TMP_2" type="characteristicQualifier" parent="DataTransformation">
+      <name>abundance_wgs</name>
+    </ontologyTerm>
+  <ontologyTerm source_id="TMP_3" type="characteristicQualifier" parent="DataTransformation">
+      <name>abundance_and_coverage_pathways</name>
+    </ontologyTerm>
+  <ontologyTerm source_id="TMP_4" type="characteristicQualifier" parent="DataTransformation">
+      <name>function_level4EC</name>
+    </ontologyTerm>
+
 </ontologymappings>
 EOF
 
@@ -93,7 +108,28 @@ my $debug = 0;
 my $isReporterMode = 0;
 my $dateObfuscationFile = undef;
 
-my $t = CBIL::ISA::InvestigationSimple->new("$dir/i_Investigation.xml", "$dir/ontologyMapping.xml", $ontologyMappingOverride, $valueMapping, $debug, $isReporterMode, $dateObfuscationFile);
+my %abundances = (
+  s1 => "{Bacteria:0.9, Archaea:0.1}",
+  s2 => "{Bacteria:0.8, Archaea:0.2}",
+  s3 => "{Bacteria:0.7, Archaea:0.3}",
+);
+
+my $addMoreValues = sub {
+  my ($valuesHash) = @_;
+  diag explain $valuesHash;
+  my $name = $valuesHash->{name}[0];
+  $valuesHash->{abundance_amplicon} = [$abundances{$name}];
+
+  return $valuesHash;
+};
+my $getAddMoreValues = sub {
+  my ($studyXml) = @_;
+  diag explain $studyXml;
+  my $dataset = $studyXml->{dataset}[0];
+  die unless $dataset eq $datasetName;
+  return $addMoreValues;
+};
+my $t = CBIL::ISA::InvestigationSimple->new("$dir/i_Investigation.xml", "$dir/ontologyMapping.xml", $ontologyMappingOverride, $valueMapping, $debug, $isReporterMode, $dateObfuscationFile, $getAddMoreValues);
 $t->parseInvestigation;
 is(scalar @{$t->getStudies}, 1);
 my $study = $t->getStudies->[0];
@@ -101,5 +137,10 @@ my $study = $t->getStudies->[0];
 $t->parseStudy($study);
 $t->dealWithAllOntologies();
 
-done_testing;
+my $out = Dump $study->getNodes;
+for my $text (qw/Bacteria:0.7  UBERON:oral cavity  UBERON:saliva UBERON:mouth/){
+  like($out, qr/$text/, "Has: $text");
+}
 
+done_testing;
+# 

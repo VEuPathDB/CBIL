@@ -31,6 +31,9 @@ sub getRegexMatch {$_[0]->{_regex_match} }
 sub setFunctions {$_[0]->{_functions} = $_[1]}
 sub getFunctions {$_[0]->{_functions} }
 
+sub setGetAddMoreValues {$_[0]->{_addMoreValues} = $_[1]}
+sub getGetAddMoreValues {$_[0]->{_addMoreValues} }
+
 sub setRowLimit {$_[0]->{_row_limit} = $_[1]}
 sub getRowLimit {$_[0]->{_row_limit} }
 
@@ -51,7 +54,7 @@ sub addStudySpecialColumn {
 }
 
 sub new {
-  my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile, $valueMappingFile, $debug, $isReporterMode, $dateObfuscationFile) = @_;
+  my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile, $valueMappingFile, $debug, $isReporterMode, $dateObfuscationFile, $getAddMoreValues) = @_;
 
   @allOntologyTerms = ();
 
@@ -130,6 +133,8 @@ sub new {
   $self->setOntologyAccessionsHash({});
 
   $self->setIsReporterMode($isReporterMode);
+
+  $self->setGetAddMoreValues($getAddMoreValues);
 
   return $self;
 }
@@ -279,6 +284,11 @@ sub addNodesAndEdgesToStudy {
 
   my $rowCount = 0;
   my $reportedMissingColumns;
+
+  my $addMoreValues;
+  if ($self->getGetAddMoreValues){
+    $addMoreValues = $self->getGetAddMoreValues->($studyXml);
+  }
   while(my $line = <$fileHandle>) {
     chomp $line;
 
@@ -286,15 +296,19 @@ sub addNodesAndEdgesToStudy {
 
     my @a = split(/\t/, $line);
 
-    my %valuesHash;
+    my $valuesHash = {};
 
     for(my $i = 0; $i < scalar @$headers; $i++) {
       my $lcHeader = lc $headers->[$i];
 
-      push @{$valuesHash{$lcHeader}}, $a[$i];
+      push @{$valuesHash->{$lcHeader}}, $a[$i];
+    }
+    if ($addMoreValues){
+      $valuesHash = $addMoreValues->($valuesHash);
     }
 
-    my $nodesHash = $self->makeNodes(\%valuesHash, $count, $studyXml, $study);
+    my $nodesHash = $self->makeNodes($valuesHash, $count, $studyXml, $study);
+
 
     my ($protocolAppHash, $nodeIOHash) = $self->makeEdges($studyXml, $study, $nodesHash);
 
@@ -302,9 +316,9 @@ sub addNodesAndEdgesToStudy {
       $self->allNodesGetDeltas($nodesHash, $nodeIOHash);
     }
 
-    my $leftoverColumns = $self->addCharacteristicsToNodes($nodesHash, \%valuesHash, $nodeIOHash);
+    my $leftoverColumns = $self->addCharacteristicsToNodes($nodesHash, $valuesHash, $nodeIOHash);
 
-    my $missingColumns = $self->addProtocolParametersToEdges($protocolAppHash, \%valuesHash, $leftoverColumns, $nodeIOHash);
+    my $missingColumns = $self->addProtocolParametersToEdges($protocolAppHash, $valuesHash, $leftoverColumns, $nodeIOHash);
 
     if(not $reportedMissingColumns) {
       my %specialColumns = map {lc($_) => 1 } @{$self->getStudySpecialColumns()};
