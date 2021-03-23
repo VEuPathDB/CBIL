@@ -130,9 +130,9 @@ sub addNode {
 sub getNodes { $_[0]->{_nodes} or [] }
 
 sub addEdge { 
-  my ($self, $input, $protocolApplications, $output, $fileName) = @_;
+  my ($self, $input, $protocolApplications, $output) = @_;
 
-  my $edge = CBIL::ISA::Edge->new($input, $protocolApplications, $output, $fileName);
+  my $edge = CBIL::ISA::Edge->new($input, $protocolApplications, $output);
 
   unless($self->disallowEdgeLookup()) {
     foreach my $existingEdge (@{$self->getEdges()}) {
@@ -244,7 +244,7 @@ sub makeStudyObjectsFromHash {
 
 
 sub addNodesAndEdges {
-  my ($self, $saEntities, $fileName) = @_;
+  my ($self, $saEntities) = @_;
 
   my $wasNodeContext;
   my @protocolApplications;
@@ -268,7 +268,7 @@ sub addNodesAndEdges {
 
 
       my @edgeProtocolApplications = @protocolApplications;
-      $self->addEdge($lastNode, \@edgeProtocolApplications, $entity, $fileName) if($start);
+      $self->addEdge($lastNode, \@edgeProtocolApplications, $entity) if($start);
 
       $lastNode = $entity;
       @protocolApplications = ();

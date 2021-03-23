@@ -5,7 +5,7 @@ use strict;
 use Data::Dumper;
 
 sub new {
-  my ($class, $inputs, $protocolApplications, $outputs, $fileName) = @_;
+  my ($class, $inputs, $protocolApplications, $outputs) = @_;
 
   $inputs = [] unless($inputs);
   $outputs = [] unless($outputs);
@@ -27,7 +27,6 @@ sub new {
   return bless {"_inputs" => $inputs,
                 "_outputs" => $outputs,
                 "_protocol_applications" => $protocolApplications,
-                "_file_name" => $fileName,
   }, $class;
 }
 
