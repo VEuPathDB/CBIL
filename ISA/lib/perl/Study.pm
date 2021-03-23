@@ -243,44 +243,6 @@ sub makeStudyObjectsFromHash {
 }
 
 
-sub addNodesAndEdges {
-  my ($self, $saEntities) = @_;
-
-  my $wasNodeContext;
-  my @protocolApplications;
-  my $lastNode;
-  my $start;
-
-  foreach my $entity (@$saEntities) {
-    my $entityName = $entity->getEntityName();
-
-    next unless($entity->isNode() || $entityName eq 'ProtocolApplication');
-
-    if($entity->isNode()) {
-      # add node unless it already exists.  If exists we get the ref to that object
-      $entity = $self->addNode($entity);
-
-      if($wasNodeContext) {
-        print STDERR "WARNING:  Study/Assay file contained consecutive Node Columns (" . $lastNode->getEntityName() . " and " . $entity->getEntityName() . ").  Creating Edge to connect these\n";
-        my $protocolApp = CBIL::ISA::StudyAssayEntity::ProtocolApplication->new({_value => 'IMPLICIT PROTOCOL'});
-        push @protocolApplications, $protocolApp;
-      }
-
-
-      my @edgeProtocolApplications = @protocolApplications;
-      $self->addEdge($lastNode, \@edgeProtocolApplications, $entity) if($start);
-
-      $lastNode = $entity;
-      @protocolApplications = ();
-    }
-    else {
-      push @protocolApplications, $entity;
-    }
-
-    $start = 1;
-    $wasNodeContext = $entity->isNode();
-  }
-}
 
 
 1;
@@ -409,11 +371,6 @@ Makes a new L<CBIL::ISA::Edge> object from input L<CBIL::ISA::StudyAssayEntity> 
 =item C<makeStudyObjectsFromHash>
 
 This method does most of the work when creating objects from the hash made from the "i_" / investigation file.
-
-=item C<addNodesAndEdges>
-
-Works on one array of objects from a Study/Assay File.  Adds L<CBIL::ISA::StudyAssayEntity> Nodes, L<CBIL::ISA::Edge>
-
 =back
 
 =cut 

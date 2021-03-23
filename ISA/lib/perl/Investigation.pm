@@ -166,8 +166,7 @@ sub parseStudy {
 
 
   while($studyFileReader->hasNextLine()) {
-    my $studyObjects = $studyFileReader->readLineToObjects();
-    $study->addNodesAndEdges($studyObjects, $studyFileName);
+    $self->addNodesAndEdgesToStudy($study, $studyFileReader->readLineToObjects());
   }
   $studyFileReader->closeFh();
   
@@ -181,8 +180,7 @@ sub parseStudy {
     my $assayFileReader = CBIL::ISA::StudyAssayFileReader->new($assayFileName, $delimiter);
 
     while($assayFileReader->hasNextLine()) {
-      my $assayObjects = $assayFileReader->readLineToObjects();
-      $study->addNodesAndEdges($assayObjects, $assayFileName);
+      $self->addNodesAndEdgesToStudy($study, $assayFileReader->readLineToObjects());
     }
     $assayFileReader->closeFh();
   }
@@ -190,6 +188,44 @@ sub parseStudy {
   $study->setHasMoreData(0);
 }
 
+sub addNodesAndEdgesToStudy {
+  my ($self, $study, $saEntities) = @_;
+
+  my $wasNodeContext;
+  my @protocolApplications;
+  my $lastNode;
+  my $start;
+
+  foreach my $entity (@$saEntities) {
+    my $entityName = $entity->getEntityName();
+
+    next unless($entity->isNode() || $entityName eq 'ProtocolApplication');
+
+    if($entity->isNode()) {
+      # add node unless it already exists.  If exists we get the ref to that object
+      $entity = $study->addNode($entity);
+
+      if($wasNodeContext) {
+        print STDERR "WARNING:  Study/Assay file contained consecutive Node Columns (" . $lastNode->getEntityName() . " and " . $entity->getEntityName() . ").  Creating Edge to connect these\n";
+        my $protocolApp = CBIL::ISA::StudyAssayEntity::ProtocolApplication->new({_value => 'IMPLICIT PROTOCOL'});
+        push @protocolApplications, $protocolApp;
+      }
+
+
+      my @edgeProtocolApplications = @protocolApplications;
+      $study->addEdge($lastNode, \@edgeProtocolApplications, $entity) if($start);
+
+      $lastNode = $entity;
+      @protocolApplications = ();
+    }
+    else {
+      push @protocolApplications, $entity;
+    }
+
+    $start = 1;
+    $wasNodeContext = $entity->isNode();
+  }
+}
 
 
 sub parse {
