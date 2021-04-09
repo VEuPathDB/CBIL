@@ -240,19 +240,15 @@ sub parseStudy {
 
   my $studyXml = $study->{_SIMPLE_XML};
   my $fileName = $study->getFileName();
-  my $fileHandle = $study->getFileHandle();
 
-  unless($fileHandle) {
-    print STDERR "Processing study file $fileName\n";
-    open($fileHandle,  $fileName) or die "Cannot open file $fileName for reading: $!";    
-    $study->setFileHandle($fileHandle);
+  print STDERR "Processing study file $fileName\n";
+  open(my $fileHandle,"<", $fileName) or die "Cannot open file $fileName for reading: $!";    
 
-    my $header = <$fileHandle>;
-    chomp $header;
-    my @headers = split(/\t/, $header);
-    $study->{_simple_study_headers} = \@headers;
-    $study->{_simple_study_count} = 1;
-  }
+  my $header = <$fileHandle>;
+  chomp $header;
+  my @headers = split(/\t/, $header);
+  $study->{_simple_study_headers} = \@headers;
+  $study->{_simple_study_count} = 1;
 
   $self->dealWithAllOntologies();
   @allOntologyTerms = ();
