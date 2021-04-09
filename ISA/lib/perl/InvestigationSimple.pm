@@ -503,6 +503,7 @@ sub addCharacteristicsToNodes {
 
       my $parent = $ontologyMapping->{lc($header)}->{$omType}->{parent};
       my $node = $nodesHash->{$parent};
+      $self->handleError("Parent of $header not in the ontology: $parent") unless $node;
 
       my $nodeName = $node->getValue();
 

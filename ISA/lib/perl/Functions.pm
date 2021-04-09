@@ -492,6 +492,9 @@ sub splitUnitFromValue {
   my $valueOrig = $obj->getValue();
 
   my ($value, $unitString) = split(/\s+/, $valueOrig);
+  if($value and not $unitString) {
+    die "Tried, and then could not separate into value and unit string: $valueOrig";
+  }
   $obj->setValue($value);
 
   my $class = "CBIL::ISA::StudyAssayEntity::Unit";
