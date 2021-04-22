@@ -61,25 +61,25 @@ sub new {
   my $investigationDirectory = dirname $investigationFile;
 
   my $investigationXml = XMLin($investigationFile, ForceArray => 1);
-  my $ontologyMapping;
+  my $omHash;
   if($ontologyMappingFile =~ /.owl$/i){
     my $om = ApiCommonData::Load::OntologyMapping->new($ontologyMappingFile);
-    $ontologyMapping = $om->getOntologyMapping();
+    $omHash = $om->getMapping();
   }
   else{
-    $ontologyMapping = XMLin($ontologyMappingFile, ForceArray => 1);
+    $omHash = XMLin($ontologyMappingFile, ForceArray => 1);
   }
 
   my %ontologyMapping;
   my %ontologySources;
 
 
-  foreach my $os (@{$ontologyMapping->{ontologySource}}) {
+  foreach my $os (@{$omHash->{ontologySource}}) {
     $ontologySources{lc($os)} = 1;
   }
 
 
-  foreach my $ot (@{$ontologyMapping->{ontologyTerm}}) {
+  foreach my $ot (@{$omHash->{ontologyTerm}}) {
     my $sourceId = $ot->{source_id};
     $ontologyMapping{lc($sourceId)}->{$ot->{type}} = $ot;
     my @names;
@@ -101,6 +101,10 @@ sub new {
 
   if(-e $ontologyMappingOverrideFile) {
     my $ontologyMappingOverride = XMLin($ontologyMappingOverrideFile, ForceArray => 1);
+    if(defined($ontologyMappingOverride->{ontologymappings})){
+      ## Looks like ontologyMapping.xml
+      $ontologyMappingOverride = $ontologyMappingOverride->{ontologymappings}
+    }
 
     foreach my $os (@{$ontologyMappingOverride->{ontologySource}}) {
       $ontologySources{lc($os)} = 1;
