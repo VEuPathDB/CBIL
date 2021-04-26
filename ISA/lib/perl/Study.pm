@@ -40,6 +40,10 @@ sub getDescription { $_[0]->{_description} }
 sub setFileName { $_[0]->{_file_name} = $_[1] }
 sub getFileName { $_[0]->{_file_name} }
 
+sub setFileHandle { $_[0]->{_file_handle} = $_[1] }
+sub getFileHandle { $_[0]->{_file_handle} }
+
+
 sub setPublications { 
   my ($self, $hash, $columnCount) = @_;
 

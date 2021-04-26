@@ -147,6 +147,8 @@ sub parseInvestigation {
 
     $self->addStudy($study);
 
+    my $studyFileName = $investigationDirectory . "/" . $study->getFileName();
+    $study->setFileName($studyFileName);
   }
 }
 
@@ -157,9 +159,10 @@ sub parseStudy {
   my $delimiter = $self->getDelimiter();
   my $investigationDirectory = $self->getInvestigationDirectory();
 
-  my $studyPath = $investigationDirectory . "/" . $study->getFileName();
+  my $studyFileName = $study->getFileName();
 
-  my $studyFileReader = CBIL::ISA::StudyAssayFileReader->new($studyPath, $delimiter);
+
+  my $studyFileReader = CBIL::ISA::StudyAssayFileReader->new($studyFileName, $delimiter);
 
 
   while($studyFileReader->hasNextLine()) {
