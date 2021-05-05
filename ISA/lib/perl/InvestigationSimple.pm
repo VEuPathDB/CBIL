@@ -56,6 +56,8 @@ sub addStudySpecialColumn {
 sub new {
   my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile, $valueMappingFile, $debug, $isReporterMode, $dateObfuscationFile, $getAddMoreValues) = @_;
 
+  my $self = $class->SUPER::new();
+
   @allOntologyTerms = ();
 
   my $investigationDirectory = dirname $investigationFile;
@@ -119,8 +121,10 @@ sub new {
       }
     }
   }
+  elsif($ontologyMappingOverrideFile){
+    $self->handleError("ontologyMappingOverrideFile $ontologyMappingOverrideFile does not exist");
+  }
 
-  my $self = $class->SUPER::new();
   $self->setInvestigationDirectory($investigationDirectory);
 
   $self->setOntologyMapping(\%ontologyMapping);
