@@ -291,12 +291,21 @@ sub addNodesAndEdgesToStudy {
   my $isReporterMode = $self->getIsReporterMode();
 
   my $rowCount = 0;
-  my $reportedMissingColumns;
 
   my $addMoreValues;
   if ($self->getGetAddMoreValues){
     $addMoreValues = $self->getGetAddMoreValues->($studyXml);
   }
+  
+  my ($characteristicQualifiersByParent, $nonChHeaders) = $self->groupHeadersByOmType($headers, "characteristicQualifier", "Characteristics");
+  my ($protocolParametersByParent, $unmappedHeaders) = $self->groupHeadersByOmType($nonChHeaders, "protocolParameter", "Parameter Value");
+
+  my %specialColumns = map {lc($_) => 1 } @{$self->getStudySpecialColumns()};
+  my @missingColumns = sort grep {not $specialColumns{lc($_)}} @{$unmappedHeaders};
+  if(@missingColumns){
+    $self->handleError("Unmapped column headers:  ". join (", ", @missingColumns));
+  }
+
   while(my $line = <$fileHandle>) {
     chomp $line;
 
@@ -307,35 +316,44 @@ sub addNodesAndEdgesToStudy {
     my $valuesHash = {};
 
     for(my $i = 0; $i < scalar @$headers; $i++) {
-      my $lcHeader = lc $headers->[$i];
+      my $lcKey = lc $headers->[$i];
 
-      push @{$valuesHash->{$lcHeader}}, $a[$i];
+      push @{$valuesHash->{$lcKey}}, $a[$i];
     }
+
     if ($addMoreValues){
+      die "TODO fix";
       $valuesHash = $addMoreValues->($valuesHash);
     }
 
     my $nodesHash = $self->makeNodes($valuesHash, $count, $studyXml, $study);
 
 
-    my ($protocolAppHash, $nodeIOHash) = $self->makeEdges($studyXml, $study, $nodesHash);
+    my ($protocolAppsHash, $nodeIOHash) = $self->makeEdges($studyXml, $study, $nodesHash);
 
     if($studyXml->{allNodesGetDeltas}){
       $self->allNodesGetDeltas($nodesHash, $nodeIOHash);
     }
-
-    my $leftoverColumns = $self->addCharacteristicsToNodes($nodesHash, $valuesHash, $nodeIOHash);
-
-    my $missingColumns = $self->addProtocolParametersToEdges($protocolAppHash, $valuesHash, $leftoverColumns, $nodeIOHash);
-
-    if(not $reportedMissingColumns) {
-      my %specialColumns = map {lc($_) => 1 } @{$self->getStudySpecialColumns()};
-      my @missingColumns = sort grep {not $specialColumns{lc($_)}} @$missingColumns;
-      if(@missingColumns){
-        $self->handleError("Unmapped column headers:  ". join (", ", @missingColumns));
-        $reportedMissingColumns++;
+    for my $missingChParent (grep {not $nodesHash->{$_}} keys %{$characteristicQualifiersByParent}){
+      $self->handleError("Characteristic qualifier parent $missingChParent does not have a corresponding node. Keys: ".join(",", map {$_->{header}} @{$characteristicQualifiersByParent->{$missingChParent}}));
+    }
+    for my $missingPrParent (grep {not $protocolAppsHash->{$_}} keys %{$protocolParametersByParent}){
+      $self->handleError("Protocol value parent $missingPrParent does not have a corresponding protocol. Keys: ".join(",", map {$_->{header}} @{$protocolParametersByParent->{$missingPrParent}}));
+    }
+    for my $nodeName (keys %{$nodesHash}){
+      my $node = $nodesHash->{$nodeName};
+      my $inputNodes = $nodeIOHash->{$nodeName} // [];
+      for my $characteristicQualifier (@{$characteristicQualifiersByParent->{$nodeName}}){
+        $self->addCharacteristicToNode($node, $inputNodes, $characteristicQualifier, $valuesHash->{lc $characteristicQualifier->{header}});
       }
     }
+    for my $protocolAppName (keys %{$protocolAppsHash}){
+      my $protocolApp = $protocolAppsHash->{$protocolAppName};
+      for my $protocolParameter (@{$protocolParametersByParent->{$protocolAppName}}){
+        $self->addProtocolParameterToEdge($protocolApp, $protocolParameter, $valuesHash->{lc $protocolParameter->{header}});
+      }
+    }
+
     $count++;
     $rowCount++;
 
@@ -358,77 +376,6 @@ sub addNodesAndEdgesToStudy {
   $study->setHasMoreData(0);
   close $fileHandle;
 }
-
-sub addProtocolParametersToEdges {
-  my ($self, $protocolAppHash, $valuesHash, $leftoverColumns) = @_;
-
-#  &checkArrayRefLengths($values, $headers);
-
-  my $ontologyMapping = $self->getOntologyMapping();
-
-  my @rv;
-
-  foreach my $key (@$leftoverColumns) {
-    my $header = $key;
-    if($header =~ /Parameter Value\s*\[(.+)\]/i) {
-      $header = $1;
-    }
-
-    my $omType = "protocolParameter";
-    if($ontologyMapping->{lc($header)} && $ontologyMapping->{lc($header)}->{$omType}) {    
-      my $qualifier = $ontologyMapping->{lc($header)}->{$omType}->{source_id};
-      my $functionsRef = $ontologyMapping->{lc($header)}->{$omType}->{function};
-      my $parent = $ontologyMapping->{lc($header)}->{$omType}->{parent};
-
-
-#      my @functions = qw/formatSentenceCase/;
-
-      my @functions;
-      if($functionsRef) {
-        push @functions, @$functionsRef;
-      }
-      else {
-        push @functions, "valueIsMappedValue";
-      }
-
-      my $protocolApp = $protocolAppHash->{$parent};
-
-      if(!$protocolApp) {
-        $self->handleError("Protocol [$parent] not defined for paramValue [$header]");
-      }
-      else {
-
-        my $values = $valuesHash->{$key};
-        foreach my $value (@$values) {
-          next unless($value || $value eq '0'); # put this here because I still wanna check the headers
-
-          my $pv = CBIL::ISA::StudyAssayEntity::ParameterValue->new({_value => $value});
-          $pv->setQualifier($qualifier);
-
-
-          my $functionsObj = $self->getFunctions();
-          foreach my $function (@functions) {
-            eval {
-              $functionsObj->$function($pv, $protocolApp, undef);
-            };
-            if ($@) {
-              $self->handleError("problem w/ function $function: $@");
-            }
-          }
-          $protocolApp->addParameterValue($pv);
-        }
-      }
-    }
-    else {
-      push @rv, $key;
-    }
-  }
-
-  return \@rv;
-}
-
-
-
 
 sub makeEdges {
   my ($self, $studyXml, $study, $nodesHash) = @_;
@@ -478,79 +425,97 @@ sub findProtocolByName {
   die "Could not find a protocol w/ name $pn";
 }
 
+sub groupHeadersByOmType {
+  my ($self, $headers, $omType, $isaHeaderType) = @_;
 
-sub addCharacteristicsToNodes {
-  my ($self, $nodesHash, $valuesHash, $nodeIOHash) = @_;
-
-  my @nodeNames = keys %$nodesHash;
-
-  my @rv;
-
-#  &checkArrayRefLengths($values, $headers);
+  my %result;
+  my @unmappedHeaders;
   my $ontologyMapping = $self->getOntologyMapping();
 
-  while (my ($key, $values) = each %$valuesHash) {
+  for my $key ( @{$headers}) {
 
     my $header = $key;
-    if($header =~ /Characteristics\s*\[(.+)\]/i) {
+    if($header =~ /$isaHeaderType\s*\[(.+)\]/i) {
       $header = $1;
     }
-
-    my $omType = "characteristicQualifier";
-    if($ontologyMapping->{lc($header)} && $ontologyMapping->{lc($header)}->{$omType}) {
-
-      my $qualifier = $ontologyMapping->{lc($header)}->{$omType}->{source_id};
-      my $functionsRef = $ontologyMapping->{lc($header)}->{$omType}->{function};
-
-#      my @functions = qw/formatSentenceCase/;
-      my @functions;
-      if($functionsRef) {
-        push @functions, @$functionsRef;
-
-      }
-      else {
-        push @functions, "valueIsMappedValue";
-      }
-      my $forceDateDelta = grep { /Obfuscation/i } @functions;
-
-      my $parent = $ontologyMapping->{lc($header)}->{$omType}->{parent};
-      my $node = $nodesHash->{$parent};
-      $self->handleError("Parent of $header not in the ontology: $parent") unless $node;
-
-      my $nodeName = $node->getValue();
-
-      my @inputNodes;
-      if($nodeIOHash->{$nodeName}) {
-        @inputNodes = @{$nodeIOHash->{$nodeName}};
-      }
-
-      foreach my $value(@$values) {
-        next unless($value || $value eq '0' || $forceDateDelta); # put this here because I still wanna check the headers
-        my $char = CBIL::ISA::StudyAssayEntity::Characteristic->new({_value => $value});
-        $char->setQualifier($qualifier);
-        $char->setAlternativeQualifier(lc($header));
-
-        my $functionsObj = $self->getFunctions();
-        foreach my $function (@functions) {
-          eval {
-            $functionsObj->$function($char, $node, \@inputNodes);
-          };
-          if ($@) {
-            $self->handleError("problem w/ function $function: $@");
-          }
-        }
-
-        $node->addCharacteristic($char) if(defined $char->getValue() && $char->getValue() ne "");
-
-      }
-    }
-    else {
-      push @rv, $key;
+    $header = lc $header;
+    my $o = $ontologyMapping->{$header}{$omType};
+    if($o){
+      push @{$result{$o->{parent}}}, { %{$o}, header => $header };
+    } else {
+      push @unmappedHeaders, $key;
     }
   }
-  return \@rv;
+  return \%result, \@unmappedHeaders;
 }
 
+
+sub functionNamesForTerm {
+  my ($term) = @_;
+  my $functionsRef = $term->{function};
+  if($functionsRef) {
+    return @$functionsRef;
+  }
+  else {
+    return "valueIsMappedValue";
+  }
+}
+
+sub addProtocolParameterToEdge {
+  my ($self, $protocolApp, $term, $values) = @_;
+
+  my @functions = functionNamesForTerm($term);
+  my $forceDateDelta = grep { /Obfuscation/i } @functions;
+
+  foreach my $value (@{$values//[]}) {
+    next unless($value || $value eq '0' || $forceDateDelta); # Old comment: "put this here because I still wanna check the headers"
+
+    my $pv = CBIL::ISA::StudyAssayEntity::ParameterValue->new({_value => $value});
+    $pv->setQualifier($term->{source_id});
+    # $pv->setAlternativeQualifier($term->{header});
+
+
+    my $functionsObj = $self->getFunctions();
+    foreach my $function (@functions) {
+      eval {
+        $functionsObj->$function($pv, $protocolApp, undef);
+      };
+      if ($@) {
+        $self->handleError("problem w/ function $function: $@");
+      }
+    }
+    #if(defined $char->getValue() && $char->getValue() ne ""){
+    $protocolApp->addParameterValue($pv);
+    #}
+  }
+}
+
+sub addCharacteristicToNode {
+  my ($self, $node, $inputNodes, $term, $values) = @_;
+
+  my @functions = functionNamesForTerm($term);
+  my $forceDateDelta = grep { /Obfuscation/i } @functions;
+
+  foreach my $value (@{$values//[]}) {
+    next unless($value || $value eq '0' || $forceDateDelta); # Old comment: "put this here because I still wanna check the headers"
+    my $char = CBIL::ISA::StudyAssayEntity::Characteristic->new({_value => $value});
+    $char->setQualifier($term->{source_id});
+    $char->setAlternativeQualifier($term->{header});
+
+    my $functionsObj = $self->getFunctions();
+    foreach my $function (@functions) {
+      eval {
+        $functionsObj->$function($char, $node, $inputNodes);
+      };
+      if ($@) {
+        $self->handleError("problem w/ function $function: $@");
+      }
+    }
+    if(defined $char->getValue() && $char->getValue() ne ""){
+      $node->addCharacteristic($char);
+    }
+  }
+}
 
 sub checkArrayRefLengths {
   my ($a, $b) = @_;

@@ -12,10 +12,10 @@ use YAML;
 
 my $dir = tempdir(CLEANUP => 1);
 my $studyTsv = <<"EOF";
-name	body_habitat	body_product	body_site
-s1	Colon	UBERON:feces	Colon
-s2	Colon	UBERON:feces	Colon
-s3	UBERON:oral cavity	UBERON:saliva	UBERON:mouth
+name	body_habitat	body_product	body_site	collection_date
+s1	Colon	UBERON:feces	Colon	01-01-1991
+s2	Colon	UBERON:feces	Colon 02-02-1992
+s3	UBERON:oral cavity	UBERON:saliva	UBERON:mouth	03-03-1993
 EOF
 my $studyFile = "study.txt";
 write_file("$dir/$studyFile", $studyTsv);
@@ -29,8 +29,9 @@ my $investigationXml = <<"EOF";
     <node name="Source" type="host" suffix="Source"/>
     <node name="Sample" type="sample from organism"/>
     <node name="Extract" type="DNA extract" suffix="Extract"/>
-    <node name="Assay" suffix="Assay"/>
-    <node name="DataTransformation" suffix="OTU"/>
+    <node isaObject="Assay" name="Assay 16S" type="Amplicon sequencing assay" suffix="Assay 16S"/>
+    <node isaObject="Assay" name="Assay WGS" type="Whole genome sequencing assay" suffix="Assay WGS"/>
+    <node isaObject="DataTransformation" name="DADA2" type="" suffix="Assay WGS"/>
 
     <edge input="Source" output="Sample">
         <protocol>specimen collection</protocol>
@@ -38,11 +39,11 @@ my $investigationXml = <<"EOF";
     <edge input="Sample" output="Extract">
       <protocol>DNA extraction</protocol>
     </edge>
-    <edge input="Extract" output="Assay">
+    <edge input="Extract" output="Assay 16S">
         <protocol>DNA sequencing</protocol>
     </edge>
-    <edge input="Assay" output="DataTransformation">
-        <protocol>data transformation</protocol>
+    <edge input="Extract" output="Assay WGS">
+        <protocol>DNA sequencing</protocol>
     </edge>
   </study>
 </investigation>
@@ -60,6 +61,12 @@ my $ontologyMappingXml = <<"EOF";
   </ontologyTerm>
   <ontologyTerm source_id="OBI_0001051" type="materialType">
     <name>DNA extract</name>
+  </ontologyTerm>
+  <ontologyTerm source_id="MTTMP_1" type="materialType">
+    <name>Amplicon sequencing assay</name>
+  </ontologyTerm>
+  <ontologyTerm source_id="MTTMP_2" type="materialType">
+    <name>Whole genome sequencing assay</name>
   </ontologyTerm>
 
   <ontologyTerm source_id="OBI_0000659" type="protocol">
@@ -84,20 +91,16 @@ my $ontologyMappingXml = <<"EOF";
   <ontologyTerm source_id="UBERON_0000061" type="characteristicQualifier" parent="Sample">
     <name>body_site</name>
   </ontologyTerm>
+  <ontologyTerm source_id="TMP_SCD" type="protocolParameter" parent="specimen collection">
+    <name>collection_date</name>
+  </ontologyTerm>
 
-  <ontologyTerm source_id="TMP_1" type="characteristicQualifier" parent="DataTransformation">
+  <ontologyTerm source_id="TMP_1" type="characteristicQualifier" parent="Assay 16S">
       <name>abundance_amplicon</name>
     </ontologyTerm>
-  <ontologyTerm source_id="TMP_2" type="characteristicQualifier" parent="DataTransformation">
+  <ontologyTerm source_id="TMP_2" type="characteristicQualifier" parent="Assay WGS">
       <name>abundance_wgs</name>
     </ontologyTerm>
-  <ontologyTerm source_id="TMP_3" type="characteristicQualifier" parent="DataTransformation">
-      <name>abundance_and_coverage_pathways</name>
-    </ontologyTerm>
-  <ontologyTerm source_id="TMP_4" type="characteristicQualifier" parent="DataTransformation">
-      <name>function_level4EC</name>
-    </ontologyTerm>
-
 </ontologymappings>
 EOF
 
@@ -108,27 +111,35 @@ my $debug = 0;
 my $isReporterMode = 0;
 my $dateObfuscationFile = undef;
 
-my %abundances = (
+my %abundancesAmplicon = (
   s1 => "{Bacteria:0.9, Archaea:0.1}",
   s2 => "{Bacteria:0.8, Archaea:0.2}",
   s3 => "{Bacteria:0.7, Archaea:0.3}",
 );
 
+my %abundancesWgs = (
+  s1 => "{Bacteria:0.1, Archaea:0.9}",
+  s2 => "{Bacteria:0.2, Archaea:0.8}",
+  s3 => "{Bacteria:0.3, Archaea:0.7}",
+);
+
 my $addMoreValues = sub {
   my ($valuesHash) = @_;
-  diag explain $valuesHash;
+  #  diag explain $valuesHash;
   my $name = $valuesHash->{name}[0];
-  $valuesHash->{abundance_amplicon} = [$abundances{$name}];
+  $valuesHash->{abundance_amplicon} = [$abundancesAmplicon{$name}];
+  $valuesHash->{abundance_wgs} = [$abundancesWgs{$name}];
 
   return $valuesHash;
 };
 my $getAddMoreValues = sub {
   my ($studyXml) = @_;
-  diag explain $studyXml;
+  #   diag explain $studyXml;
   my $dataset = $studyXml->{dataset}[0];
   die unless $dataset eq $datasetName;
   return $addMoreValues;
 };
+$getAddMoreValues = undef;
 my $t = CBIL::ISA::InvestigationSimple->new("$dir/i_Investigation.xml", "$dir/ontologyMapping.xml", $ontologyMappingOverride, $valueMapping, $debug, $isReporterMode, $dateObfuscationFile, $getAddMoreValues);
 $t->parseInvestigation;
 is(scalar @{$t->getStudies}, 1);
@@ -137,10 +148,11 @@ my $study = $t->getStudies->[0];
 $t->parseStudy($study);
 $t->dealWithAllOntologies();
 
-my $out = Dump $study->getNodes;
-for my $text (qw/Bacteria:0.7  UBERON:oral cavity  UBERON:saliva UBERON:mouth/){
-  like($out, qr/$text/, "Has: $text");
+my $nodesText = Dump $study->getNodes;
+for my $text (qw/UBERON:oral cavity  UBERON:saliva UBERON:mouth/){
+  like($nodesText, qr/$text/, "Has: $text");
 }
-
+my $edgesText = Dump $study->getEdges;
+like($edgesText, qr/01-01-1991/, "Has: 01-01-1991");
 done_testing;
-# 
+
