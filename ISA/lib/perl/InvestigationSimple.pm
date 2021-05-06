@@ -31,8 +31,8 @@ sub getRegexMatch {$_[0]->{_regex_match} }
 sub setFunctions {$_[0]->{_functions} = $_[1]}
 sub getFunctions {$_[0]->{_functions} }
 
-sub setGetAddMoreValues {$_[0]->{_addMoreValues} = $_[1]}
-sub getGetAddMoreValues {$_[0]->{_addMoreValues} }
+sub setGetExtraValues {$_[0]->{_getExtraValues} = $_[1]}
+sub getGetExtraValues {$_[0]->{_getExtraValues} }
 
 sub setRowLimit {$_[0]->{_row_limit} = $_[1]}
 sub getRowLimit {$_[0]->{_row_limit} }
@@ -54,7 +54,7 @@ sub addStudySpecialColumn {
 }
 
 sub new {
-  my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile, $valueMappingFile, $debug, $isReporterMode, $dateObfuscationFile, $getAddMoreValues) = @_;
+  my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile, $valueMappingFile, $debug, $isReporterMode, $dateObfuscationFile, $getExtraValues) = @_;
 
   my $self = $class->SUPER::new();
 
@@ -142,7 +142,7 @@ sub new {
 
   $self->setIsReporterMode($isReporterMode);
 
-  $self->setGetAddMoreValues($getAddMoreValues);
+  $self->setGetExtraValues($getExtraValues);
 
   return $self;
 }
@@ -268,16 +268,6 @@ sub parseStudy {
   $study->{_edges} = [];
 
   $self->addNodesAndEdgesToStudy($study, $fileHandle, $studyXml);
-
-
-#  my %nodeType;
-#  foreach(@{$study->getNodes()}) {
-#    my $type = $_->getMaterialType()->getTerm();
-#    $nodeType{$type}++;
-#  }
-
-#  print STDERR Dumper \%nodeType;
-#  print STDERR "Edge Count:  " . scalar @{$study->getEdges()};
 }
 
 
@@ -292,13 +282,14 @@ sub addNodesAndEdgesToStudy {
 
   my $rowCount = 0;
 
-  my $addMoreValues;
-  if ($self->getGetAddMoreValues){
-    $addMoreValues = $self->getGetAddMoreValues->($studyXml);
+  my $getExtraValues;
+  if ($self->getGetExtraValues){
+    $getExtraValues = $self->getGetExtraValues->($studyXml);
   }
   
   my ($characteristicQualifiersByParent, $nonChHeaders) = $self->groupHeadersByOmType($headers, "characteristicQualifier", "Characteristics");
   my ($protocolParametersByParent, $unmappedHeaders) = $self->groupHeadersByOmType($nonChHeaders, "protocolParameter", "Parameter Value");
+
 
   my %specialColumns = map {lc($_) => 1 } @{$self->getStudySpecialColumns()};
   my @missingColumns = sort grep {not $specialColumns{lc($_)}} @{$unmappedHeaders};
@@ -308,26 +299,14 @@ sub addNodesAndEdgesToStudy {
 
   while(my $line = <$fileHandle>) {
     chomp $line;
-
-
-
     my @a = split(/\t/, $line);
-
     my $valuesHash = {};
-
     for(my $i = 0; $i < scalar @$headers; $i++) {
       my $lcKey = lc $headers->[$i];
-
       push @{$valuesHash->{$lcKey}}, $a[$i];
     }
 
-    if ($addMoreValues){
-      die "TODO fix";
-      $valuesHash = $addMoreValues->($valuesHash);
-    }
-
     my $nodesHash = $self->makeNodes($valuesHash, $count, $studyXml, $study);
-
 
     my ($protocolAppsHash, $nodeIOHash) = $self->makeEdges($studyXml, $study, $nodesHash);
 
@@ -338,19 +317,32 @@ sub addNodesAndEdgesToStudy {
       $self->handleError("Characteristic qualifier parent $missingChParent does not have a corresponding node. Keys: ".join(",", map {$_->{header}} @{$characteristicQualifiersByParent->{$missingChParent}}));
     }
     for my $missingPrParent (grep {not $protocolAppsHash->{$_}} keys %{$protocolParametersByParent}){
-      $self->handleError("Protocol value parent $missingPrParent does not have a corresponding protocol. Keys: ".join(",", map {$_->{header}} @{$protocolParametersByParent->{$missingPrParent}}));
+      $self->handleError("Protocol parameter parent $missingPrParent does not have a corresponding protocol. Keys: ".join(",", map {$_->{header}} @{$protocolParametersByParent->{$missingPrParent}}));
     }
-    for my $nodeName (keys %{$nodesHash}){
+    for my $nodeName (sort keys %{$nodesHash}){
       my $node = $nodesHash->{$nodeName};
       my $inputNodes = $nodeIOHash->{$nodeName} // [];
       for my $characteristicQualifier (@{$characteristicQualifiersByParent->{$nodeName}}){
-        $self->addCharacteristicToNode($node, $inputNodes, $characteristicQualifier, $valuesHash->{lc $characteristicQualifier->{header}});
+        my $values = $valuesHash->{lc $characteristicQualifier->{header}};
+        $self->addCharacteristicToNode($node, $inputNodes, $characteristicQualifier, $values);
+      }
+      my $extraValues;
+      if($getExtraValues){
+        $extraValues = $getExtraValues->($node);
+      }
+      while(my ($key, $values) = each %{$extraValues //{}}){
+        my $characteristicQualifier = $self->getOntologyMapping->{$key}{characteristicQualifier};
+        $self->handleError("Extra value $key for node $nodeName not in the ontology") unless $characteristicQualifier;
+        $characteristicQualifier->{header} = $key;
+
+        $self->addCharacteristicToNode($node, $inputNodes, $characteristicQualifier, $values);
       }
     }
-    for my $protocolAppName (keys %{$protocolAppsHash}){
+    for my $protocolAppName (sort keys %{$protocolAppsHash}){
       my $protocolApp = $protocolAppsHash->{$protocolAppName};
       for my $protocolParameter (@{$protocolParametersByParent->{$protocolAppName}}){
-        $self->addProtocolParameterToEdge($protocolApp, $protocolParameter, $valuesHash->{lc $protocolParameter->{header}});
+        my $values = $valuesHash->{lc $protocolParameter->{header}};
+        $self->addProtocolParameterToEdge($protocolApp, $protocolParameter, $values);
       }
     }
 

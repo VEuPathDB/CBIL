@@ -28,22 +28,19 @@ my $investigationXml = <<"EOF";
 
     <node name="Source" type="host" suffix="Source"/>
     <node name="Sample" type="sample from organism"/>
-    <node name="Extract" type="DNA extract" suffix="Extract"/>
-    <node isaObject="Assay" name="Assay 16S" type="Amplicon sequencing assay" suffix="Assay 16S"/>
-    <node isaObject="Assay" name="Assay WGS" type="Whole genome sequencing assay" suffix="Assay WGS"/>
-    <node isaObject="DataTransformation" name="DADA2" type="" suffix="Assay WGS"/>
+    <node isaObject="Assay" name="16s" type="Amplicon sequencing assay" suffix="16s"/>
+    <node isaObject="Assay" name="WGS" type="Whole genome sequencing assay" suffix="WGS"/>
 
     <edge input="Source" output="Sample">
         <protocol>specimen collection</protocol>
     </edge>
-    <edge input="Sample" output="Extract">
+    <edge input="Sample" output="16s">
       <protocol>DNA extraction</protocol>
+      <protocol>DNA sequencing</protocol>
     </edge>
-    <edge input="Extract" output="Assay 16S">
-        <protocol>DNA sequencing</protocol>
-    </edge>
-    <edge input="Extract" output="Assay WGS">
-        <protocol>DNA sequencing</protocol>
+    <edge input="Sample" output="WGS">
+      <protocol>DNA extraction</protocol>
+      <protocol>DNA sequencing</protocol>
     </edge>
   </study>
 </investigation>
@@ -95,12 +92,9 @@ my $ontologyMappingXml = <<"EOF";
     <name>collection_date</name>
   </ontologyTerm>
 
-  <ontologyTerm source_id="TMP_1" type="characteristicQualifier" parent="Assay 16S">
-      <name>abundance_amplicon</name>
-    </ontologyTerm>
-  <ontologyTerm source_id="TMP_2" type="characteristicQualifier" parent="Assay WGS">
-      <name>abundance_wgs</name>
-    </ontologyTerm>
+  <ontologyTerm source_id="TMP_1" type="characteristicQualifier" parent="Assay">
+      <name>taxon_abundance</name>
+  </ontologyTerm>
 </ontologymappings>
 EOF
 
@@ -123,24 +117,26 @@ my %abundancesWgs = (
   s3 => "{Bacteria:0.3, Archaea:0.7}",
 );
 
-my $addMoreValues = sub {
-  my ($valuesHash) = @_;
-  #  diag explain $valuesHash;
-  my $name = $valuesHash->{name}[0];
-  $valuesHash->{abundance_amplicon} = [$abundancesAmplicon{$name}];
-  $valuesHash->{abundance_wgs} = [$abundancesWgs{$name}];
-
-  return $valuesHash;
+my $getExtraValues = sub {
+  my ($node) = @_;
+  return {} unless $node->isa('CBIL::ISA::StudyAssayEntity::Assay');
+  my ($sample, $suffix) = $node->getValue =~ m{^(.*) \((.*)\)$};
+  if($suffix eq '16s'){
+    return {taxon_abundance => [$abundancesAmplicon{$sample}]};
+  } 
+  if ($suffix eq 'WGS'){
+    return {taxon_abundance => [$abundancesWgs{$sample}]};
+  }
+  return {};
 };
-my $getAddMoreValues = sub {
+my $getGetExtraValues = sub {
   my ($studyXml) = @_;
   #   diag explain $studyXml;
   my $dataset = $studyXml->{dataset}[0];
   die unless $dataset eq $datasetName;
-  return $addMoreValues;
+  return $getExtraValues;
 };
-$getAddMoreValues = undef;
-my $t = CBIL::ISA::InvestigationSimple->new("$dir/i_Investigation.xml", "$dir/ontologyMapping.xml", $ontologyMappingOverride, $valueMapping, $debug, $isReporterMode, $dateObfuscationFile, $getAddMoreValues);
+my $t = CBIL::ISA::InvestigationSimple->new("$dir/i_Investigation.xml", "$dir/ontologyMapping.xml", $ontologyMappingOverride, $valueMapping, $debug, $isReporterMode, $dateObfuscationFile, $getGetExtraValues);
 $t->parseInvestigation;
 is(scalar @{$t->getStudies}, 1);
 my $study = $t->getStudies->[0];
@@ -149,10 +145,11 @@ $t->parseStudy($study);
 $t->dealWithAllOntologies();
 
 my $nodesText = Dump $study->getNodes;
-for my $text (qw/UBERON:oral cavity  UBERON:saliva UBERON:mouth/){
+for my $text (qw/Bacteria:0.9 Bacteria:0.1 UBERON:oral cavity  UBERON:saliva UBERON:mouth/){
   like($nodesText, qr/$text/, "Has: $text");
 }
 my $edgesText = Dump $study->getEdges;
 like($edgesText, qr/01-01-1991/, "Has: 01-01-1991");
 done_testing;
+
 
