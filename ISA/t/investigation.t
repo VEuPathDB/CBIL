@@ -15,7 +15,7 @@ my $studyTsv = <<"EOF";
 name	body_habitat	body_product	body_site	collection_date
 s1	Colon	UBERON:feces	Colon	01-01-1991
 s2	Colon	UBERON:feces	Colon 02-02-1992
-s3	UBERON:oral cavity	UBERON:saliva	UBERON:mouth	03-03-1993
+s3	UBERON:oral cavity	UBERON:saliva	UBERON:mouth	
 EOF
 my $studyFile = "study.txt";
 write_file("$dir/$studyFile", $studyTsv);

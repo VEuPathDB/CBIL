@@ -472,7 +472,7 @@ sub addProtocolParameterToEdge {
 
     my $pv = CBIL::ISA::StudyAssayEntity::ParameterValue->new({_value => $value});
     $pv->setQualifier($term->{source_id});
-    # $pv->setAlternativeQualifier($term->{header});
+    $pv->setAlternativeQualifier($term->{header});
 
 
     my $functionsObj = $self->getFunctions();
@@ -484,9 +484,9 @@ sub addProtocolParameterToEdge {
         $self->handleError("problem w/ function $function: $@");
       }
     }
-    #if(defined $char->getValue() && $char->getValue() ne ""){
-    $protocolApp->addParameterValue($pv);
-    #}
+    if(defined $pv->getValue() && $pv->getValue() ne ""){
+      $protocolApp->addParameterValue($pv);
+    }
   }
 }
 
