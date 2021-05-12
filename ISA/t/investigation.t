@@ -12,10 +12,10 @@ use YAML;
 
 my $dir = tempdir(CLEANUP => 1);
 my $studyTsv = <<"EOF";
-name	body_habitat	body_product	body_site	collection_date
-s1	Colon	UBERON:feces	Colon	01-01-1991
-s2	Colon	UBERON:feces	Colon 02-02-1992
-s3	UBERON:oral cavity	UBERON:saliva	UBERON:mouth	
+name	body_habitat	body_product	body_site	collection_date	subject_id
+sample_1	Colon	UBERON:feces	Colon	01-01-1991	subject_a
+sample_2	Colon	UBERON:feces	Colon	02-02-1992	subject_a
+sample_3	UBERON:oral cavity	UBERON:saliva	UBERON:mouth		subject_b
 EOF
 my $studyFile = "study.txt";
 write_file("$dir/$studyFile", $studyTsv);
@@ -26,7 +26,7 @@ my $investigationXml = <<"EOF";
   <study fileName="$studyFile" identifierSuffix="-1" sampleRegex=".+">
     <dataset>$datasetName</dataset>
 
-    <node name="Source" type="host" suffix="Source"/>
+    <node name="Source" type="host" suffix="Source" idColumn="subject_id" />
     <node name="Sample" type="sample from organism"/>
     <node isaObject="Assay" name="16s" type="Amplicon sequencing assay" suffix="16s"/>
     <node isaObject="Assay" name="WGS" type="Whole genome sequencing assay" suffix="WGS"/>
@@ -82,6 +82,9 @@ my $ontologyMappingXml = <<"EOF";
   <ontologyTerm source_id="UBERON_0000466" type="characteristicQualifier" parent="Source">
     <name>body_habitat</name>
   </ontologyTerm>
+  <ontologyTerm source_id="EUPATH_0000606" type="characteristicQualifier" parent="Source">
+    <name>subject_id</name>
+  </ontologyTerm>
   <ontologyTerm source_id="UBERON_0000463" type="characteristicQualifier" parent="Sample">
     <name>body_product</name>
   </ontologyTerm>
@@ -106,15 +109,15 @@ my $isReporterMode = 0;
 my $dateObfuscationFile = undef;
 
 my %abundancesAmplicon = (
-  s1 => "{Bacteria:0.9, Archaea:0.1}",
-  s2 => "{Bacteria:0.8, Archaea:0.2}",
-  s3 => "{Bacteria:0.7, Archaea:0.3}",
+  sample_1 => "{Bacteria:0.9, Archaea:0.1}",
+  sample_2 => "{Bacteria:0.8, Archaea:0.2}",
+  sample_3 => "{Bacteria:0.7, Archaea:0.3}",
 );
 
 my %abundancesWgs = (
-  s1 => "{Bacteria:0.1, Archaea:0.9}",
-  s2 => "{Bacteria:0.2, Archaea:0.8}",
-  s3 => "{Bacteria:0.3, Archaea:0.7}",
+  sample_1 => "{Bacteria:0.1, Archaea:0.9}",
+  sample_2 => "{Bacteria:0.2, Archaea:0.8}",
+  sample_3 => "{Bacteria:0.3, Archaea:0.7}",
 );
 
 my $getExtraValues = sub {
@@ -144,8 +147,31 @@ my $study = $t->getStudies->[0];
 $t->parseStudy($study);
 $t->dealWithAllOntologies();
 
+my %entityNames;
+$entityNames{$_->getEntityName}{$_->getValue}++ for @{$study->getNodes};
+
+is_deeply(\%entityNames, {
+  'Source' => {
+    'subject_a (Source)' => 1,
+    'subject_b (Source)' => 1,
+  },
+  'Sample' => {
+    'sample_1' => 1,
+    'sample_2' => 1,
+    'sample_3' => 1
+  },
+  'Assay' => {
+    'sample_1 (16s)' => 1,
+    'sample_1 (WGS)' => 1,
+    'sample_2 (16s)' => 1,
+    'sample_2 (WGS)' => 1,
+    'sample_3 (16s)' => 1,
+    'sample_3 (WGS)' => 1
+  },
+}, "entity IDs") or diag explain \%entityNames;
+
 my $nodesText = Dump $study->getNodes;
-for my $text (qw/Bacteria:0.9 Bacteria:0.1 UBERON:oral cavity  UBERON:saliva UBERON:mouth/){
+for my $text ("Bacteria:0.9", "Bacteria:0.1", "UBERON:oral cavity", "UBERON:saliva", "UBERON:mouth"){
   like($nodesText, qr/$text/, "Has: $text");
 }
 my $edgesText = Dump $study->getEdges;
