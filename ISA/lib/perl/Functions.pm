@@ -49,7 +49,7 @@ sub new {
     while(<FILE>) {
       chomp;
 
-      my ($qualName, $qualSourceId, $in, $out, $termId) = split(/\t/, $_);
+      my ($qualName, $qualSourceId, $in, $out, $categoricalOrder, $termId) = split(/\t/, $_);
       if($termId){ $termId =~ s/[\{\}]//g }
       # term ID is the ontology term source ID (IRI) for the value, referenced in GUS by Study.Characteristic.ONTOLOGY_TERM_ID
       # not to be confused with Qualifier_ID or Unit_ID
