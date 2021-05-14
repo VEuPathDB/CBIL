@@ -331,7 +331,7 @@ sub addNodesAndEdgesToStudy {
         $extraValues = $getExtraValues->($node);
       }
       while(my ($key, $values) = each %{$extraValues //{}}){
-        my $characteristicQualifier = $self->getOntologyMapping->{$key}{characteristicQualifier};
+        my $characteristicQualifier = $self->getOntologyMapping->{lc $key}{characteristicQualifier};
         $self->handleError("Extra value $key for node $nodeName not in the ontology") unless $characteristicQualifier;
         $characteristicQualifier->{header} = $key;
 
