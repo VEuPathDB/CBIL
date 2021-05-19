@@ -63,45 +63,16 @@ sub new {
   my $investigationDirectory = dirname $investigationFile;
 
   my $investigationXml = XMLin($investigationFile, ForceArray => 1);
-  my $omHash;
-  if($ontologyMappingFile =~ /.owl$/i){
-    my $om = ApiCommonData::Load::OntologyMapping->new($ontologyMappingFile);
-    $omHash = $om->getMapping();
-  }
-  else{
-    $omHash = XMLin($ontologyMappingFile, ForceArray => 1);
-  }
 
-  my %ontologyMapping;
-  my %ontologySources;
+  my $om = 
+    $ontologyMappingFile =~ /.owl$/i ? ApiCommonData::Load::OntologyMapping->fromOwl($ontologyMappingFile) 
+    : ApiCommonData::Load::OntologyMapping->($ontologyMappingFile);
+
+  my ($ontologySources, $ontologyMapping) = $om->asSourcesAndMapping;
 
 
-  foreach my $os (@{$omHash->{ontologySource}}) {
-    $ontologySources{lc($os)} = 1;
-  }
-
-
-  foreach my $ot (@{$omHash->{ontologyTerm}}) {
-    my $sourceId = $ot->{source_id};
-    $ontologyMapping{lc($sourceId)}->{$ot->{type}} = $ot;
-    my @names;
-    if(ref($ot->{name}) eq "ARRAY"){
-      @names = @{$ot->{name}};
-    }
-    elsif(ref($ot->{name}) eq "HASH"){
-      @names = map { $_->{content} } values %{$ot->{name}};
-      $ot->{name} = \@names;
-    }
-    else {
-      die "Cannot read names from ontologyTerm $sourceId in $ontologyMappingFile\n"
-    }
-    foreach my $name (@names) {
-      $ontologyMapping{lc($name)}->{$ot->{type}} = $ot;
-    }
-
-  }
-
-  if(-e $ontologyMappingOverrideFile) {
+  if($ontologyMappingOverrideFile) {
+      $self->handleError("ontologyMappingOverrideFile $ontologyMappingOverrideFile does not exist") unless -f $ontologyMappingOverrideFile;
     my $ontologyMappingOverride = XMLin($ontologyMappingOverrideFile, ForceArray => 1);
     if(defined($ontologyMappingOverride->{ontologymappings})){
       ## Looks like ontologyMapping.xml
@@ -114,15 +85,12 @@ sub new {
 
     foreach my $ot (@{$ontologyMappingOverride->{ontologyTerm}}) {
       my $sourceId = $ot->{source_id};
-      $ontologyMapping{lc($sourceId)}->{$ot->{type}} = $ot;
+      $ontologyMapping->{lc($sourceId)}->{$ot->{type}} = $ot;
       
       foreach my $name (@{$ot->{name}}) {
-        $ontologyMapping{lc($name)}->{$ot->{type}} = $ot;
+        $ontologyMapping->{lc($name)}->{$ot->{type}} = $ot;
       }
     }
-  }
-  elsif($ontologyMappingOverrideFile){
-    $self->handleError("ontologyMappingOverrideFile $ontologyMappingOverrideFile does not exist");
   }
 
   $self->setInvestigationDirectory($investigationDirectory);
@@ -132,7 +100,7 @@ sub new {
 
   $self->setDebug($debug);
 
-  my $functions = CBIL::ISA::Functions->new({_ontology_mapping => \%ontologyMapping, _ontology_sources => \%ontologySources, _valueMappingFile => $valueMappingFile, _dateObfuscationFile => $dateObfuscationFile});
+  my $functions = CBIL::ISA::Functions->new({_ontology_mapping => $ontologyMapping, _ontology_sources => $ontologySources, _valueMappingFile => $valueMappingFile, _dateObfuscationFile => $dateObfuscationFile});
   $self->setFunctions($functions);
 
   $self->setStudySpecialColumns(['name', 'description', 'sourcemtoverride', 'samplemtoverride', 'parent']);
