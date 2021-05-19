@@ -64,9 +64,9 @@ sub new {
 
   my $investigationXml = XMLin($investigationFile, ForceArray => 1);
 
-  my $om = 
+  my $om =
     $ontologyMappingFile =~ /.owl$/i ? ApiCommonData::Load::OntologyMapping->fromOwl($ontologyMappingFile) 
-    : ApiCommonData::Load::OntologyMapping->($ontologyMappingFile);
+    : ApiCommonData::Load::OntologyMapping->fromXml($ontologyMappingFile);
 
   my ($ontologySources, $ontologyMapping) = $om->asSourcesAndMapping;
 
@@ -80,7 +80,7 @@ sub new {
     }
 
     foreach my $os (@{$ontologyMappingOverride->{ontologySource}}) {
-      $ontologySources{lc($os)} = 1;
+      $ontologySources->{lc($os)} = 1;
     }
 
     foreach my $ot (@{$ontologyMappingOverride->{ontologyTerm}}) {
@@ -95,7 +95,7 @@ sub new {
 
   $self->setInvestigationDirectory($investigationDirectory);
 
-  $self->setOntologyMapping(\%ontologyMapping);
+  $self->setOntologyMapping($ontologyMapping);
   $self->setSimpleXml($investigationXml);
 
   $self->setDebug($debug);
