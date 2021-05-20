@@ -254,6 +254,7 @@ sub addNodesAndEdgesToStudy {
   if ($self->getGetExtraValues){
     $getExtraValues = $self->getGetExtraValues->($studyXml);
   }
+  $self->addSpecialColumnsFromXml($studyXml); 
   
   my ($characteristicQualifiersByParent, $nonChHeaders) = $self->groupHeadersByOmType($headers, "characteristicQualifier", "Characteristics");
   my ($protocolParametersByParent, $unmappedHeaders) = $self->groupHeadersByOmType($nonChHeaders, "protocolParameter", "Parameter Value");
@@ -491,6 +492,13 @@ sub checkArrayRefLengths {
   }
 }
 
+sub addSpecialColumnsFromXml {
+  my ($self, $studyXml) = @_;
+  for my $nodeName (keys %{$studyXml->{node}}) {
+    my $idColumn = lc($studyXml->{node}->{$nodeName}->{idColumn}) || "name";
+    $self->addStudySpecialColumn($idColumn);
+  }
+}
 
 sub makeNodes {
   my ($self, $valuesHash, $count, $studyXml, $study) = @_;
@@ -518,7 +526,6 @@ sub makeNodes {
     else { 
       $name = $valuesHash->{$idColumn}->[0];
     }
-    $self->addStudySpecialColumn($idColumn); # housekeeping
 
     my $description = $valuesHash->{description}->[0];
     my $sourceMtOverride = $valuesHash->{sourcemtoverride}->[0];

@@ -82,9 +82,6 @@ my $ontologyMappingXml = <<"EOF";
   <ontologyTerm source_id="UBERON_0000466" type="characteristicQualifier" parent="Source">
     <name>body_habitat</name>
   </ontologyTerm>
-  <ontologyTerm source_id="EUPATH_0000606" type="characteristicQualifier" parent="Source">
-    <name>subject_id</name>
-  </ontologyTerm>
   <ontologyTerm source_id="OBI_0001169" type="characteristicQualifier" parent="Source">
     <name>age_in_years_unit_with_value</name>
     <function>splitUnitFromValue</function>
