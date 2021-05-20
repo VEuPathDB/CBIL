@@ -12,10 +12,10 @@ use YAML;
 
 my $dir = tempdir(CLEANUP => 1);
 my $studyTsv = <<"EOF";
-name	body_habitat	body_product	body_site	collection_date	subject_id
-sample_1	Colon	UBERON:feces	Colon	01-01-1991	subject_a
-sample_2	Colon	UBERON:feces	Colon	02-02-1992	subject_a
-sample_3	UBERON:oral cavity	UBERON:saliva	UBERON:mouth		subject_b
+name	body_habitat	body_product	body_site	collection_date	subject_id	age_in_days_unit_set_on_variable	age_in_years_unit_with_value
+sample_1	Colon	UBERON:feces	Colon	01-01-1991	subject_a	234	2 years
+sample_2	Colon	UBERON:feces	Colon	02-02-1992	subject_a	234	2 years
+sample_3	UBERON:oral cavity	UBERON:saliva	UBERON:mouth		subject_b	345	3 years
 EOF
 my $studyFile = "study.txt";
 write_file("$dir/$studyFile", $studyTsv);
@@ -85,6 +85,14 @@ my $ontologyMappingXml = <<"EOF";
   <ontologyTerm source_id="EUPATH_0000606" type="characteristicQualifier" parent="Source">
     <name>subject_id</name>
   </ontologyTerm>
+  <ontologyTerm source_id="OBI_0001169" type="characteristicQualifier" parent="Source">
+    <name>age_in_years_unit_with_value</name>
+    <function>splitUnitFromValue</function>
+    <function>setUnitToYear</function>
+  </ontologyTerm>
+  <ontologyTerm source_id="TMP_AGE" type="characteristicQualifier" parent="Source" unit="days" >
+    <name>age_in_days_unit_set_on_variable</name>
+  </ontologyTerm>
   <ontologyTerm source_id="UBERON_0000463" type="characteristicQualifier" parent="Sample">
     <name>body_product</name>
   </ontologyTerm>
@@ -97,6 +105,12 @@ my $ontologyMappingXml = <<"EOF";
 
   <ontologyTerm source_id="TMP_1" type="characteristicQualifier" parent="Assay">
       <name>taxon_abundance</name>
+  </ontologyTerm>
+  <ontologyTerm source_id="UO_0000036" type="unit">
+    <name>years</name>
+  </ontologyTerm>
+  <ontologyTerm source_id="UO_0000033" type="unit">
+    <name>days</name>
   </ontologyTerm>
 </ontologymappings>
 EOF
@@ -171,7 +185,8 @@ is_deeply(\%entityNames, {
 }, "entity IDs") or diag explain \%entityNames;
 
 my $nodesText = Dump $study->getNodes;
-for my $text ("Bacteria:0.9", "Bacteria:0.1", "UBERON:oral cavity", "UBERON:saliva", "UBERON:mouth"){
+# diag explain $nodesText;
+for my $text ("Bacteria:0.9", "Bacteria:0.1", "UBERON:oral cavity", "UBERON:saliva", "UBERON:mouth", "years", "days"){
   like($nodesText, qr/$text/, "Has: $text");
 }
 my $edgesText = Dump $study->getEdges;

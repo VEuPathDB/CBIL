@@ -430,9 +430,7 @@ sub addProtocolParameterToEdge {
   foreach my $value (@{$values//[]}) {
     next unless($value || $value eq '0' || $forceDateDelta); # Old comment: "put this here because I still wanna check the headers"
 
-    my $pv = CBIL::ISA::StudyAssayEntity::ParameterValue->new({_value => $value});
-    $pv->setQualifier($term->{source_id});
-    $pv->setAlternativeQualifier($term->{header});
+    my $pv = $self->makeValueObject('CBIL::ISA::StudyAssayEntity::ParameterValue', $term, $value);
 
 
     my $functionsObj = $self->getFunctions();
@@ -450,6 +448,17 @@ sub addProtocolParameterToEdge {
   }
 }
 
+sub makeValueObject {
+  my ($self, $objectClass, $term, $value) = @_;
+    my $o = $objectClass->new({_value => $value});
+    $o->setQualifier($term->{source_id});
+    $o->setAlternativeQualifier($term->{header});
+    if($term->{unit}){
+      my $unitSourceId = $term->{unitSourceId} // $self->getOntologyMapping->{$term->{unit}}{unit}{source_id};
+      $o->setUnit(&makeOntologyTerm($unitSourceId, $term->{unit}, "CBIL::ISA::StudyAssayEntity::Unit"));
+    }
+    return $o;
+}
 sub addCharacteristicToNode {
   my ($self, $node, $inputNodes, $term, $values) = @_;
 
@@ -458,9 +467,7 @@ sub addCharacteristicToNode {
 
   foreach my $value (@{$values//[]}) {
     next unless($value || $value eq '0' || $forceDateDelta); # Old comment: "put this here because I still wanna check the headers"
-    my $char = CBIL::ISA::StudyAssayEntity::Characteristic->new({_value => $value});
-    $char->setQualifier($term->{source_id});
-    $char->setAlternativeQualifier($term->{header});
+    my $char = $self->makeValueObject('CBIL::ISA::StudyAssayEntity::Characteristic', $term, $value);
 
     my $functionsObj = $self->getFunctions();
     foreach my $function (@functions) {
