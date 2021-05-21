@@ -193,8 +193,8 @@ like($edgesText, qr/01-01-1991/, "Has: 01-01-1991");
 my $clinEpiDir = "$dir/clinEpi";
 make_path $clinEpiDir;
 
-my $clinEpiParticipantsFile "participants.txt";
-my $clinEpiObservationsFile "observations.txt";
+my $clinEpiParticipantsFile = "participants.txt";
+my $clinEpiObservationsFile = "observations.txt";
 my $clinEpiInvestigationXml = <<EOF;
 <investigation identifier="GEMSCC0003" identifierIsDirectoryName="false">
   <study fileName="$clinEpiParticipantsFile" identifierSuffix="-1" allNodesGetDeltas="1">
@@ -222,9 +222,6 @@ my $clinEpiObservationsTsv = <<EOF;
 PRIMARY_KEY	PARENT	f4b_med_bmiz_f
 3010244171_21jun08_out	3010244171	
 3010244171_21jun08	3010244171	0
-3010244171_21jun08_find	3010244171	
-3010244171_08-21-2008	3010244171	
-3010244171_21jun08_last	3010244171	
 EOF
 write_file("$clinEpiDir/$clinEpiObservationsFile", $clinEpiObservationsTsv);
 
@@ -248,17 +245,29 @@ my $clinEpiOntologyMapping = <<EOF;
   </ontologyTerm>
 </ontologymappings>
 EOF
+write_file("$clinEpiDir/ontologyMapping.xml", $clinEpiOntologyMapping);
+my $clinEpiDateObfuscation = <<EOF;
+EUPATH_0000096	3010244171	0:0:0:-3:0:0:0
+EUPATH_0000738	3010244171_21jun08_out	0:0:0:-3:0:0:0
+EUPATH_0000738	3010244171_21jun08	0:0:0:-3:0:0:0
+EOF
 my $clinEpiDateObfuscationFile = "$clinEpiDir/dateObfuscation.txt";
-my $clinEpiT = CBIL::ISA::InvestigationSimple->new("$clinEpiDir/i_Investigation.xml", "$clinEpiDir/ontologyMapping.xml", $ontologyMappingOverride, $valueMapping, $debug, $isReporterMode, $$clinEpiDateObfuscationFile, undef);
+write_file($clinEpiDateObfuscationFile, $clinEpiDateObfuscation);
+my $clinEpiT = CBIL::ISA::InvestigationSimple->new("$clinEpiDir/i_Investigation.xml", "$clinEpiDir/ontologyMapping.xml", $ontologyMappingOverride, $valueMapping, $debug, $isReporterMode, $clinEpiDateObfuscationFile, undef);
 
 $clinEpiT->parseInvestigation;
-is(scalar @{$clinEpiT->getStudies}, 1);
-my $clinEpiStudy = $clinEpiT->getStudies->[0];
+is(scalar @{$clinEpiT->getStudies}, 2);
+my ($participantsStudy, $observationsStudy) = @{$clinEpiT->getStudies};
 
-$clinEpiT->parseStudy($clinEpiStudy);
+$clinEpiT->parseStudy($participantsStudy);
 $clinEpiT->dealWithAllOntologies();
-my $clinEpiNodesText = Dump $clinEpiStudy->getNodes;
-diag explain $clinEpiNodesText;
-my $clinEpiEdgesText = Dump $clinEpiStudy->getEdges;
-diag explain $clinEpiEdgesText;
+
+$clinEpiT->parseStudy($observationsStudy);
+$clinEpiT->dealWithAllOntologies();
+
+is(scalar @{$participantsStudy->getNodes}, 1, "one participant");
+is(scalar @{$participantsStudy->getEdges}, 0, "no edges to participant");
+is(scalar @{$observationsStudy->getNodes}, 3, "three observation nodes");
+is(scalar @{$observationsStudy->getEdges}, 1, "one participant -> observation edge");
+
 done_testing;
