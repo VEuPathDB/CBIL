@@ -7,6 +7,7 @@ use Test::More;
 use CBIL::ISA::InvestigationSimple;
 use File::Temp qw/tempdir/;
 use File::Slurp qw/write_file/;
+use File::Path qw/make_path/;
 use YAML;
 
 
@@ -188,6 +189,76 @@ for my $text ("Bacteria:0.9", "Bacteria:0.1", "UBERON:oral cavity", "UBERON:sali
 }
 my $edgesText = Dump $study->getEdges;
 like($edgesText, qr/01-01-1991/, "Has: 01-01-1991");
+
+my $clinEpiDir = "$dir/clinEpi";
+make_path $clinEpiDir;
+
+my $clinEpiParticipantsFile "participants.txt";
+my $clinEpiObservationsFile "observations.txt";
+my $clinEpiInvestigationXml = <<EOF;
+<investigation identifier="GEMSCC0003" identifierIsDirectoryName="false">
+  <study fileName="$clinEpiParticipantsFile" identifierSuffix="-1" allNodesGetDeltas="1">
+    <dataset>ISASimple_Gates_GEMS_eda_gems1_case_control_RSRC</dataset>
+    <node isaObject="Source" name="ENTITY" type="participant" suffix="" useExactSuffix="true" idColumn="PRIMARY_KEY"/> 
+  </study>
+
+  <study fileName="$clinEpiObservationsFile" identiifierSuffix="-1" allNodesGetDeltas="1">
+    <dataset>ISASimple_Gates_GEMS_eda_gems1_case_control_RSRC</dataset>
+    <node isaObject="Source" name="PARENT" type="participant" suffix="" useExactSuffix="true" idColumn="PARENT"/>  
+    <node isaObject="Source" name="ENTITY" type="observation" suffix="" useExactSuffix="true" idColumn="PRIMARY_KEY" idObfuscationFunction="idObfuscateDate1"/>  
+    <edge input="PARENT" output="ENTITY">
+      <protocol>observationprotocol</protocol>
+    </edge>
+  </study>
+</investigation>
+EOF
+write_file("$clinEpiDir/i_Investigation.xml", $clinEpiInvestigationXml);
+my $clinEpiParticipantsTsv = <<EOF;
+PRIMARY_KEY	f4a_cur_nodrink
+3010244171	0
+EOF
+write_file("$clinEpiDir/$clinEpiParticipantsFile", $clinEpiParticipantsTsv);
+my $clinEpiObservationsTsv = <<EOF;
+PRIMARY_KEY	PARENT	f4b_med_bmiz_f
+3010244171_21jun08_out	3010244171	
+3010244171_21jun08	3010244171	0
+3010244171_21jun08_find	3010244171	
+3010244171_08-21-2008	3010244171	
+3010244171_21jun08_last	3010244171	
+EOF
+write_file("$clinEpiDir/$clinEpiObservationsFile", $clinEpiObservationsTsv);
+
+my $clinEpiOntologyMapping = <<EOF;
+<ontologymappings>
+  <ontologyTerm source_id="EUPATH_0000096" type="materialType">
+    <name>participant</name>
+  </ontologyTerm>
+  <ontologyTerm source_id="EUPATH_0000738" type="materialType">
+    <name>observation</name>
+  </ontologyTerm>
+  <ontologyTerm source_id="BFO_0000015" type="protocol">
+    <name>observationprotocol</name>
+  </ontologyTerm>
+  <ontologyTerm parent="ENTITY" source_id="EUPATH_0015075" type="characteristicQualifier">
+    <name>f4a_cur_nodrink</name>
+  </ontologyTerm>
+  <ontologyTerm parent="ENTITY" source_id="EUPATH_0015129" type="characteristicQualifier">
+    <name>f4b_med_bmiz_f</name>
+    <function>enforceYesNoForBoolean</function>
+  </ontologyTerm>
+</ontologymappings>
+EOF
+my $clinEpiDateObfuscationFile = "$clinEpiDir/dateObfuscation.txt";
+my $clinEpiT = CBIL::ISA::InvestigationSimple->new("$clinEpiDir/i_Investigation.xml", "$clinEpiDir/ontologyMapping.xml", $ontologyMappingOverride, $valueMapping, $debug, $isReporterMode, $$clinEpiDateObfuscationFile, undef);
+
+$clinEpiT->parseInvestigation;
+is(scalar @{$clinEpiT->getStudies}, 1);
+my $clinEpiStudy = $clinEpiT->getStudies->[0];
+
+$clinEpiT->parseStudy($clinEpiStudy);
+$clinEpiT->dealWithAllOntologies();
+my $clinEpiNodesText = Dump $clinEpiStudy->getNodes;
+diag explain $clinEpiNodesText;
+my $clinEpiEdgesText = Dump $clinEpiStudy->getEdges;
+diag explain $clinEpiEdgesText;
 done_testing;
-
-
