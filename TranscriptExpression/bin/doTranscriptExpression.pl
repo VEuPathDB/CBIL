@@ -9,7 +9,7 @@ use CBIL::TranscriptExpression::Error;
 
 use Data::Dumper;
 
-my ($help, $xmlFile, $mainDirectory, $inputFile, @executableDirectory, $technologyType, $seqIdPrefix);
+my ($help, $xmlFile, $mainDirectory, $inputFile, @executableDirectory, $technologyType, $seqIdPrefix, $patch);
 
 &GetOptions('help|h' => \$help,
             'xml_file=s' => \$xmlFile,
@@ -18,6 +18,7 @@ my ($help, $xmlFile, $mainDirectory, $inputFile, @executableDirectory, $technolo
             'executable_path=s' => \@executableDirectory,
             'technology_type=s' => \$technologyType,
             'seq_id_prefix=s' => \$seqIdPrefix,
+            'patch' => \$patch,
            );
 
 
@@ -50,6 +51,7 @@ foreach my $node (@$nodes) {
   }
 
   if (defined $seqIdPrefix) { $args->{seqIdPrefix} = $seqIdPrefix; }
+  if ($patch) { $args->{patch} = 1; }
 
   $args->{mainDirectory} = $mainDirectory;
 
@@ -73,7 +75,7 @@ sub usage {
   my $m = shift;
 
   print STDERR "$m\n\n" if($m);
-  print STDERR "usage:  perl doTranscriptExpression.pl --xml_file <XML> --main_directory <DIR> [--input_file <FILE>] [--seq_id_prefix <SEQ ID PREFIX>] --help\n";
+  print STDERR "usage:  perl doTranscriptExpression.pl --xml_file <XML> --main_directory <DIR> [--input_file <FILE>] [--seq_id_prefix <SEQ ID PREFIX>] [--patch <use this flag for a patch update>]--help\n";
   exit;
 }
 

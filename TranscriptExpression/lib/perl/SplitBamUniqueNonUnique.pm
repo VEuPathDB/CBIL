@@ -23,12 +23,9 @@ sub splitBamUniqueNonUnique {
     my $totalReads = $statsHash->{'raw total sequences'};
 
    
-# my $cmd = "samtools view -h  $file_to_open | grep -P '^\@SQ|NH:i:1/\s' |samtools view -h -bS - > $unique";
- #   print Dumper $cmd;
    
-    &runCmd("samtools view -h  $file_to_open  | grep -P '(NH:i:([2-9]|1\\d))|(^\@SQ)|(^\@HD)' |samtools view -h -bS - > $nonunique");
-    &runCmd("samtools view -h  $file_to_open | grep -P '(^\@SQ)|NH:i:1[\\s|\$]|(^\@HD)' |samtools view -h -bS - > $unique");
-#    die;
+    &runCmd("samtools view -h  $file_to_open  | grep -P '^@|NH:i:([2-9]|1\\d)' |samtools view -h -bS - > $nonunique");
+    &runCmd("samtools view -h  $file_to_open | grep -P '^@|NH:i:1(\\s|\$)' |samtools view -h -bS - > $unique");
 
     open (M, ">$expDir/mappingStats.txt") or die "Cannot open mapping stat file file $expDir/mappingStats.txt for writing\n";
     print M "file\tcoverage\tmapped\tnumber_reads_mapped\taverage_read_length\n";    
@@ -79,10 +76,10 @@ sub dealWithStrand {
 	
 	# 1. alignments of the second in pair if they map to the forward strand
 	# 2. alignments of the first in pair if they map to the reverse strand
-	&runCmd("samtools view -b -f 128 -F 16 $file >${baseName}_fwd1.bam");
+	&runCmd("samtools view -b -f 163 $file >${baseName}_fwd1.bam");
 	&runCmd("samtools index ${baseName}_fwd1.bam");
 	
-	&runCmd("samtools view -b -f 80 $file >${baseName}_fwd2.bam");
+	&runCmd("samtools view -b -f 83 $file >${baseName}_fwd2.bam");
 	&runCmd("samtools index ${baseName}_fwd2.bam");
 	
 	&runCmd("samtools merge -f ${baseName}.firststrand.bam ${baseName}_fwd1.bam ${baseName}_fwd2.bam");
@@ -90,10 +87,10 @@ sub dealWithStrand {
 	
 	# 1. alignments of the second in pair if they map to the reverse strand
 	# 2. alignments of the first in pair if they map to the forward strand
-	&runCmd("samtools view -b -f 144 $file > ${baseName}_rev1.bam");
+	&runCmd("samtools view -b -f 147 $file > ${baseName}_rev1.bam");
 	&runCmd("samtools index ${baseName}_rev1.bam");
 	
-	&runCmd("samtools view -b -f 64 -F 16 $file > ${baseName}_rev2.bam");
+	&runCmd("samtools view -b -f 99 $file > ${baseName}_rev2.bam");
 	&runCmd("samtools index ${baseName}_rev2.bam");
 	
 	&runCmd("samtools merge -f ${baseName}.secondstrand.bam ${baseName}_rev1.bam ${baseName}_rev2.bam");

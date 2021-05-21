@@ -1,5 +1,7 @@
 package CBIL::TranscriptExpression::DataMunger::Loadable;
 use base qw(CBIL::TranscriptExpression::DataMunger);
+use locale;
+use open ':locale';
 
 use Data::Dumper;
 
@@ -118,6 +120,11 @@ sub createConfigFile {
 
     # don't allow the something to be input to itself
     $inputProtocolAppNodesString = undef if($inputProtocolAppNodesString eq $name);
+
+    my $invalidChars = qr/,/;
+    if($profileSetName =~ $invalidChars || $name =~ $invalidChars) {
+      CBIL::TranscriptExpression::Error->new("Invalid Character in either sample or profileset")->throw();
+    }
 
      $self->printConfigLine(\*CONFIG, $profileSetName, $name, $fileName, $inputProtocolAppNodesString);
    }
