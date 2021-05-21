@@ -256,18 +256,27 @@ write_file($clinEpiDateObfuscationFile, $clinEpiDateObfuscation);
 my $clinEpiT = CBIL::ISA::InvestigationSimple->new("$clinEpiDir/i_Investigation.xml", "$clinEpiDir/ontologyMapping.xml", $ontologyMappingOverride, $valueMapping, $debug, $isReporterMode, $clinEpiDateObfuscationFile, undef);
 
 $clinEpiT->parseInvestigation;
+$clinEpiT->setRowLimit(1);
 is(scalar @{$clinEpiT->getStudies}, 2);
 my ($participantsStudy, $observationsStudy) = @{$clinEpiT->getStudies};
 
 $clinEpiT->parseStudy($participantsStudy);
 $clinEpiT->dealWithAllOntologies();
 
-$clinEpiT->parseStudy($observationsStudy);
-$clinEpiT->dealWithAllOntologies();
 
 is(scalar @{$participantsStudy->getNodes}, 1, "one participant");
 is(scalar @{$participantsStudy->getEdges}, 0, "no edges to participant");
-is(scalar @{$observationsStudy->getNodes}, 3, "three observation nodes");
-is(scalar @{$observationsStudy->getEdges}, 1, "one participant -> observation edge");
+my @expectedNodeValues = (
+  ["3010244171", "3010244171_21jun08_out"],
+  ["3010244171", "3010244171_21jun08"],
+);
+for my $c (0..1){
+  $clinEpiT->parseStudy($observationsStudy);
+  $clinEpiT->dealWithAllOntologies();
+  my $values = [sort map {$_->getValue()} @{$observationsStudy->getNodes}];
+  is_deeply($expectedNodeValues[$c], $values, "Node values as expected");
+  is(scalar @{$observationsStudy->getEdges}, 1, "one participant -> observation edge");
+}
+
 
 done_testing;
