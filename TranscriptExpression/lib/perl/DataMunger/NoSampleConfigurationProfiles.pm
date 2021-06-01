@@ -32,7 +32,7 @@ sub new {
 
   my $mainDirectory = $args->{mainDirectory};
 
-  open(FILE, "$mainDirectory/$output") || die "Cannot open file $output for reading $!";
+  open(FILE, "$mainDirectory/$output") || die "Cannot open file $mainDirectory/$output for reading $!";
   my $header = <FILE>;
   chomp($header);
   my @samples = split('\t',$header);
