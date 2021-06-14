@@ -70,9 +70,12 @@ sub new {
 
   my ($ontologySources, $ontologyMapping) = $om->asSourcesAndMapping;
 
-
-  if($ontologyMappingOverrideFile) {
-      $self->handleError("ontologyMappingOverrideFile $ontologyMappingOverrideFile does not exist") unless -f $ontologyMappingOverrideFile;
+  # The file is optional for the genomic workflow
+  # but the argument is always provided in classes.xml file
+  # TODO change it there?
+  warn "ontologyMappingOverrideFile provided as $ontologyMappingOverrideFile, but the file does not exist"
+   if $ontologyMappingOverrideFile && ! -f $ontologyMappingOverrideFile;
+  if( -f $ontologyMappingOverrideFile) {
     my $ontologyMappingOverride = XMLin($ontologyMappingOverrideFile, ForceArray => 1);
     if(defined($ontologyMappingOverride->{ontologymappings})){
       ## Looks like ontologyMapping.xml
