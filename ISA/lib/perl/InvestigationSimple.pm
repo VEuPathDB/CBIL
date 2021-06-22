@@ -274,8 +274,8 @@ sub addNodesAndEdgesToStudy {
     my @a = split(/\t/, $line);
     my $valuesHash = {};
     for(my $i = 0; $i < scalar @$headers; $i++) {
-      my $lcKey = lc $headers->[$i];
-      push @{$valuesHash->{$lcKey}}, $a[$i];
+      my $lcHeader = lc $headers->[$i];
+      push @{$valuesHash->{$lcHeader}}, $a[$i];
     }
 
     my $nodesHash = $self->makeNodes($valuesHash, $count, $studyXml, $study);
@@ -286,16 +286,16 @@ sub addNodesAndEdgesToStudy {
       $self->allNodesGetDeltas($nodesHash, $nodeIOHash);
     }
     for my $missingChParent (grep {not $nodesHash->{$_}} keys %{$characteristicQualifiersByParent}){
-      $self->handleError("Characteristic qualifier parent $missingChParent does not have a corresponding node. Keys: ".join(",", map {$_->{header}} @{$characteristicQualifiersByParent->{$missingChParent}}));
+      $self->handleError("Characteristic qualifier parent $missingChParent does not have a corresponding node. Keys: ".join(",", map {$_->{lc_header}} @{$characteristicQualifiersByParent->{$missingChParent}}));
     }
     for my $missingPrParent (grep {not $protocolAppsHash->{$_}} keys %{$protocolParametersByParent}){
-      $self->handleError("Protocol parameter parent $missingPrParent does not have a corresponding protocol. Keys: ".join(",", map {$_->{header}} @{$protocolParametersByParent->{$missingPrParent}}));
+      $self->handleError("Protocol parameter parent $missingPrParent does not have a corresponding protocol. Keys: ".join(",", map {$_->{lc_header}} @{$protocolParametersByParent->{$missingPrParent}}));
     }
     for my $nodeName (sort keys %{$nodesHash}){
       my $node = $nodesHash->{$nodeName};
       my $inputNodes = $nodeIOHash->{$nodeName} // [];
       for my $characteristicQualifier (@{$characteristicQualifiersByParent->{$nodeName}}){
-        my $values = $valuesHash->{lc $characteristicQualifier->{header}};
+        my $values = $valuesHash->{$characteristicQualifier->{lc_header}};
         $self->addCharacteristicToNode($node, $inputNodes, $characteristicQualifier, $values);
       }
       my $extraValues;
@@ -305,7 +305,7 @@ sub addNodesAndEdgesToStudy {
       while(my ($key, $values) = each %{$extraValues //{}}){
         my $characteristicQualifier = $self->getOntologyMapping->{lc $key}{characteristicQualifier};
         $self->handleError("Extra value $key for node $nodeName not in the ontology") unless $characteristicQualifier;
-        $characteristicQualifier->{header} = $key;
+        $characteristicQualifier->{lc_header} = lc $key;
 
         $self->addCharacteristicToNode($node, $inputNodes, $characteristicQualifier, $values);
       }
@@ -313,7 +313,7 @@ sub addNodesAndEdgesToStudy {
     for my $protocolAppName (sort keys %{$protocolAppsHash}){
       my $protocolApp = $protocolAppsHash->{$protocolAppName};
       for my $protocolParameter (@{$protocolParametersByParent->{$protocolAppName}}){
-        my $values = $valuesHash->{lc $protocolParameter->{header}};
+        my $values = $valuesHash->{$protocolParameter->{lc_header}};
         $self->addProtocolParameterToEdge($protocolApp, $protocolParameter, $values);
       }
     }
@@ -396,23 +396,21 @@ sub groupHeadersByOmType {
   my @unmappedHeaders;
   my $ontologyMapping = $self->getOntologyMapping();
 
-  for my $key ( @{$headers}) {
+  for my $header ( @{$headers}) {
 
-    my $header = $key;
-    if($header =~ /$isaHeaderType\s*\[(.+)\]/i) {
-      $header = $1;
+    my $key = lc $header;
+    if($key =~ /$isaHeaderType\s*\[(.+)\]/i) {
+      $key = $1;
     }
-    $header = lc $header;
-    my $o = $ontologyMapping->{$header}{$omType};
+    my $o = $ontologyMapping->{$key}{$omType};
     if($o){
-      push @{$result{$o->{parent}}}, { %{$o}, header => $header };
+      push @{$result{$o->{parent}}}, { %{$o}, lc_header => lc $header};
     } else {
       push @unmappedHeaders, $key;
     }
   }
   return \%result, \@unmappedHeaders;
 }
-
 
 sub functionNamesForTerm {
   my ($term) = @_;
@@ -434,7 +432,7 @@ sub addProtocolParameterToEdge {
   foreach my $value (@{$values//[]}) {
     next unless($value || $value eq '0' || $forceDateDelta); # Old comment: "put this here because I still wanna check the headers"
 
-    my $pv = $self->makeValueObject('CBIL::ISA::StudyAssayEntity::ParameterValue', $term, $value);
+    my $pv = $self->makeValueObject('CBIL::ISA::StudyAssayEntity::ParameterValue','Parameter Value', $term, $value);
 
 
     my $functionsObj = $self->getFunctions();
@@ -453,10 +451,15 @@ sub addProtocolParameterToEdge {
 }
 
 sub makeValueObject {
-  my ($self, $objectClass, $term, $value) = @_;
+  my ($self, $objectClass, $isaHeaderType, $term, $value) = @_;
     my $o = $objectClass->new({_value => $value});
     $o->setQualifier($term->{source_id});
-    $o->setAlternativeQualifier($term->{header});
+    my $alternativeQualifier = $term->{lc_header};
+
+    if($alternativeQualifier =~ /$isaHeaderType\s*\[(.+)\]/i) {
+      $alternativeQualifier = $1;
+    }
+    $o->setAlternativeQualifier($alternativeQualifier);
     if($term->{unit}){
       my $unitSourceId = $term->{unitSourceId} // $self->getOntologyMapping->{$term->{unit}}{unit}{source_id};
       $o->setUnit(&makeOntologyTerm($unitSourceId, $term->{unit}, "CBIL::ISA::StudyAssayEntity::Unit"));
@@ -471,7 +474,7 @@ sub addCharacteristicToNode {
 
   foreach my $value (@{$values//[]}) {
     next unless($value || $value eq '0' || $forceDateDelta); # Old comment: "put this here because I still wanna check the headers"
-    my $char = $self->makeValueObject('CBIL::ISA::StudyAssayEntity::Characteristic', $term, $value);
+    my $char = $self->makeValueObject('CBIL::ISA::StudyAssayEntity::Characteristic','Characteristics', $term, $value);
 
     my $functionsObj = $self->getFunctions();
     foreach my $function (@functions) {

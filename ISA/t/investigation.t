@@ -13,10 +13,10 @@ use YAML;
 
 my $dir = tempdir(CLEANUP => 1);
 my $studyTsv = <<"EOF";
-name	body_habitat	body_product	body_site	collection_date	subject_id	age_in_days_unit_set_on_variable	age_in_years_unit_with_value
-sample_1	Colon	UBERON:feces	Colon	01-01-1991	subject_a	234	2 years
-sample_2	Colon	UBERON:feces	Colon	02-02-1992	subject_a	234	2 years
-sample_3	UBERON:oral cavity	UBERON:saliva	UBERON:mouth		subject_b	345	3 years
+name	body_habitat	body_product	body_site	collection_date	subject_id	age_in_days_unit_set_on_variable	age_in_years_unit_with_value	Characteristics [specimen] 
+sample_1	Colon	UBERON:feces	Colon	01-01-1991	subject_a	234	2 years	poo
+sample_2	Colon	UBERON:feces	Colon	02-02-1992	subject_a	234	2 years	poo
+sample_3	UBERON:oral cavity	UBERON:saliva	UBERON:mouth		subject_b	345	3 years	poo
 EOF
 my $studyFile = "study.txt";
 write_file("$dir/$studyFile", $studyTsv);
@@ -96,6 +96,9 @@ my $ontologyMappingXml = <<"EOF";
   </ontologyTerm>
   <ontologyTerm source_id="UBERON_0000061" type="characteristicQualifier" parent="Sample">
     <name>body_site</name>
+  </ontologyTerm>
+  <ontologyTerm source_id="OBI_0100051" type="characteristicQualifier" parent="Sample">
+    <name>specimen</name>
   </ontologyTerm>
   <ontologyTerm source_id="TMP_SCD" type="protocolParameter" parent="specimen collection">
     <name>collection_date</name>
@@ -184,7 +187,7 @@ is_deeply(\%entityNames, {
 
 my $nodesText = Dump $study->getNodes;
 # diag explain $nodesText;
-for my $text ("Bacteria:0.9", "Bacteria:0.1", "UBERON:oral cavity", "UBERON:saliva", "UBERON:mouth", "years", "days"){
+for my $text ("Bacteria:0.9", "Bacteria:0.1", "UBERON:oral cavity", "UBERON:saliva", "UBERON:mouth", "years", "days", "poo"){
   like($nodesText, qr/$text/, "Has: $text");
 }
 my $edgesText = Dump $study->getEdges;
