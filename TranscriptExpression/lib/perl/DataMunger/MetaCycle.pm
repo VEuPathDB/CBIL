@@ -120,7 +120,7 @@ sub makeTempROutputFile {
     
     my $rCode = <<"RCODE";
     library(MetaCycle);
-    meta2d(infile="$mainDirectory/$inputFile", outdir ="$mainDirectory", filestyle = "txt", timepoints = "line1", minper = 20, maxper = 28, cycMethod= c("ARS","JTK"), analysisStrategy = "auto", outputFile = TRUE, outIntegration = "both",ARSmle = "auto",ARSdefaultPer = 24);
+    meta2d(infile="$mainDirectory/$inputFile", outdir ="$mainDirectory", filestyle = "txt", timepoints = "line1", minper = 18, maxper = 26, cycMethod= c("ARS","JTK"), analysisStrategy = "auto", outputFile = TRUE, outIntegration = "both",ARSmle = "auto",ARSdefaultPer = 24);
 RCODE
     print $rFh $rCode;
     close $rFh;
