@@ -227,30 +227,6 @@ sub addNodesAndEdgesToStudy {
   }
 }
 
-
-sub parse {
-  my ($self) = @_;
-
-  # split these out so we can get some information before processing nodes and edges
-  $self->parseInvestigation();
-
-  foreach my $study (@{$self->getStudies()}) {
-    while($study->hasMoreData()) {
-      $self->parseStudy($study);
-      $self->dealWithAllOntologies();
-    }
-  }
-
-
-
-  if($self->getHasErrors()) {
-    die "___Errors Found.  Please fix and try again.";
-  }
-
-
-}
-
-
 sub handleError {
   my ($self, $error) = @_;
 
