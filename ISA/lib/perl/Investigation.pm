@@ -28,13 +28,6 @@ my $STUDY_PUBLICATIONS = "STUDY PUBLICATIONS";
 my $STUDY_ASSAYS = "STUDY ASSAYS";
 
 
-sub setDebug {$_[0]->{_debug} = $_[1]}
-sub getDebug {$_[0]->{_debug} }
-
-sub setHasErrors {$_[0]->{_has_errors} = $_[1]}
-sub getHasErrors {$_[0]->{_has_errors} }
-
-
 sub new {
   my ($class, $investigationFile, $investigationDirectory, $delimiter) = @_;
   $delimiter //= "\t";
@@ -84,6 +77,16 @@ sub setOntologySources {
   $self->{_ontology_sources} = $self->makeStudyObjectsFromHash($hash, $columnCount, "CBIL::ISA::OntologySource");
 
   return $self->getOntologySources();
+}
+
+sub setOnError { $_[0]->{_on_error} = $_[1] }
+sub handleError {
+  my ($self, $error) = @_;
+  if ($self->{_on_error}){
+    $self->{_on_error}->($error);
+  } else {
+    die $error;
+  }
 }
 
 sub makeStudy {
@@ -226,22 +229,6 @@ sub addNodesAndEdgesToStudy {
     $wasNodeContext = $entity->isNode();
   }
 }
-
-sub handleError {
-  my ($self, $error) = @_;
-
-  my $debug = $self->getDebug();
-  $self->setHasErrors(1);
-
-  if($debug) {
-    print STDERR $error . "\n";
-  }
-  else {
-    die $error;
-  }
-
-}
-
 
 sub dealWithAllOntologies {
   my ($self) = @_;

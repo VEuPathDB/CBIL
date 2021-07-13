@@ -54,7 +54,7 @@ sub addStudySpecialColumn {
 }
 
 sub new {
-  my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile, $valueMappingFile, $debug, $isReporterMode, $dateObfuscationFile, $getExtraValues) = @_;
+  my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile, $valueMappingFile, $onError, $isReporterMode, $dateObfuscationFile, $getExtraValues) = @_;
 
   my $self = $class->SUPER::new();
 
@@ -101,7 +101,10 @@ sub new {
   $self->setOntologyMapping($ontologyMapping);
   $self->setSimpleXml($investigationXml);
 
-  $self->setDebug($debug);
+  if($onError){
+    die $onError unless ref $onError eq 'CODE';
+    $self->setOnError($onError);
+  }
 
   my $functions = CBIL::ISA::Functions->new({_ontology_mapping => $ontologyMapping, _ontology_sources => $ontologySources, _valueMappingFile => $valueMappingFile, _dateObfuscationFile => $dateObfuscationFile});
   $self->setFunctions($functions);

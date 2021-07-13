@@ -4,6 +4,7 @@ use warnings;
 use lib "$ENV{GUS_HOME}/lib/perl";
 
 use Test::More;
+use Test::Exception;
 use CBIL::ISA::InvestigationSimple;
 use File::Temp qw/tempdir/;
 use File::Slurp qw/write_file/;
@@ -82,6 +83,7 @@ my $ontologyMappingXml = <<"EOF";
 
   <ontologyTerm source_id="UBERON_0000466" type="characteristicQualifier" parent="Source">
     <name>body_habitat</name>
+    <function>valueIsOntologyTerm</function>
   </ontologyTerm>
   <ontologyTerm source_id="OBI_0001169" type="characteristicQualifier" parent="Source">
     <name>age_in_years_unit_with_value</name>
@@ -113,13 +115,21 @@ my $ontologyMappingXml = <<"EOF";
   <ontologyTerm source_id="UO_0000033" type="unit">
     <name>days</name>
   </ontologyTerm>
+
+  <ontologyTerm source_id="UBERON_0001155" type="characteristicValue" parent="characteristicQualifier">
+    <name>colon</name>
+  </ontologyTerm>
+
+  <ontologyTerm source_id="UBERON_0000167" type="characteristicValue" parent="characteristicQualifier">
+    <name>UBERON:oral cavity</name>
+  </ontologyTerm>
 </ontologymappings>
 EOF
 
 write_file("$dir/ontologyMapping.xml", $ontologyMappingXml);
 my $ontologyMappingOverride = "";
 my $valueMapping = "";
-my $debug = 0;
+my $onError;
 my $isReporterMode = 0;
 my $dateObfuscationFile = undef;
 
@@ -154,7 +164,7 @@ my $getGetExtraValues = sub {
   die unless $dataset eq $datasetName;
   return $getExtraValues;
 };
-my $t = CBIL::ISA::InvestigationSimple->new("$dir/i_Investigation.xml", "$dir/ontologyMapping.xml", $ontologyMappingOverride, $valueMapping, $debug, $isReporterMode, $dateObfuscationFile, $getGetExtraValues);
+my $t = CBIL::ISA::InvestigationSimple->new("$dir/i_Investigation.xml", "$dir/ontologyMapping.xml", $ontologyMappingOverride, $valueMapping, $onError, $isReporterMode, $dateObfuscationFile, $getGetExtraValues);
 $t->parseInvestigation;
 is(scalar @{$t->getStudies}, 1);
 my $study = $t->getStudies->[0];
@@ -192,6 +202,34 @@ for my $text ("Bacteria:0.9", "Bacteria:0.1", "UBERON:oral cavity", "UBERON:sali
 }
 my $edgesText = Dump $study->getEdges;
 like($edgesText, qr/01-01-1991/, "Has: 01-01-1991");
+
+my $badDir = "$dir/bad";
+make_path $badDir;
+my $badStudyTsv = <<"EOF";
+name	body_habitat	bad_header
+sample_1	body_habitat_not_an_ontology_term_value	bad_header_value
+EOF
+my $badStudyFile = "badStudy.txt";
+my $badInvestigationXml = $investigationXml;
+$badInvestigationXml =~ s{$studyFile}{$badStudyFile}g;
+
+write_file("$badDir/$badStudyFile", $badStudyTsv);
+write_file("$badDir/i_Investigation.xml", $badInvestigationXml);
+
+my $badT = CBIL::ISA::InvestigationSimple->new("$badDir/i_Investigation.xml", "$dir/ontologyMapping.xml", $ontologyMappingOverride, $valueMapping, $onError, $isReporterMode, $dateObfuscationFile, $getGetExtraValues);
+
+$badT->parseInvestigation;
+is(scalar @{$badT->getStudies}, 1, "one bad study");
+my $badStudy = $badT->getStudies->[0];
+dies_ok {$badT->parseStudy($badStudy)} "Bad study dies with no error handler set";
+my @errors;
+$badT->setOnError(sub{push @errors, $@;});
+$badT->parseStudy($badStudy);
+ok(@errors > 0, "Bad study has errors");
+ok( (scalar grep {$_=~/bad_header/} @errors), "Bad study: report error about bad header") or diag explain @errors;
+ok( (scalar grep {$_=~/body_habitat_not_an_ontology_term_value/} @errors), "Bad study: report error about body_habitat_not_an_ontology_term_value") or diag explain @errors;
+
+
 
 my $clinEpiDir = "$dir/clinEpi";
 make_path $clinEpiDir;
@@ -256,11 +294,11 @@ EUPATH_0000738	3010244171_21jun08	0:0:0:-3:0:0:0
 EOF
 my $clinEpiDateObfuscationFile = "$clinEpiDir/dateObfuscation.txt";
 write_file($clinEpiDateObfuscationFile, $clinEpiDateObfuscation);
-my $clinEpiT = CBIL::ISA::InvestigationSimple->new("$clinEpiDir/i_Investigation.xml", "$clinEpiDir/ontologyMapping.xml", $ontologyMappingOverride, $valueMapping, $debug, $isReporterMode, $clinEpiDateObfuscationFile, undef);
+my $clinEpiT = CBIL::ISA::InvestigationSimple->new("$clinEpiDir/i_Investigation.xml", "$clinEpiDir/ontologyMapping.xml", $ontologyMappingOverride, $valueMapping, $onError, $isReporterMode, $clinEpiDateObfuscationFile, undef);
 
 $clinEpiT->parseInvestigation;
 $clinEpiT->setRowLimit(1);
-is(scalar @{$clinEpiT->getStudies}, 2);
+is(scalar @{$clinEpiT->getStudies}, 2, "Two clinepi studies");
 my ($participantsStudy, $observationsStudy) = @{$clinEpiT->getStudies};
 
 $clinEpiT->parseStudy($participantsStudy);
