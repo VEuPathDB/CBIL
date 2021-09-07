@@ -812,14 +812,6 @@ sub formatDateAsInteger {
   return $obj->setValue($val);
 }
 
-sub formatFloat4 {
-  my ($self, $obj) = @_;
-  my $val = $obj->getValue();
-  return unless(looks_like_number($val));
-  $val = sprintf("%0.04f", $val);
-  return $obj->setValue($val);
-}
-
 sub formatClinicalFtoC {
   my ($self, $obj) = @_;
   my $val = $obj->getValue();
@@ -833,6 +825,31 @@ sub formatFtoC {
   my $val = $obj->getValue();
   return unless defined($val);
   return $obj->setValue((($val - 32) * 5) / 9);
+}
+
+sub formatFloat1 {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val);
+  return $obj->setValue(sprintf('%.1f', $val));
+}
+sub formatFloat2 {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val);
+  return $obj->setValue(sprintf('%.2f', $val));
+}
+sub formatFloat3 {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val);
+  return $obj->setValue(sprintf('%.3f', $val));
+}
+sub formatFloat4 {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val);
+  return $obj->setValue(sprintf('%.4f', $val));
 }
 
 sub formatQuotation {
