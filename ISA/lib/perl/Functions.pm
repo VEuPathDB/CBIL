@@ -97,6 +97,30 @@ sub new {
 }
 
 
+sub enforceYesNoUndefForBoolean {
+  my ($self, $obj) = @_;
+  my $value = $obj->getValue();
+  return undef unless defined($value);
+  if($value =~ /^\d+$/){ $value = int($value); } # remove leading zeros if $value is integer;
+  my %allowedValues = (
+    "1" => "Yes",
+    "yes" => "Yes",
+    "true" => "Yes",
+    "y" => "Yes",
+    "0" => "No",
+    "no" => "No",
+    "n" => "No",
+    "false" => "No",
+    "" => "",
+  );
+  my $cv = $allowedValues{lc($value)};
+  if(defined($cv)) {
+    return $obj->setValue($cv);
+  }
+  else  {
+    return $obj->setValue(undef);
+  }
+}
 
 sub enforceYesNoForBoolean {
   my ($self, $obj) = @_;
