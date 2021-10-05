@@ -814,7 +814,18 @@ sub formatInteger {
   my $val = $obj->getValue();
   return unless defined($val);
   if(looks_like_number($val)){
-    return $obj->setValue(sprintf("%d",$val));
+    return $obj->setValue(sprintf("%d",$val + 0.5));
+  }
+}
+
+sub convertDaysToMonths {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val);
+  if(looks_like_number($val)){
+    # days per month = 365.25 / 12 = 30.43
+    my $months = int(($val / 30.43) + 0.5);
+    return $obj->setValue(sprintf("%d",$months));
   }
 }
 
