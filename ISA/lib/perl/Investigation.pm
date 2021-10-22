@@ -13,6 +13,8 @@ use CBIL::ISA::StudyDesign;
 
 use CBIL::ISA::OntologyTerm qw(@allOntologyTerms);
 
+use Carp;
+
 use Data::Dumper;
 
 my $INVESTIGATION = "INVESTIGATION";
@@ -85,7 +87,7 @@ sub handleError {
   if ($self->{_on_error}){
     $self->{_on_error}->($error);
   } else {
-    die $error;
+    confess $error;
   }
 }
 
@@ -171,7 +173,7 @@ sub parseStudy {
   while($studyFileReader->hasNextLine()) {
     $self->addNodesAndEdgesToStudy($study, $studyFileReader->readLineToObjects());
   }
-  $studyFileReader->closeFh();
+  close $studyFileReader->getFh();
   
 
   my $studyAssays = $study->getStudyAssays();
@@ -185,7 +187,7 @@ sub parseStudy {
     while($assayFileReader->hasNextLine()) {
       $self->addNodesAndEdgesToStudy($study, $assayFileReader->readLineToObjects());
     }
-    $assayFileReader->closeFh();
+    close $assayFileReader->getFh();
   }
 
   $study->setHasMoreData(0);
@@ -239,7 +241,11 @@ sub dealWithAllOntologies {
   foreach my $ontologyTerm(@allOntologyTerms) {
     my $hasAccession = defined $ontologyTerm->getTermAccessionNumber();
 
-    $ontologyTerms->{$ontologyTerm->getTermSourceRef()}->{$ontologyTerm->getTermAccessionNumber()}++ if($hasAccession);
+    if($hasAccession) {
+      $ontologyTerms->{$ontologyTerm->getTermSourceRef()}->{$ontologyTerm->getTermAccessionNumber()}++;
+    }
+
+    
 
     # Characteristic Qualifiers are a special case.  Their term/accession/source is not defined in the investigation file
     if(blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::Characteristic' || blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::ParameterValue') {
@@ -251,8 +257,21 @@ sub dealWithAllOntologies {
     my $term = $ontologyTerm->getTerm();
 
 
+    if($accession && !$source) {
+      print "BLESSED=" . blessed($ontologyTerm) . "\n";
+      print Dumper $ontologyTerm;
+      $self->handleError("OntologyTerm $term is required to have source when accession is defined.");
+
+    }
+
     unless(($accession && $source) || blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::Characteristic' || blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::ParameterValue') {
+#      carp "OntologyTerm $term is required to have accession and source."
+          # TODO:  not sure where this is from 
+      print "BLESSED=" . blessed($ontologyTerm) . "\n";
+
+      print Dumper $ontologyTerm;
       $self->handleError("OntologyTerm $term is required to have accession and source.");
+
     }
   }
 }
