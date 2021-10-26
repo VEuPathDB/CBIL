@@ -509,6 +509,46 @@ sub valueIsOntologyTerm {
   }
 }
 
+
+
+
+sub splitLatitudeLongitudeUnitFromValue {
+  my ($self, $obj) = @_;
+
+  my $om = $self->getOntologyMapping();
+  my $valueOrig = $obj->getValue();
+
+  my ($value, $unitString, $nsew) = $valueOrig =~ /(\S+)(\s([NnSsEeWw])?\s?degrees$)/;
+
+  if($value and not $unitString) {
+    die "Tried, and then could not separate into value and unit string: $valueOrig";
+  }
+
+  $unitString = "degrees";
+  if($nsew) {
+    $value = $value * -1;
+  }
+
+  $obj->setValue($value);
+
+  my $class = "CBIL::ISA::StudyAssayEntity::Unit";
+
+  my $unitSourceId = $om->{lc($unitString)}->{unit}->{source_id};
+  if (defined $value) {
+    unless($unitSourceId) {
+      die "Could not find ontologyTerm for Unit:  $unitString";
+    }
+
+    my $unit = &makeOntologyTerm($unitSourceId, $unitString, $class);
+
+    $obj->setUnit($unit);
+  }
+  else {
+    $obj->setUnit(undef);
+  }
+}
+
+
 sub splitUnitFromValue {
   my ($self, $obj) = @_;
 
@@ -520,7 +560,7 @@ sub splitUnitFromValue {
     die "Tried, and then could not separate into value and unit string: $valueOrig";
   }
   $obj->setValue($value);
-
+  
   my $class = "CBIL::ISA::StudyAssayEntity::Unit";
 
   my $unitSourceId = $om->{lc($unitString)}->{unit}->{source_id};
