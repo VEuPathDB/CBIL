@@ -90,7 +90,7 @@ sub read {
       push @{$columnCounts->{$lineContext}}, scalar @a;
     }
     $line++;
-    printf STDERR ("done reading %d\n", $line);
+    #printf STDERR ("done reading %d\n", $line);
     #last if eof($fh);
   }
 

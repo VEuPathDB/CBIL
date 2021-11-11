@@ -30,6 +30,9 @@ my $STUDY_PUBLICATIONS = "STUDY PUBLICATIONS";
 my $STUDY_ASSAYS = "STUDY ASSAYS";
 
 
+sub setRowLimit {$_[0]->{_row_limit} = $_[1]}
+sub getRowLimit {$_[0]->{_row_limit} }
+
 sub new {
   my ($class, $investigationFile, $investigationDirectory, $delimiter) = @_;
   $delimiter //= "\t";
@@ -54,6 +57,8 @@ sub new {
   $self->setDelimiter($delimiter);
 
   $self->setOntologyAccessionsHash({});
+
+  $self->setRowLimit(500);
 
   return $self;
 }
@@ -140,7 +145,6 @@ sub parseInvestigation {
   $self->setContacts($iHash->{$INVESTIGATION_CONTACTS}, 
                             $iColumnCounts->{$INVESTIGATION_CONTACTS});
 
-
   # "_studies" key is internal and set by the Reader
   foreach my $studyId (keys %{$iHash->{"_studies"}}) {
     my $studyHash = $iHash->{"_studies"}->{$studyId};
@@ -155,8 +159,21 @@ sub parseInvestigation {
     my $studyFileName = $investigationDirectory . "/" . $study->getFileName();
     $study->setFileName($studyFileName);
   }
+
+  $self->dealWithAllOntologies();
 }
 
+sub getStudyAssayFileReader {
+  my ($self, $fileName, $delimiter, $studyAssay) = @_;
+
+  if(my $fileReader = $self->{_study_assay_file_readers}->{$fileName}) {
+    return $fileReader;
+  }
+  my $fileReader = CBIL::ISA::StudyAssayFileReader->new($fileName, $delimiter, $studyAssay);
+
+  $self->{_study_assay_file_readers}->{$fileName} = $fileReader;
+  return $fileReader;
+}
 
 sub parseStudy {
   my ($self, $study) = @_;
@@ -167,31 +184,59 @@ sub parseStudy {
   my $studyFileName = $study->getFileName();
 
 
-  my $studyFileReader = CBIL::ISA::StudyAssayFileReader->new($studyFileName, $delimiter);
+  my $studyFileReader = $self->getStudyAssayFileReader($studyFileName, $delimiter, undef);
 
+  my $rowLimit = $self->getRowLimit();
+  my $rowCount = 0;
+
+
+  @allOntologyTerms = ();
+  $study->{_nodes} = [];
+  $study->{_edges} = [];
 
   while($studyFileReader->hasNextLine()) {
     $self->addNodesAndEdgesToStudy($study, $studyFileReader->readLineToObjects());
-  }
-  close $studyFileReader->getFh();
-  
+    $rowCount++;
+    
+    if($rowCount == $rowLimit) {
 
+      $self->dealWithAllOntologies();
+      return;
+    }
+  }
+  
   my $studyAssays = $study->getStudyAssays();
+
   foreach my $assay (@$studyAssays) {
     next unless($assay->getAssayFileName());
 
     my $assayFileName = $investigationDirectory . "/" . $assay->getAssayFileName();
     
-    my $assayFileReader = CBIL::ISA::StudyAssayFileReader->new($assayFileName, $delimiter);
+    my $assayFileReader = $self->getStudyAssayFileReader($assayFileName, $delimiter, $assay);
 
     while($assayFileReader->hasNextLine()) {
       $self->addNodesAndEdgesToStudy($study, $assayFileReader->readLineToObjects());
+      $rowCount++;
+
+      if($rowCount == $rowLimit) {
+
+        $self->dealWithAllOntologies();
+       return;
+      }
     }
-    close $assayFileReader->getFh();
+
   }
 
+  foreach my $f (keys %{$self->{_study_assay_file_readers}}) {
+    my $safr = $self->getStudyAssayFileReader($f);
+    close $safr->getFh();
+  }
+
+
+  $self->dealWithAllOntologies();
   $study->setHasMoreData(0);
 }
+
 
 sub addNodesAndEdgesToStudy {
   my ($self, $study, $saEntities) = @_;
@@ -245,11 +290,11 @@ sub dealWithAllOntologies {
       $ontologyTerms->{$ontologyTerm->getTermSourceRef()}->{$ontologyTerm->getTermAccessionNumber()}++;
     }
 
-    
-
     # Characteristic Qualifiers are a special case.  Their term/accession/source is not defined in the investigation file
     if(blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::Characteristic' || blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::ParameterValue') {
       $ontologyTerms->{"QUALIFIER"}->{$ontologyTerm->getQualifier()}++;
+
+#      print $ontologyTerm->getQualifier() . "\t" . $ontologyTerm->getQualifier() . "\n";
     }
 
     my $accession = $ontologyTerm->getTermAccessionNumber();
@@ -268,11 +313,12 @@ sub dealWithAllOntologies {
 #      carp "OntologyTerm $term is required to have accession and source."
           # TODO:  not sure where this is from 
       print "BLESSED=" . blessed($ontologyTerm) . "\n";
-
       print Dumper $ontologyTerm;
       $self->handleError("OntologyTerm $term is required to have accession and source.");
 
     }
+
+#    print "$accession\t$term\n" if($accession);
   }
 }
 

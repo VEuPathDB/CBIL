@@ -10,8 +10,8 @@ use Data::Dumper;
 sub setStudyAssayFile { $_[0]->{_study_assay_file} = $_[1] }
 sub getStudyAssayFile { $_[0]->{_study_assay_file} }
 
-sub setStudyAssayHash { $_[0]->{_study_assay_hash} = $_[1] }
-sub getStudyAssayHash { $_[0]->{_study_assay_hash} }
+sub setStudyAssay { $_[0]->{_study_assay} = $_[1] }
+sub getStudyAssay { $_[0]->{_study_assay} }
 
 sub setHeaderValues { $_[0]->{_header_values} = $_[1] }
 sub getHeaderValues { $_[0]->{_header_values} }
@@ -23,12 +23,13 @@ sub setQualifierNames { $_[0]->{_qualifier_names} = $_[1] }
 sub getQualifierNames { $_[0]->{_qualifier_names} }
 
 sub new {
-  my ($class, $file, $delimiter) = @_;
+  my ($class, $file, $delimiter, $studyAssay) = @_;
 
   my $self = bless {}, $class;
 
   $self->initReader($delimiter);
   $self->setStudyAssayFile($file);
+  $self->setStudyAssay($studyAssay);
 
   my ($fh);
 
@@ -44,7 +45,17 @@ sub new {
   my @qualifierNames;
 
   foreach my $headerValue (@$header) {
-    my ($entity, $junk, $qualifier) = $headerValue =~ m/([\w|\s]+)(\[(.+)\])?/;
+    #my ($entity, $junk, $qualifier) = $headerValue =~ m/([\w|\s]+)(\[(.+)\])?/;
+    my @parsedHeader = $headerValue =~ m/([\w|\s]+)(\[([^\(]+(\(\w+:(.+)\))?)\])?/;
+
+    my $entity = $parsedHeader[0];
+
+    my $qualifier = $parsedHeader[2];
+
+    if($parsedHeader[4]) {
+      $qualifier = $parsedHeader[4];
+    }
+
     my @words = map {ucfirst(lc($_))} split(/\s+/, $entity);
     $entity = join("", @words);
 
@@ -101,6 +112,10 @@ sub readLineToObjects {
 
     if(my $qualifierName = $qualifierNames[$i]) {
       $obj->setQualifier($qualifierName);
+    }
+
+    if($entityNames[$i] eq 'Assay') {
+      $obj->setStudyAssay($self->getStudyAssay());
     }
 
     my $found;

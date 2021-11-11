@@ -4,7 +4,7 @@ use base qw(CBIL::ISA::OntologyTermWithQualifier);
 use strict;
 
 sub getParents {
-  return ["Source", "Sample", "Extract", "LabeledExtract" ];
+  return ["Source", "Sample", "Extract", "LabeledExtract", "Assay" ];
 }
 
 # @override

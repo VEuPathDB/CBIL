@@ -34,9 +34,6 @@ sub getFunctions {$_[0]->{_functions} }
 sub setGetExtraValues {$_[0]->{_getExtraValues} = $_[1]}
 sub getGetExtraValues {$_[0]->{_getExtraValues} }
 
-sub setRowLimit {$_[0]->{_row_limit} = $_[1]}
-sub getRowLimit {$_[0]->{_row_limit} }
-
 sub setIsReporterMode {$_[0]->{_is_reporter_mode} = $_[1]}
 sub getIsReporterMode {$_[0]->{_is_reporter_mode} }
 
@@ -236,12 +233,12 @@ sub parseStudy {
     $study->{_simple_study_count} = 1;
   }
 
-  $self->dealWithAllOntologies();
   @allOntologyTerms = ();
   $study->{_nodes} = [];
   $study->{_edges} = [];
 
   $self->addNodesAndEdgesToStudy($study, $fileHandle, $studyXml);
+  $self->dealWithAllOntologies();
 }
 
 

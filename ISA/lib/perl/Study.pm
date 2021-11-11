@@ -225,7 +225,19 @@ sub makeStudyObjectsFromHash {
         $otHash{1} = \%initOtHash;
       }
 
+
+      
       foreach my $n (keys %otHash) {
+
+        my @otHashValues = values %{$otHash{$n}};
+        my $otHashValueCount;
+        foreach(@otHashValues) {
+          $otHashValueCount++ if($_ eq "" || !defined($_));
+        }
+        next if($otHashValueCount eq scalar @otHashValues);
+
+
+
         my $ontologyTerm = CBIL::ISA::OntologyTerm->new($otHash{$n});
         eval {
           $obj->$setterName($ontologyTerm);
