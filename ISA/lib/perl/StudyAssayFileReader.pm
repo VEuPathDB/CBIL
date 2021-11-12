@@ -98,7 +98,7 @@ sub readLineToObjects {
     my $class = "CBIL::ISA::StudyAssayEntity::" . $entityNames[$i];
     my $lineValue = $lineValues->[$i];
 
-    next unless($lineValue);
+    next unless(defined $lineValue);
 
     my %hash = ( "_value" => $lineValue);
 
