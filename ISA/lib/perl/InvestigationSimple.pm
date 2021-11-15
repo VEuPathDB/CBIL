@@ -210,6 +210,11 @@ sub parseInvestigation {
 
     $self->addStudy($study);
   }
+
+  # Make sure this happens
+  # otherwise $self->getOntologyAccessionsHash
+  # might not have terms for protocols
+  $self->dealWithAllOntologies();
 }
 
 

@@ -170,7 +170,6 @@ is(scalar @{$t->getStudies}, 1);
 my $study = $t->getStudies->[0];
 
 $t->parseStudy($study);
-$t->dealWithAllOntologies();
 
 my %entityNames;
 $entityNames{$_->getEntityName}{$_->getValue}++ for @{$study->getNodes};
@@ -195,6 +194,53 @@ is_deeply(\%entityNames, {
   },
 }, "entity IDs") or diag explain \%entityNames;
 
+# numbers depend on the number of times $t->dealWithAllOntologies() got called
+my $good = {
+  'EUPATH' => {
+    'EUPATH_0000591' => 3
+  },
+  'MTTMP' => {
+    'MTTMP_1' => 3,
+    'MTTMP_2' => 3
+  },
+  'OBI' => {
+    'OBI_0000257' => 1,
+    'OBI_0000626' => 1,
+    'OBI_0000659' => 1,
+    'OBI_0000671' => 3
+  },
+  'QUALIFIER' => {
+    'OBI_0001169' => 3,
+    'OBI_0100051' => 3,
+    'TMP_1' => 6,
+    'TMP_AGE' => 3,
+    'TMP_SCD' => 2,
+    'UBERON_0000061' => 3,
+    'UBERON_0000463' => 3,
+    'UBERON_0000466' => 3
+  },
+  'TMP' => {
+    'TMP_SCD' => 1
+  },
+  'UBERON' => {
+    'UBERON_0000167' => 1,
+    'UBERON_0001155' => 2
+  },
+  'UO' => {
+    'UO_0000033' => 3,
+    'UO_0000036' => 3
+  }
+};
+subtest "Ontology accessions" => sub {
+  my $actual = $t->getOntologyAccessionsHash;
+  for my $key (keys %$good){
+    my $gk = [sort keys %{$good->{$key}}];
+    my $ak =  [sort keys %{$actual->{$key}}];
+    is_deeply($gk,$ak, "Keys agree for $key") or diag explain $gk, $ak;
+  }
+};
+#
+#diag explain $t->getOntologyAccessionsHash;
 my $nodesText = Dump $study->getNodes;
 # diag explain $nodesText;
 for my $text ("Bacteria:0.9", "Bacteria:0.1", "UBERON:oral cavity", "UBERON:saliva", "UBERON:mouth", "years", "days", "poo"){
