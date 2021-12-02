@@ -27,6 +27,9 @@ averageSpottedReplicates <- function (m=NULL, nm=NULL, nameIsList=TRUE) {
   if (length(nm) != nrow(m)) {
     stop("nm vector of different length than matrix m;");
   }
+  if (! is.numeric(m)) {
+    stop("The m matrix contains non-numeric characters;");
+  }
 
   if(nameIsList) {
   
