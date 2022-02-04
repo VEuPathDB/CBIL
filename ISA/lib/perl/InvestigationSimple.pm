@@ -51,7 +51,7 @@ sub addStudySpecialColumn {
 }
 
 sub new {
-  my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile, $valueMappingFile, $onError, $isReporterMode, $dateObfuscationFile, $getExtraValues) = @_;
+  my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile, $valueMappingFile, $onError, $isReporterMode, $dateObfuscationFile, $getExtraValues, $maybeNamesPrefixForOwl) = @_;
 
   my $self = $class->SUPER::new();
 
@@ -65,7 +65,7 @@ sub new {
     $ontologyMappingFile =~ /.owl$/i ? ApiCommonData::Load::OntologyMapping->fromOwl($ontologyMappingFile) 
     : ApiCommonData::Load::OntologyMapping->fromXml($ontologyMappingFile);
 
-  my ($ontologySources, $ontologyMapping) = $om->asSourcesAndMapping;
+  my ($ontologySources, $ontologyMapping) = $om->asSourcesAndMapping($maybeNamesPrefixForOwl);
 
   # The file is optional for the genomic workflow
   # but the argument is always provided in classes.xml file
