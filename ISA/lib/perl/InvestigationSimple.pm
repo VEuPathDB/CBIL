@@ -627,9 +627,15 @@ sub makeProtocols {
 
   my @rv;
 
+  my @missingSourceIds;
+
   my $omType = "protocol";
   foreach my $protocolName (keys %$protocols) {
     my $sourceId = $ontologyMapping->{lc($protocolName)}->{$omType}->{source_id};
+    if (not $sourceId){
+       push @missingSourceIds, $protocolName;
+       next;
+    }
 
     my $pt = &makeOntologyTerm($sourceId, $protocolName, undef);
 
@@ -638,6 +644,8 @@ sub makeProtocols {
     $protocol->setProtocolName($protocolName);
     push @rv, $protocol;
   }
+
+  $self->handleError("Missing source IDs:  ". join (", ", @missingSourceIds)) if @missingSourceIds;
 
   $omType = "protocolParameter";
 
