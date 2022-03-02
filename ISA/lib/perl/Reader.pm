@@ -1,5 +1,5 @@
 package CBIL::ISA::Reader;
-use Text::CSV_XS;
+use Text::CSV;
 use strict;
 use warnings;
 
@@ -14,11 +14,11 @@ sub getLineParser { $_[0]->{_line_parser} }
 sub initReader {
   my ($self, $delimiter) = @_;
   $self->setDelimiter($delimiter);
-  my $csv = Text::CSV_XS->new({
+  my $csv = Text::CSV->new({
     binary => 1,
     sep_char => $delimiter,
     quote_char => '"'
-  }) or die "Cannot use CSV: " . Text::CSV_XS->error_diag ();
+  }) or die "Cannot use CSV: " . Text::CSV->error_diag ();
   $self->setLineParser($csv);
 }
 
