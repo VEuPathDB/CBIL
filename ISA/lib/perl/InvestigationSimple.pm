@@ -227,7 +227,7 @@ sub parseStudy {
   my $fileHandle = $study->getFileHandle();
 
   unless($fileHandle) {
-    print STDERR "Processing study file $fileName\n";
+    $self->log("Processing study file $fileName");
     open($fileHandle,  $fileName) or die "Cannot open file $fileName for reading: $!";    
     $study->setFileHandle($fileHandle);
 
@@ -329,7 +329,7 @@ sub addNodesAndEdgesToStudy {
     $study->{_simple_study_count} = $count;
 
     if($rowCount == $rowLimit) {
-      print STDERR "Processed $count lines\n";
+      $self->log("Processed $count lines");
 
       if($isReporterMode) {
         $study->setHasMoreData(0);

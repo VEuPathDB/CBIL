@@ -3,6 +3,7 @@ use base qw(CBIL::ISA::Study);
 
 use strict;
 use Scalar::Util 'blessed';
+use feature 'say';
 
 use CBIL::ISA::InvestigationFileReader;
 use CBIL::ISA::StudyAssayFileReader;
@@ -93,6 +94,15 @@ sub handleError {
     $self->{_on_error}->($error);
   } else {
     confess $error;
+  }
+}
+sub setOnLog { $_[0]->{_on_log} = $_[1] }
+sub log {
+  my ($self, @args) = @_;
+  if ($self->{_on_log}){
+    $self->{_on_log}->(@args);
+  } else {
+    say @args;
   }
 }
 
@@ -256,7 +266,7 @@ sub addNodesAndEdgesToStudy {
       $entity = $study->addNode($entity);
 
       if($wasNodeContext) {
-        print STDERR "WARNING:  Study/Assay file contained consecutive Node Columns (" . $lastNode->getEntityName() . " and " . $entity->getEntityName() . ").  Creating Edge to connect these\n";
+        $self->log("WARNING:  Study/Assay file contained consecutive Node Columns (" . $lastNode->getEntityName() . " and " . $entity->getEntityName() . ").  Creating Edge to connect these\n");
         my $protocolApp = CBIL::ISA::StudyAssayEntity::ProtocolApplication->new({_value => 'IMPLICIT PROTOCOL'});
         push @protocolApplications, $protocolApp;
       }
@@ -303,8 +313,8 @@ sub dealWithAllOntologies {
 
 
     if($accession && !$source) {
-      print "BLESSED=" . blessed($ontologyTerm) . "\n";
-      print Dumper $ontologyTerm;
+      $self->log("BLESSED=" . blessed($ontologyTerm));
+      $self->log(Dumper($ontologyTerm));
       $self->handleError("OntologyTerm $term is required to have source when accession is defined.");
 
     }
@@ -312,8 +322,8 @@ sub dealWithAllOntologies {
     unless(($accession && $source) || blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::Characteristic' || blessed($ontologyTerm) eq 'CBIL::ISA::StudyAssayEntity::ParameterValue') {
 #      carp "OntologyTerm $term is required to have accession and source."
           # TODO:  not sure where this is from 
-      print "BLESSED=" . blessed($ontologyTerm) . "\n";
-      print Dumper $ontologyTerm;
+      $self->log("BLESSED=" . blessed($ontologyTerm));
+      $self->log(Dumper($ontologyTerm));
       $self->handleError("OntologyTerm $term is required to have accession and source.");
 
     }
