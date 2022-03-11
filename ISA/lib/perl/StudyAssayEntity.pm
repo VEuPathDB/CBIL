@@ -63,11 +63,11 @@ sub getEntityName {
 #  All other entity types are attributes and should not be thought of as the same entity
 sub equals {
   my ($self, $obj) = @_;
+  return 0 unless $self->isNode();
+  return 0 unless $self->getValue() eq $obj->getValue();
+  return 0 unless $self->getEntityName() eq $obj->getEntityName();
+  return 1;
 
-  if($self->isNode() && $self->getEntityName() eq $obj->getEntityName() && $self->getValue() eq $obj->getValue()) {
-    return 1;
-  }
-  return 0;
 }
 
 
