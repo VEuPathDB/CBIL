@@ -488,7 +488,9 @@ sub addCharacteristicToNode {
         $functionsObj->$function($char, $node, $inputNodes);
       };
       if ($@) {
-        $self->handleError("problem w/ function $function: $@");
+        my $charTxt = $char->Dumper;
+        my $nodeTxt = $node->getValue;
+        $self->handleError("Could not apply function: $function\nCharacteristic: ${charTxt}Node: ${nodeTxt}\nMesssage: $@");
       }
     }
     if(defined $char->getValue() && $char->getValue() ne ""){
