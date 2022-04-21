@@ -5,7 +5,6 @@
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
   <target name="CBIL-Installation" depends="CBIL/Bio-Installation,
-                                            CBIL/CSP-Installation,
                                             CBIL/Util-Installation,
                                             CBIL/Cider-Installation,
                                             CBIL/HQ-Installation,
@@ -38,14 +37,6 @@
     <ant target="defaultComponentInstall">
       <property name="project" value="CBIL" />
       <property name="component" value="Bio" />
-    </ant>
-  </target>
-
-  <target name="CBIL/CSP-Installation">
-    <ant target="defaultComponentInstall">
-      <property name="project" value="CBIL" />
-      <property name="component" value="CSP" />
-      <property name="skipJava" value="true" />
     </ant>
   </target>
 
@@ -90,19 +81,6 @@
       <property name="component" value="ISA" />
     </ant>
   </target>
-
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooo  Release  ooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-
-  <target name="CBIL-Release">
-
-    <ant target="defaultProjectRelease">
-      <property name="tag" value="v1-4-0" />
-      <property name="cvsroot" value="/files/cbil/cvs/cvsroot" />
-    </ant>
-  </target>
-
 
 </project>
 
