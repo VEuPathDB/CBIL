@@ -361,20 +361,29 @@ sub valueIsMappedValue {
   my ($self, $obj) = @_;
 
   my $value = $obj->getValue();
+  my $qualName = $obj->getAlternativeQualifier();
+  # Handle automatically generated variables, having suffix like "!!1", "!!2"
+  # These are generated when an entity has multiple values from the same column
+  # They should be treated the same here as the original column (alternative qual)
+  $qualName =~ s/!!.*$//;
+  #
   my $qualSourceId = $obj->getQualifier();
 
   my $valueMapping = $self->getValueMapping();
 
-  ## First look for a rule matching the IRI (or other term which this column is mapped to)
-  ## This is found in column 2 of valueMap.txt
-  my $qualifierValues = $valueMapping->{$qualSourceId};
-  ## If not matched (which means the codebook for this file and/or column may be special 
-  ## get the mapping for this particular file and/or column
+  ## 
+  ## First look for a rule matching this particular column
+  ## (the codebook for this file and/or column may be special)
   ## This is found in column 1 of valueMap.txt
+  my $qualifierValues = $valueMapping->{$qualName};
+  ## get the mapping for the IRI
+  ## This is found in column 2 of valueMap.txt
   unless($qualifierValues){
-    my $qualName = $obj->getAlternativeQualifier();
-    $qualifierValues = $valueMapping->{$qualName};
+    $qualifierValues = $valueMapping->{$qualSourceId};
   }
+  ## _TERMS_ are the ontology IRIs for specific values
+  ## Currently this serves no purpose but may be relevant at some time in the future
+  ## If there is an IRI for the value, it is added to this file during preprocessing
   my $terms = $valueMapping->{_TERMS_}->{$qualSourceId};
 
   unless(defined($value) && ($value ne "")){ return }
@@ -837,6 +846,8 @@ sub formatSentenceCase {
 
 sub formatTitleCase {
   my ($self, $obj) = @_;
+  my $_v = $obj->getValue();
+  return unless defined $_v;
   my $val = join(" ", map { ucfirst } split(/\s/, lc($obj->getValue())));
   return $obj->setValue($val);
 }
@@ -926,7 +937,12 @@ sub formatFloat4 {
   return unless defined($val);
   return $obj->setValue(sprintf('%.4f', $val));
 }
-
+sub scaleDivideBy1000 {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val);
+  return $obj->setValue($val / 1000);
+}
 sub formatQuotation {
   my ($self, $obj) = @_;
   return $obj->setValue(sprintf("\"%s\"",$obj->getValue()));

@@ -402,7 +402,8 @@ sub groupHeadersByOmType {
   my $ontologyMapping = $self->getOntologyMapping();
 
   for my $header ( @{$headers}) {
-
+    # Allow incrementally generated header ( myheader!!1, myheader!!2,...)
+    $header =~ s/\!\!.*$//;
     my $key = lc $header;
     if($key =~ /$isaHeaderType\s*\[(.+)\]/i) {
       $key = $1;
