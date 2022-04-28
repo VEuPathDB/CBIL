@@ -365,7 +365,7 @@ sub valueIsMappedValue {
   # Handle automatically generated variables, having suffix like "!!1", "!!2"
   # These are generated when an entity has multiple values from the same column
   # They should be treated the same here as the original column (alternative qual)
-  $qualName =~ s/!!.*$//;
+  $qualName =~ s/\!\!.*$//;
   #
   my $qualSourceId = $obj->getQualifier();
 
