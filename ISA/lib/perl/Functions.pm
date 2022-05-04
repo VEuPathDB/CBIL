@@ -378,8 +378,11 @@ sub valueIsMappedValue {
   my $qualifierValues = $valueMapping->{$qualName};
   ## get the mapping for the IRI
   ## This is found in column 2 of valueMap.txt
-  unless($qualifierValues){
-    $qualifierValues = $valueMapping->{$qualSourceId};
+  $qualifierValues //= {};
+  my $vmBySourceId = $valueMapping->{$qualSourceId};
+  while( my ($rawval, $mapval) = each %$vmBySourceId){
+    next if( $qualifierValues->{lc($rawval)} ); # give bias to previous rows, no override
+    $qualifierValues->{lc($rawval)} = $mapval;
   }
   ## _TERMS_ are the ontology IRIs for specific values
   ## Currently this serves no purpose but may be relevant at some time in the future
