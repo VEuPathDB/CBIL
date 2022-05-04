@@ -169,6 +169,81 @@ sub addEdge {
 }
 sub getEdges { $_[0]->{_edges} or [] }
 
+sub pruneNodesAndEdges {
+  my ($self) = @_;
+
+  my %nodesToKeep;
+
+  my %edgesByInputNode;
+  for my $edge (@{$self->getEdges}){
+    for my $inputNode (@{$edge->getInputs}){
+      push @{$edgesByInputNode{$inputNode->getValue}}, $edge;
+    }
+  }
+  # mark all nodes with characteristics, or outedges with protocol applications, for keep
+  NODE:
+  for my $node (@{$self->getNodes}){
+    my $v = $node->getValue;
+    if (@{$node->getCharacteristics //[]} >0){
+      $nodesToKeep{$v}++;
+      next NODE;
+    }
+    for my $edge (@{$edgesByInputNode{$v}}){
+      for my $pa (@{$edge->getProtocolApplications}){
+        for my $pv (@{$pa->getParameterValues}){
+          $nodesToKeep{$v}++;
+          next NODE;
+        }
+      }
+    }
+  }
+
+  # chance at early return so we don't do tiresome stuff for no reason
+  return $self if scalar keys %nodesToKeep == scalar @{$self->getNodes};
+
+  # recursively mark all the parents for keep
+  my $numKeepLastRound = 0;
+  my $numKeepThisRound = scalar keys %nodesToKeep;
+  my $reps = 0;
+  LOOP:
+  while($numKeepThisRound > $numKeepLastRound){
+    die "Recursion limit!" if $reps++ > 100;
+    NODE:
+    for my $node (@{$self->getNodes}){
+      my $v = $node->getValue;
+      next NODE if $nodesToKeep{$v};
+
+      for my $edge (@{$edgesByInputNode{$v}}){
+        for my $outputNode (@{$edge->getOutputs}){
+          if ($nodesToKeep{$outputNode->getValue}){
+            $nodesToKeep{$v}++;
+            next NODE;
+          }
+        }
+      }
+    }
+    $numKeepLastRound = $numKeepThisRound;
+    $numKeepThisRound = scalar keys %nodesToKeep;
+    next LOOP;
+  }
+
+  # second chance at early return so we don't do tiresome stuff for no reason
+  return $self if scalar keys %nodesToKeep == scalar @{$self->getNodes};
+
+
+  my @newEdges;
+  EDGE:
+  for my $edge (@{$self->getEdges}){
+    my @inputs = grep {$nodesToKeep{$_->getValue}} @{$edge->getInputs};
+    my @outputs = grep {$nodesToKeep{$_->getValue}} @{$edge->getOutputs};
+    next EDGE unless @inputs && @outputs;
+    push @newEdges, CBIL::ISA::Edge->new(\@inputs, $edge->getProtocolApplications, \@outputs);
+  }
+
+  $self->{_nodes} = [grep {$nodesToKeep{$_->getValue}} @{$self->getNodes}];
+  $self->{_edges} = \@newEdges;
+  return $self;
+}
 
 # Handle a chunk of the Investigation File
 #  Each section is made into an object

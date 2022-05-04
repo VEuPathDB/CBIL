@@ -40,6 +40,9 @@ sub getIsReporterMode {$_[0]->{_is_reporter_mode} }
 
 sub setStudySpecialColumns {$_[0]->{_study_special_columns} = $_[1]}
 sub getStudySpecialColumns {$_[0]->{_study_special_columns} }
+
+sub setDoPruneStudies {$_[0]->{_do_prune_studies} = 1}
+sub doPruneStudies {$_[0]->{_do_prune_studies} }
 sub addStudySpecialColumn {
   my ($self, $col) = @_;
 
@@ -51,7 +54,7 @@ sub addStudySpecialColumn {
 }
 
 sub new {
-  my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile, $valueMappingFile, $onError, $isReporterMode, $dateObfuscationFile, $getExtraValues, $maybeNamesPrefixForOwl) = @_;
+  my ($class, $investigationFile, $ontologyMappingFile, $ontologyMappingOverrideFile, $valueMappingFile, $onError, $isReporterMode, $dateObfuscationFile, $getExtraValues, $maybeNamesPrefixForOwl, $doPruneStudies) = @_;
 
   my $self = $class->SUPER::new();
 
@@ -101,6 +104,9 @@ sub new {
   if($onError){
     die $onError unless ref $onError eq 'CODE';
     $self->setOnError($onError);
+  }
+  if($doPruneStudies){
+    $self->setDoPruneStudies;
   }
 
   my $functions = CBIL::ISA::Functions->new({_ontology_mapping => $ontologyMapping, _ontology_sources => $ontologySources, _valueMappingFile => $valueMappingFile, _dateObfuscationFile => $dateObfuscationFile});
@@ -244,6 +250,9 @@ sub parseStudy {
 
   $self->addNodesAndEdgesToStudy($study, $fileHandle, $studyXml);
   $self->dealWithAllOntologies();
+  if($self->doPruneStudies){
+    $study->pruneNodesAndEdges;
+  }
 }
 
 

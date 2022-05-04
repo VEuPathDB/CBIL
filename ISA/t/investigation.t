@@ -14,10 +14,10 @@ use YAML;
 
 my $dir = tempdir(CLEANUP => 1);
 my $studyTsv = <<"EOF";
-name	body_habitat	body_product	body_site	collection_date	subject_id	age_in_days_unit_set_on_variable	age_in_years_unit_with_value	Characteristics [specimen] 
-sample_1	Colon	UBERON:feces	Colon	01-01-1991	subject_a	234	2 years	poo
-sample_2	Colon	UBERON:feces	Colon	02-02-1992	subject_a	234	2 years	poo
-sample_3	UBERON:oral cavity	UBERON:saliva	UBERON:mouth		subject_b	345	3 years	poo
+name	body_habitat	body_product	body_site	collection_date	subject_id	age_in_days_unit_set_on_variable	age_in_years_unit_with_value	Characteristics [specimen] 	data_wrangle
+sample_1	Colon	UBERON:feces	Colon	01-01-1991	subject_a	234	2 years	poo	
+sample_2	Colon	UBERON:feces	Colon	02-02-1992	subject_a	234	2 years	poo	optional_wrangle_for_sample_2
+sample_3	UBERON:oral cavity	UBERON:saliva	UBERON:mouth		subject_b	345	3 years	poo	
 EOF
 my $studyFile = "study.txt";
 write_file("$dir/$studyFile", $studyTsv);
@@ -32,6 +32,8 @@ my $investigationXml = <<"EOF";
     <node name="Sample" type="sample from organism"/>
     <node isaObject="Assay" name="16s" type="Amplicon sequencing assay" suffix="16s"/>
     <node isaObject="Assay" name="WGS" type="Whole genome sequencing assay" suffix="WGS"/>
+    <node name="DataTransformation" type="Something after WGS data" suffix="WGS_DT"/>
+
 
     <edge input="Source" output="Sample">
         <protocol>specimen collection</protocol>
@@ -43,6 +45,9 @@ my $investigationXml = <<"EOF";
     <edge input="Sample" output="WGS">
       <protocol>DNA extraction</protocol>
       <protocol>DNA sequencing</protocol>
+    </edge>
+    <edge input="WGS" output="DataTransformation">
+      <protocol>data transformation</protocol>
     </edge>
   </study>
 </investigation>
@@ -67,6 +72,9 @@ my $ontologyMappingXml = <<"EOF";
   <ontologyTerm source_id="MTTMP_2" type="materialType">
     <name>Whole genome sequencing assay</name>
   </ontologyTerm>
+  <ontologyTerm source_id="MTTMP_3" type="materialType">
+    <name>Something after WGS data</name>
+  </ontologyTerm>
 
   <ontologyTerm source_id="OBI_0000659" type="protocol">
     <name>specimen collection</name>
@@ -84,6 +92,9 @@ my $ontologyMappingXml = <<"EOF";
   <ontologyTerm source_id="UBERON_0000466" type="characteristicQualifier" parent="Source">
     <name>body_habitat</name>
     <function>valueIsOntologyTerm</function>
+  </ontologyTerm>
+  <ontologyTerm source_id="TMP_DT" type="characteristicQualifier" parent="DataTransformation">
+      <name>data_wrangle</name>
   </ontologyTerm>
   <ontologyTerm source_id="OBI_0001169" type="characteristicQualifier" parent="Source">
     <name>age_in_years_unit_with_value</name>
@@ -123,6 +134,7 @@ my $ontologyMappingXml = <<"EOF";
   <ontologyTerm source_id="UBERON_0000167" type="characteristicValue" parent="characteristicQualifier">
     <name>UBERON:oral cavity</name>
   </ontologyTerm>
+
 </ontologymappings>
 EOF
 
@@ -149,6 +161,9 @@ my $getExtraValues = sub {
   my ($node) = @_;
   return {} unless $node->isa('CBIL::ISA::StudyAssayEntity::Assay');
   my ($sample, $suffix) = $node->getValue =~ m{^(.*) \((.*)\)$};
+  if($suffix eq 'WGS' and $sample ne 'sample_1'){
+    return {};
+  }
   if($suffix eq '16s'){
     return {taxon_abundance => [$abundancesAmplicon{$sample}]};
   } 
@@ -171,10 +186,14 @@ my $study = $t->getStudies->[0];
 
 $t->parseStudy($study);
 
-my %entityNames;
-$entityNames{$_->getEntityName}{$_->getValue}++ for @{$study->getNodes};
+sub checkStudyHasEntities {
+  my ($study, $expectedEntityNames, $testName) = @_;
+  my %entityNames;
+  $entityNames{$_->getEntityName}{$_->getValue}++ for @{$study->getNodes};
+  is_deeply(\%entityNames, $expectedEntityNames, $testName) or diag explain \%entityNames;
+}
 
-is_deeply(\%entityNames, {
+my $expectedEntityNames = { 
   'Source' => {
     'subject_a (Source)' => 1,
     'subject_b (Source)' => 1,
@@ -192,7 +211,22 @@ is_deeply(\%entityNames, {
     'sample_3 (16s)' => 1,
     'sample_3 (WGS)' => 1
   },
-}, "entity IDs") or diag explain \%entityNames;
+  'DataTransformation' => {
+        'sample_1 (WGS_DT)' => 1,
+        'sample_2 (WGS_DT)' => 1,
+        'sample_3 (WGS_DT)' => 1
+  },
+
+};
+checkStudyHasEntities($study, $expectedEntityNames, "entity IDs");
+
+delete $expectedEntityNames->{'Assay'}{'sample_3 (WGS)'};
+delete $expectedEntityNames->{'DataTransformation'}{'sample_3 (WGS_DT)'};
+delete $expectedEntityNames->{'DataTransformation'}{'sample_1 (WGS_DT)'};
+$study->pruneNodesAndEdges;
+checkStudyHasEntities($study, $expectedEntityNames, "entity IDs after pruning");
+
+
 
 # numbers depend on the number of times $t->dealWithAllOntologies() got called
 my $good = {
@@ -201,26 +235,29 @@ my $good = {
   },
   'MTTMP' => {
     'MTTMP_1' => 3,
-    'MTTMP_2' => 3
+    'MTTMP_2' => 3,
+    'MTTMP_3' => 3
   },
   'OBI' => {
     'OBI_0000257' => 1,
     'OBI_0000626' => 1,
     'OBI_0000659' => 1,
-    'OBI_0000671' => 3
+    'OBI_0000671' => 3,
+    'OBI_0200000' => 3
   },
   'QUALIFIER' => {
     'OBI_0001169' => 3,
     'OBI_0100051' => 3,
     'TMP_1' => 6,
     'TMP_AGE' => 3,
+    'TMP_DT' => 3,
     'TMP_SCD' => 2,
     'UBERON_0000061' => 3,
     'UBERON_0000463' => 3,
     'UBERON_0000466' => 3
   },
   'TMP' => {
-    'TMP_SCD' => 1
+    'TMP_SCD' => 1,
   },
   'UBERON' => {
     'UBERON_0000167' => 1,
