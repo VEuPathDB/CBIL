@@ -46,10 +46,10 @@ sub new {
   if($valueMappingFile) {
     open(FILE, $valueMappingFile) or die "Cannot open file $valueMappingFile for reading: $!";
 
-    while(<FILE>) {
-      chomp;
-
-      my ($qualName, $qualSourceId, $in, $out, $categoricalOrder, $termId) = split(/\t/, $_);
+    while(my $line = <FILE>) {
+      chomp $line;
+      my @row = map { s/^\s*|\s*$//g; $_ } split(/\t/, $line);
+      my ($qualName, $qualSourceId, $in, $out, $categoricalOrder, $termId) = @row;
       if($termId){ $termId =~ s/[\{\}]//g }
       # term ID is the ontology term source ID (IRI) for the value, referenced in GUS by Study.Characteristic.ONTOLOGY_TERM_ID
       # not to be confused with Qualifier_ID or Unit_ID
