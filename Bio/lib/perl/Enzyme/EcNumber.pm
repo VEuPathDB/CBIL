@@ -46,7 +46,7 @@ sub parse {
    my $T = shift; # string ; text of line
 
 	 my @parts;
-	 if ($T =~ /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/) {
+	 if ($T =~ /^(\d+)\.(\d+)\.(\d+)\.(n\d+|\d+)$/) {
 		 @parts = ($1,$2,$3,$4);
 	 }
 	 elsif ($T =~ /^(\d+)\.(\d+)\.(\d+)\.-$/) {
