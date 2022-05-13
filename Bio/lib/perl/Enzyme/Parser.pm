@@ -235,7 +235,7 @@ sub assemble {
 	foreach my $class (values %$class_entries) {
 		$M->linkClass($class);
 	}
-	CBIL::Util::Disp::Display($class_entries->{'6.5.1'}, 'class 6.5.1' );
+	#CBIL::Util::Disp::Display($class_entries->{'6.5.1.-'}, 'class 6.5.1.-' );
 
 	# link in enzymes
 	my $enzyme_entries = $M->getFileCache('enzymes')->getEntries;
@@ -243,7 +243,7 @@ sub assemble {
 		$M->linkClass($enzyme);
 	}
 
-	CBIL::Util::Disp::Display($enzyme_entries->{'6.5.1.3'}, 'enzyme 6.5.1.3');
+	#CBIL::Util::Disp::Display($enzyme_entries->{'6.5.1.3'}, 'enzyme 6.5.1.3');
 
 	$M->setAssembled(1);
 }
@@ -260,9 +260,12 @@ sub linkClass {
 	# add it in.
 	else {
 		my $parent_path = $C->getId;
-		if ($parent_path =~ /\d$/) {
-			$parent_path =~ s/\d+$/-/;
+		if ($parent_path =~ /n\d+$/) {
+			$parent_path =~ s/n\d+$/-/;
 		}
+        elsif ($parent_path =~ /\d+$/) {
+            $parent_path =~ s/\d+$/-/;
+        }
 		else {
 			$parent_path =~ s/\d+\.-/-.-/;
 		}
