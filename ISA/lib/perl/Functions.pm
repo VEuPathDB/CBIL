@@ -1008,6 +1008,10 @@ sub idObfuscateDate2 {
   my ($self, $node, $type) = @_;
   return $self->idObfuscateDateN($node,$type,2);
 }
+sub idObfuscateDate3 {
+  my ($self, $node, $type) = @_;
+  return $self->idObfuscateDateN($node,$type,3);
+}
 
 sub idObfuscateDateN {
   my ($self, $node, $type, $offset) = @_;
