@@ -247,6 +247,7 @@ sub parseStudy {
   @allOntologyTerms = ();
   $study->{_nodes} = [];
   $study->{_edges} = [];
+  $study->{__line__} = 0;
 
   $self->addNodesAndEdgesToStudy($study, $fileHandle, $studyXml);
   $self->dealWithAllOntologies();
@@ -284,6 +285,7 @@ sub addNodesAndEdgesToStudy {
   }
 
   while(my $line = <$fileHandle>) {
+    $study->{__line__}++;
     chomp $line;
     my @a = split(/\t/, $line);
     my $valuesHash = {};
@@ -534,20 +536,28 @@ sub makeNodes {
   foreach my $edge ( @{$studyXml->{edge}} ){
     $inputNames{ $edge->{input} } = 1;
   }
+  my $basename = fileparse(lc($study->getFileName), qw/\.[^.]*$/);
 
   foreach my $nodeName (keys %{$studyXml->{node}}) {
     my $isaType = defined($studyXml->{node}->{$nodeName}->{isaObject}) ? $studyXml->{node}->{$nodeName}->{isaObject} : $nodeName;
     my $class = "CBIL::ISA::StudyAssayEntity::$isaType";
 
-    my $idColumn = lc($studyXml->{node}->{$nodeName}->{idColumn}) || "name";
+    my $idColumn = lc($studyXml->{node}->{$nodeName}->{idColumn});
     my $name;
-    if($idColumn =~ /:::/){
-      my @cols = split(/:::/, $idColumn);
-      my @keys = map { $valuesHash->{$_}->[0] } @cols;
-      $name = join("_", @keys);
+    if($idColumn){
+      if($idColumn =~ /:::/){
+        my @cols = split(/:::/, $idColumn);
+        my @keys = map { $valuesHash->{$_}->[0] } @cols;
+        $name = join("_", @keys);
+      }
+      else { 
+        $name = $valuesHash->{$idColumn}->[0];
+      }
+      $self->addStudySpecialColumn($idColumn); # housekeeping
     }
-    else { 
-      $name = $valuesHash->{$idColumn}->[0];
+    else { ## idColumn not defined: use lowercase file basename + line number
+      # alternatively, use lc($study->{_simple_study_headers}->[0]);
+      $name = join(":", $basename, $study->{__line__}) ;
     }
 
     my $description = $valuesHash->{description}->[0];
