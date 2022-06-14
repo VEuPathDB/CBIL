@@ -1056,6 +1056,7 @@ sub idObfuscateDateN {
   my $newId = $nodeId; 
   die "No date in $nodeId\n" . Dumper $local unless $local->{dateOrig} && $local->{formattedDate}; 
   $newId =~ s/$dateOrig/$local->{formattedDate}/;
+  $self->cacheDelta($materialTypeSourceId,$newId,$delta);
   return $node->setValue($newId);
 }
 
