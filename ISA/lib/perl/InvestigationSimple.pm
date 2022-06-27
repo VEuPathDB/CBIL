@@ -8,6 +8,7 @@ use Scalar::Util 'blessed';
 use CBIL::ISA::OntologyTerm qw(@allOntologyTerms);
 use ApiCommonData::Load::OntologyMapping;
 use File::Basename;
+use Fcntl qw(:flock LOCK_EX LOCK_UN);
 use CBIL::ISA::Functions qw(makeObjectFromHash makeOntologyTerm);
 
 use CBIL::ISA::StudyAssayEntity::Characteristic;
@@ -120,6 +121,8 @@ sub new {
   $self->setIsReporterMode($isReporterMode);
 
   $self->setGetExtraValues($getExtraValues);
+  
+  $self->{idMap} = {};
 
   return $self;
 }
@@ -705,18 +708,25 @@ sub allNodesGetDeltas {
   my $functionsObj = $self->getFunctions();
   foreach my $node (values %$nodesHash){
     my $nodeName=$node->getValue();
-    $functionsObj->setDeltaForNode($node,$nodeIOHash->{$nodeName} || []);
+    my $parentNode = $nodeIOHash->{$nodeName};
+    unless($parentNode){ # check for obfuscated ID 
+      $parentNode = $nodeIOHash->{ $self->{idMap}->{$nodeName} };
+    }
+    $functionsObj->setDeltaForNode($node,$parentNode || []);
   }
 }
 
 sub writeObfuscatedIdFile {
   my ($self,$file) = @_;
+  ## TODO lock the file
   $file ||= $self->getInvestigationDirectory() . "/idObfuscation.txt";
   open(FH, ">$file") or die "Cannot write $file: $!";
-    printf FH ("ObfuscatedID\tOriginalID\n");
+  flock(FH, LOCK_EX);
+  printf FH ("ObfuscatedID\tOriginalID\n");
   while(my ($obfuscatedId,$originalId) = each(%{$self->{idMap}})){
     printf FH ("%s\t%s\n", $originalId, $obfuscatedId);
   }
+  flock(FH, LOCK_UN);
   close(FH);
 }
 
