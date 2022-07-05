@@ -250,7 +250,7 @@ sub parseStudy {
   @allOntologyTerms = ();
   $study->{_nodes} = [];
   $study->{_edges} = [];
-  $study->{__line__} = 0;
+  $study->{__line__} ||= 0; # This function is called iteratively, so do not clobber this
 
   $self->addNodesAndEdgesToStudy($study, $fileHandle, $studyXml);
   $self->dealWithAllOntologies();
