@@ -641,7 +641,7 @@ sub killNA {
   my ($self, $obj) = @_;
   my $value = $obj->getValue();
   return unless $value;
-  if($value =~ /^na$/i){ $obj->setValue(undef); return }
+  if($value =~ /^na$|^\.$/i){ $obj->setValue(undef); return }
 }
   
 
@@ -778,6 +778,18 @@ sub formatTimeHHMMtoDecimal {
   my $time = sprintf('%.03f',$hr + $min);
   $obj->setValue($time);
   return $time;
+}
+
+sub formatExcelInteger2Date {
+  ## Stata saves dates as days since January 1, 1960
+  my ($self, $obj) = @_;
+  my $value = $obj->getValue();
+  return unless($value);
+  return unless(looks_like_number($value));
+  Date_Init("DateFormat=non-US"); 
+  my $date = UnixDate(DateCalc("1900-01-01", "0:0:0:$value:0:0:0"), "%Y-%m-%d");
+  $obj->setValue($date);
+  return $date;
 }
 
 sub formatStataInteger2Date {
