@@ -238,6 +238,7 @@ sub parseStudy {
   unless($fileHandle) {
     $self->log("Processing study file $fileName");
     open($fileHandle,  $fileName) or die "Cannot open file $fileName for reading: $!";    
+    binmode($fileHandle, ':utf8');
     $study->setFileHandle($fileHandle);
 
     my $header = <$fileHandle>;
