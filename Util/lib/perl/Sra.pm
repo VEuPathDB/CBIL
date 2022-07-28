@@ -376,7 +376,7 @@ sub getRunIdsFromSraSampleId {
 sub getFastqForSraRunId {
     my($runId,$isPairedEnd,$deflineVars) = @_;
 
-    my $file = "$runId.sra";
+    my $file = "$runId/$runId.sra";
     print STDERR "getFastqForSraRunId run $runId paired? $isPairedEnd\n";
 
     unlink("$runId.sra") if -e "$runId.sra";
@@ -389,12 +389,17 @@ sub getFastqForSraRunId {
     if($?){
 	die "ERROR ($?): Unable to fetch sra file for $runId\n";
     }
-    if ($isPairedEnd) {
+    if ($isPairedEnd eq 'true') {
         if (defined $deflineVars) {
           system("fastq-dump -B -I --defline-seq '$deflineVars' --split-files ./$file");
         } else {
 	  system("fastq-dump -B -I --split-files ./$file");
         }
+     my $fileone = "reads_1.fastq";
+     my $filetwo = "reads_2.fastq";
+     rename("${runId}_1.fastq","$fileone") if (-e "${runId}_1.fastq");
+     rename("${runId}_2.fastq","$filetwo") if (-e "${runId}_2.fastq");
+
     }
     else {
         if (defined $deflineVars) {
@@ -403,12 +408,12 @@ sub getFastqForSraRunId {
   	  system("fastq-dump --split-spot --skip-technical ./$file");
         }
 	my $first = $runId.".fastq";
-	my $second = $runId."_1.fastq";
+	my $second = "reads_1.fastq";
 #  if (-e $first) {
 	#     next;
 	# }
 	#else {
-	system("mv $first $second");
+	system("mv $first $second") if (-e $first);
     }
     my @files = glob("$runId*.fastq");
     print STDERR "DONE: ".scalar(@files)." files (".join(", ",@files).")\n";
