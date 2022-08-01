@@ -31,7 +31,6 @@ use File::Temp qw/ tempfile /;
  sub getIsTimeSeries            { $_[0]->{isTimeSeries} }
  sub getIsLogged                { $_[0]->{isLogged} }
  sub getBase                    { $_[0]->{base} }
- sub getIsEigengene             { $_[0]->{isEigengene} }
 
 sub getIgnoreStdError          { $_[0]->{ignoreStdErrorEstimation} }
 #-------------------------------------------------------------------------------
@@ -168,7 +167,6 @@ sub writeRScript {
   my $statistic = $self->getFindMedian() ? 'median' : 'average';
   my $isTimeSeries = $self->getIsTimeSeries() ? "TRUE" : "FALSE";
   my $isLogged = $self->getIsLogged() ? "TRUE" : "FALSE";
-  my $isEigengene = $self->getIsEigengene() ? "TRUE" : "FALSE";
 
   $self->addProtocolParamValue("isTwoChannel", $hasRedGreenFiles);
   $self->addProtocolParamValue("statistic", $statistic);
@@ -240,11 +238,8 @@ if($makePercentiles) {
    sampleId = colnames(reorderedSamples\$data)[i];
 
    sample = as.matrix(reorderedSamples\$data[,i]);
-   if ($isEigengene) {
-    colnames(sample) = c("eigenvalue");
-   } else {
-    colnames(sample)= c("value");
-   }
+   colnames(sample)= c("value");
+
 
    if($makeStandardError) {
      stdErrSample = as.matrix(reorderedSamples\$stdErr[,i]);
