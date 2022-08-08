@@ -1,4 +1,4 @@
-<project name="CBIL" default="Installation" basedir=".">
+<project name="CBIL" basedir=".">
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
@@ -12,7 +12,9 @@
                                             CBIL/ISA-Installation,
                                             CBIL/ObjectMapper-Installation">
 
-    <ant target="defaultProjectInstall" />
+    <ant target="defaultProjectInstall">
+      <property name="project" value="CBIL"/>
+    </ant>
 
   </target>
 
@@ -83,5 +85,3 @@
   </target>
 
 </project>
-
-
