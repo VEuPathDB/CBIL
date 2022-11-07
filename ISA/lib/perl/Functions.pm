@@ -6,6 +6,7 @@ require Exporter;
 use strict;
 use warnings;
 
+use open ':std', ':encoding(UTF-8)';
 use Scalar::Util qw/blessed looks_like_number/;
 use Date::Manip qw(Date_Init ParseDate UnixDate DateCalc);
 
@@ -41,6 +42,10 @@ sub new {
   my $self = bless $args, $class;
 
   my $valueMappingFile = $self->getValueMappingFile();
+  ## New feature: version-1: columns varname,IRI,oldval,newval,...
+  ## version-1: columns: varname,IRI,oldval,newval,...
+  ## version-2: columns: varname or IRI,oldval,newval,...
+  my $version = 1;
 
   my $valueMapping = {};
   if($valueMappingFile) {
@@ -48,14 +53,29 @@ sub new {
 
     while(my $line = <FILE>) {
       chomp $line;
+      if($line =~ /^\s*#/){ ## Allow comments, skip
+        if($line =~ /^\s*#\s*version-(\d+)/){ ## reset version
+          $version = $1;
+        }
+        next;
+      }
       my @row = map { s/^\s*|\s*$//g; defined($_) ? $_ : ''} split(/\t/, $line);
       my ($qualName, $qualSourceId, $in, $out, $categoricalOrder, $termId) = @row;
+      if($version == 1){ }# do nothing, default 
+      elsif($version == 2){
+        ($qualName, $in, $out, $categoricalOrder, $termId) = @row;
+        $qualSourceId =  $qualName; 
+      }
+      else{
+        die("Unknown version: version-$version")
+      }
+         
       if($termId){ $termId =~ s/[\{\}]//g }
       # term ID is the ontology term source ID (IRI) for the value, referenced in GUS by Study.Characteristic.ONTOLOGY_TERM_ID
       # not to be confused with Qualifier_ID or Unit_ID
       #
       my $lcIn = lc($in) if(defined($in)); # value hash key, matching is not case-sensitive
-      if( $lcIn =~ /^:::function:/ ){ ## bypass case-insensitivity for embedded functions
+      if( $lcIn =~ /:::function:/ ){ ## bypass case-insensitivity for embedded functions
         $lcIn = $in;
       }
 
@@ -393,7 +413,7 @@ sub valueIsMappedValue {
 
   ## $qualifierValues = { hashref of value=>mapped value/term }
   if($qualifierValues) { ## there is some row for this variable
-    my $lcValue = lc($value); ## matching is not case-sensitive
+    my $lcValue = lc($value) unless $value =~ /:::function:/; ## matching is not case-sensitive
     ## Skip rows where 
 ## <CLEAN-UP qualifierValues->{:::undef:::} tried to use this to insert a value, didn't work
     # unless(defined($value) || defined($qualifierValues->{':::undef:::'})){ return; }
