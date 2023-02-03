@@ -17,17 +17,25 @@ reorderAndGetColCentralVal <- function (pl=NULL, df=NULL, isFirstColNames=TRUE, 
 
     samples = as.vector(pl[[sampleGroupName]]);
 
-    if(computeMedian) {
+
+    # add NA Column if samplename not found in file
+     if(length(samples) == 1 && sum(samples == colnames(dat)) == 0) {
+        colCentralVal = rep(NA, nrow(dat));
+     }
+     else if(computeMedian) {
       colCentralVal = medianSamples(v=samples, df=df);
     } else {
       colCentralVal = meanSamples(v=samples, df=df); 
     }
 
-    colStdErr = stdErrSamples(v=samples, df=df);
-
+    if(length(samples) == 1) {
+      res$stdErr = cbind(res$stdErr, rep(NA,nrow(dat)));
+    }
+    else {
+      colStdErr = stdErrSamples(v=samples, df=df);
+      res$stdErr = cbind(res$stdErr, colStdErr);
+    } 
     res$data = cbind(res$data, colCentralVal);
-
-    res$stdErr = cbind(res$stdErr, colStdErr);
   }
 
   colnames(res$data) = groupNames;
@@ -81,7 +89,7 @@ stdErrSamples <- function(v=NULL, df=NULL) {
 
 #--------------------------------------------------------------------------------
 stdErr <- function(x=NULL) {
-       sqrt(var(x,NULL,na.rm=T)/sum(!is.na(x))) 
+      sqrt(var(x,NULL,na.rm=T)/sum(!is.na(x))) 
  }
 #--------------------------------------------------------------------------------
 findIndex <- function (array=NULL, value=NULL) {
