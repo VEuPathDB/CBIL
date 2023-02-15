@@ -70,13 +70,13 @@ sub getRunsForStudy {
 }
 
 sub getFastqForSampleIds {
-  my($sids,$fileoutone,$fileouttwo,$dontdownload,$isPairedEnd) = @_;
+  my($sids,$fileoutone,$fileouttwo,$dontdownload,$isPairedEnd,$apiKey) = @_;
 
   $fileoutone = $fileoutone ? $fileoutone : "reads_1.fastq";
   $fileouttwo = $fileouttwo ? $fileouttwo : "reads_2.fastq";
   my @rids;
   foreach my $sid (@{$sids}){
-    push(@rids,&getRunIdsFromSraSampleId($sid));
+    push(@rids,&getRunIdsFromSraSampleId($sid, $apiKey));
   }
   my @out;
   my $readCount = 0;
@@ -144,12 +144,12 @@ sub getFastqForSampleIds {
 }
 
 sub getCsForSampleIds {
-  my($sids,$fileoutone,$fileouttwo,$dontdownload) = @_;
+  my($sids,$fileoutone,$fileouttwo,$dontdownload,$apiKey) = @_;
   $fileoutone = $fileoutone ? $fileoutone : "reads_1.csfasta";
   $fileouttwo = $fileouttwo ? $fileouttwo : "reads_2.csfasta";
   my @rids;
   foreach my $sid (@{$sids}){
-    push(@rids,&getRunIdsFromSraSampleId($sid));
+    push(@rids,&getRunIdsFromSraSampleId($sid, $apiKey));
   }
   my @out;
   my $readCount = 0;
@@ -214,11 +214,11 @@ sub getCsForSampleIds {
 
 sub getRunIdsFromSraStudyId {
     warn __PACKAGE__ . " getRunIdsFromSraStudyId is derped, check out getRunsForStudy";
-    my ($studyId) = @_;
+    my ($studyId, $apiKey) = @_;
 
     my $utils = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
 
-    my $esearch = "$utils/esearch.fcgi?api_key=f2006d7a9fa4e92b2931d964bb75ada85a08&db=sra&retmax=1&usehistory=y&term=$studyId";
+    my $esearch = "$utils/esearch.fcgi?api_key=$apiKey&db=sra&retmax=1&usehistory=y&term=$studyId";
 
     my $esearch_result;
     my $counter=0;
@@ -256,11 +256,11 @@ sub getRunIdsFromSraStudyId {
 }
 
 sub runEfetch {
-  my ($Count, $QueryKey, $WebEnv) = @_;
+  my ($Count, $QueryKey, $WebEnv, $apiKey) = @_;
 
   my $utils = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
 
-  my $efetch = "$utils/efetch.fcgi?api_key=f2006d7a9fa4e92b2931d964bb75ada85a08&rettype=xml&retmode=text&retmax=$Count&db=sra&query_key=$QueryKey&WebEnv=$WebEnv";
+  my $efetch = "$utils/efetch.fcgi?api_key=$apiKey&rettype=xml&retmode=text&retmax=$Count&db=sra&query_key=$QueryKey&WebEnv=$WebEnv";
 
   my $efetch_result;
   my $counter=0;
@@ -326,11 +326,11 @@ sub runEfetch {
 
 
 sub getRunIdsFromSraSampleId { 
- my ($sid) = @_; 
+ my ($sid, $apiKey) = @_;
 
  my $utils = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"; 
 
- my $esearch = "$utils/esearch.fcgi?api_key=f2006d7a9fa4e92b2931d964bb75ada85a08&db=sra&retmax=1&usehistory=y&term=$sid"; 
+ my $esearch = "$utils/esearch.fcgi?api_key=$apiKey&db=sra&retmax=1&usehistory=y&term=$sid"; 
 
  my $esearch_result;
  my $counter=0;
@@ -352,7 +352,7 @@ sub getRunIdsFromSraSampleId {
  $esearch_result =~ /<WebEnv>(\S+)<\/WebEnv>/s;
  my $WebEnv = $1; 
 
- my @ids = &runEfetch($Count, $QueryKey, $WebEnv);
+ my @ids = &runEfetch($Count, $QueryKey, $WebEnv, $apiKey);
 
  if ($sid =~ /^[SED]RX/ ) {
      return @ids;
