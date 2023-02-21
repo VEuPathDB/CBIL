@@ -778,6 +778,16 @@ sub formatTime {
   }
 }
 
+sub formatSecondsAsHours {
+  my ($self, $obj) = @_;
+  my $value = $obj->getValue();
+  return unless($value);
+  return unless(looks_like_number($value));
+  $value = sprintf("%0.03f", $value / 3600);
+  $obj->setValue($value);
+  return $value;
+}
+
 sub formatTimeHHMMtoDecimal {
   my ($self, $obj) = @_;
   my $value = $obj->getValue();
