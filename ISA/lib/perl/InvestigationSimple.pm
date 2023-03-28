@@ -1,6 +1,7 @@
 package CBIL::ISA::InvestigationSimple;
 use base qw(CBIL::ISA::Investigation);
 
+use utf8;
 use strict;
 use XML::Simple;
 
@@ -237,7 +238,7 @@ sub parseStudy {
 
   unless($fileHandle) {
     $self->log("Processing study file $fileName");
-    open($fileHandle,  $fileName) or die "Cannot open file $fileName for reading: $!";    
+    open($fileHandle, "<:encoding(utf8)",  $fileName) or die "Cannot open file $fileName for reading: $!";    
     binmode($fileHandle, ':utf8');
     $study->setFileHandle($fileHandle);
 

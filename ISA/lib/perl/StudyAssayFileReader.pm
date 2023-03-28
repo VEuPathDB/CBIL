@@ -4,6 +4,8 @@ use base qw(CBIL::ISA::Reader);
 use strict;
 use warnings;
 
+use utf8;
+
 use Scalar::Util qw(blessed);
 use Data::Dumper;
 
@@ -33,7 +35,7 @@ sub new {
 
   my ($fh);
 
-  open($fh, $file) or die "Cannot open file $file for reading: $!";
+  open($fh, "<:encoding(utf8)", $file) or die "Cannot open file $file for reading: $!";
 
   $self->setFh($fh);
 

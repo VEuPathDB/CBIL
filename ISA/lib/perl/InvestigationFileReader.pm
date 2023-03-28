@@ -2,6 +2,7 @@ package CBIL::ISA::InvestigationFileReader;
 use base qw(CBIL::ISA::Reader);
 
 use strict;
+use utf8;
 
 use CBIL::Util::V;
 use Data::Dumper;
@@ -52,7 +53,7 @@ sub read {
   my $columnCounts = {};
   my ($fh);
 
-  open($fh, $investigationFile) or die "Cannot open file $investigationFile for Reading: $!";
+  open($fh, "<:encoding(utf8)", $investigationFile) or die "Cannot open file $investigationFile for Reading: $!";
   $self->setFh($fh);
 
   my ($lineContext, $studyIdentifier);
@@ -70,6 +71,10 @@ sub read {
       $lineContext = uc $a[0];
       next;
     }
+
+    # next if($a[0] eq 'STUDY PUBLICATIONS');
+    # next if($a[0] eq 'STUDY DESIGN DESCRIPTORS');
+    # next if($a[0] eq 'STUDY CONTACTS');
 
     my $header = shift @a;
 
