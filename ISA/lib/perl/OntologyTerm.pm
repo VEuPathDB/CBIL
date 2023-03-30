@@ -48,6 +48,54 @@ sub new {
   return $self;
 }
 
+
+sub isMultiValued {
+  my ($self) = @_;
+
+  if($self->getTermAccessionNumber() =~ /;/) {
+    return 1;
+  }
+  return 0;
+}
+
+
+sub multiValueFactory {
+  my ($self) = @_;
+
+  return $self unless($self->isMultiValued());
+
+  my $accessions = $self->getTermAccessionNumber();
+  my $sources = $self->getTermSourceRef();
+  my $terms = $self->getTerm();
+
+  my @accessions = split(/;/, $accessions);
+  my @sources = split(/;/, $sources);
+  my @terms = split(/;/, $terms);
+
+
+  unless(scalar @sources == scalar @accessions) {
+    die "Multivalued accessions must have same number of soruces for term:  " . $self->getTerm();
+  }
+
+  my @rv;
+  for(my $i = 0; $i < scalar @sources; $i++) {
+    my $copy = $self->clone();
+    $copy->setTermAccessionNumber($accessions[$i]);
+    $copy->setTermSourceRef($sources[$i]);
+    $copy->setTerm($terms[$i]);
+
+    push @rv, $copy;
+  }
+  return @rv;
+}
+
+sub clone {
+    my $self = shift;
+    my $copy = bless { %$self }, ref $self;
+    return $copy;
+}
+
+
 # @OVERRIDE
 sub getAttributeNames {
   return ["TermAccessionNumber", "TermSourceRef"];

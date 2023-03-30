@@ -3,11 +3,28 @@ use base qw(CBIL::ISA::StudyAssayEntity);
 
 use strict;
 
+use Data::Dumper;
 sub setDescription { $_[0]->{_description} = $_[1] }
 sub getDescription { $_[0]->{_description} }
 
 sub addCharacteristic { push @{$_[0]->{_characteristics}}, $_[1] }
-sub getCharacteristics { $_[0]->{_characteristics}  || [] }
+sub getCharacteristics {
+  my ($self) = @_;
+
+  my $chars = $self->{_characteristics};
+  return [] unless($chars);
+
+  my @rv;
+  foreach my $char(@$chars) {
+    if($char->isMultiValued()) {
+      push @rv, $char->multiValueFactory();
+    }
+    else {
+      push @rv, $char;
+    }
+  }
+  return \@rv;
+}
 
 sub setMaterialType { $_[0]->{_material_type} = $_[1] }
 sub getMaterialType { $_[0]->{_material_type} }

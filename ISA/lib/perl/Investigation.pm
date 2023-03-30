@@ -297,7 +297,14 @@ sub dealWithAllOntologies {
     my $hasAccession = defined $ontologyTerm->getTermAccessionNumber();
 
     if($hasAccession) {
-      $ontologyTerms->{$ontologyTerm->getTermSourceRef()}->{$ontologyTerm->getTermAccessionNumber()}++;
+      if($ontologyTerm->isMultiValued()) {
+        foreach my $clone ($ontologyTerm->multiValueFactory()) {
+          $ontologyTerms->{$clone->getTermSourceRef()}->{$clone->getTermAccessionNumber()}++;
+        }
+      }
+      else {
+        $ontologyTerms->{$ontologyTerm->getTermSourceRef()}->{$ontologyTerm->getTermAccessionNumber()}++;
+      }
     }
 
     # Characteristic Qualifiers are a special case.  Their term/accession/source is not defined in the investigation file
