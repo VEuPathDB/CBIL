@@ -1,8 +1,8 @@
-package CBIL::TranscriptExpression::DataMunger::MetaCycle;
-use base qw(CBIL::TranscriptExpression::DataMunger::Profiles);
+package CBIL::StudyAssayResults::DataMunger::MetaCycle;
+use base qw(CBIL::StudyAssayResults::DataMunger::Profiles);
 
 use strict;
-use CBIL::TranscriptExpression::Error;
+use CBIL::StudyAssayResults::Error;
 use File::Temp qw/ tempfile tempdir /;
 use Exporter;
 use Data::Dumper;
@@ -26,7 +26,7 @@ sub new {
 
 
    # unless($args->{inputSuffix}) {
-   #   CBIL::TranscriptExpression::Error->new("Missing required argument [inputSuffix]")->throw();
+   #   CBIL::StudyAssayResults::Error->new("Missing required argument [inputSuffix]")->throw();
    # }
 
     my $self = $class->SUPER::new($args);

@@ -1,12 +1,12 @@
-package CBIL::TranscriptExpression::DataMunger::Loadable;
-use base qw(CBIL::TranscriptExpression::DataMunger);
+package CBIL::StudyAssayResults::DataMunger::Loadable;
+use base qw(CBIL::StudyAssayResults::DataMunger);
 use locale;
 use open ':locale';
 
 use Data::Dumper;
 
 use strict;
-use CBIL::TranscriptExpression::Error;
+use CBIL::StudyAssayResults::Error;
 
 my $CONFIG_BASE_NAME = "insert_study_results_config.txt";
 
@@ -91,7 +91,7 @@ sub createConfigFile {
 
 
   unless(scalar @$names == scalar @$fileNames && scalar @$names > 0) {
-    CBIL::TranscriptExpression::Error->new("AppNode Names and/or file name not specified correctly")->throw();
+    CBIL::StudyAssayResults::Error->new("AppNode Names and/or file name not specified correctly")->throw();
   }
 
 
@@ -103,7 +103,7 @@ sub createConfigFile {
     my $inputProtocolAppNodes = $inputProtocolAppNodesHash->{$name};
 
     my $technologyType = $self->getTechnologyType();
-    CBIL::TranscriptExpression::Error->new("Class" . ref($self) . "  is required to setTechnologyType OR set doNotLoad=1")->throw() unless($technologyType);
+    CBIL::StudyAssayResults::Error->new("Class" . ref($self) . "  is required to setTechnologyType OR set doNotLoad=1")->throw() unless($technologyType);
 
      my @inputAppNodesWithProtocolSuffix = map {"$_ ($technologyType)"} @$inputProtocolAppNodes;
 
@@ -123,7 +123,7 @@ sub createConfigFile {
 
     my $invalidChars = qr/,/;
     if($profileSetName =~ $invalidChars || $name =~ $invalidChars) {
-      CBIL::TranscriptExpression::Error->new("Invalid Character in either sample or profileset")->throw();
+      CBIL::StudyAssayResults::Error->new("Invalid Character in either sample or profileset")->throw();
     }
 
      $self->printConfigLine(\*CONFIG, $profileSetName, $name, $fileName, $inputProtocolAppNodesString);

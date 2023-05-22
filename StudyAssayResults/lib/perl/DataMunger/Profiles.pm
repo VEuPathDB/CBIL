@@ -1,5 +1,5 @@
-package CBIL::TranscriptExpression::DataMunger::Profiles;
-use base qw(CBIL::TranscriptExpression::DataMunger::Loadable);
+package CBIL::StudyAssayResults::DataMunger::Profiles;
+use base qw(CBIL::StudyAssayResults::DataMunger::Loadable);
 
 use strict;
 
@@ -8,7 +8,7 @@ use open ":std" => ":locale";
 
 use File::Basename;
 
-use CBIL::TranscriptExpression::Error;
+use CBIL::StudyAssayResults::Error;
 
 use Data::Dumper;
 
@@ -68,7 +68,7 @@ sub new {
   }
 
   if ($args->{isTimeSeries} && $args->{hasRedGreenFiles} && !$args->{percentileChannel}) {
-    CBIL::TranscriptExpression::Error->new("Must specify percentileChannel for two channel time series experiments")->throw();
+    CBIL::StudyAssayResults::Error->new("Must specify percentileChannel for two channel time series experiments")->throw();
   }
 
 
@@ -85,7 +85,7 @@ sub new {
   my $inputFile = $args->{inputFile};
 
   unless(-e $inputFile) {
-    CBIL::TranscriptExpression::Error->new("input file $inputFile does not exist")->throw();
+    CBIL::StudyAssayResults::Error->new("input file $inputFile does not exist")->throw();
   }
 
 
@@ -177,7 +177,7 @@ sub writeRScript {
 
   my $rString = <<RString;
 
-source("$ENV{GUS_HOME}/lib/R/TranscriptExpression/profile_functions.R");
+source("$ENV{GUS_HOME}/lib/R/StudyAssayResults/profile_functions.R");
 
 dat = read.table("$inputFile", header=T, sep="\\t", check.names=FALSE);
 

@@ -1,11 +1,11 @@
-package CBIL::TranscriptExpression::DataMunger;
+package CBIL::StudyAssayResults::DataMunger;
 
 use strict;
 
 use Tie::IxHash;
 
-use CBIL::TranscriptExpression::Error;
-use CBIL::TranscriptExpression::Utils;
+use CBIL::StudyAssayResults::Error;
+use CBIL::StudyAssayResults::Utils;
 
 use File::Basename;
 use File::Temp qw/ tempfile /;
@@ -63,15 +63,15 @@ sub new {
     chdir $mainDirectory;
   }
   else {
-    CBIL::TranscriptExpression::Error->new("Main Directory was not provided")->throw();
+    CBIL::StudyAssayResults::Error->new("Main Directory was not provided")->throw();
   }
 
-  if(ref($class) eq 'CBIL::TranscriptExpression::DataMunger') {
-    CBIL::TranscriptExpression::Error->
+  if(ref($class) eq 'CBIL::StudyAssayResults::DataMunger') {
+    CBIL::StudyAssayResults::Error->
         new("try to instantiate an abstract class:  $class")->throw();
   }
 
-  CBIL::TranscriptExpression::Utils::checkRequiredParams($requiredParamArrayRef, $args);
+  CBIL::StudyAssayResults::Utils::checkRequiredParams($requiredParamArrayRef, $args);
 
   my $self=bless $args, $class;
 
@@ -98,7 +98,7 @@ sub runR {
   my $systemResult = system($command);
 
   unless($systemResult / 256 == 0) {
-    CBIL::TranscriptExpression::Error->new("Error while attempting to run R:\n$command")->throw();
+    CBIL::StudyAssayResults::Error->new("Error while attempting to run R:\n$command")->throw();
   }
 }
 

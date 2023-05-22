@@ -1,4 +1,4 @@
-package CBIL::TranscriptExpression::SplitBamUniqueNonUnique;
+package CBIL::StudyAssayResults::SplitBamUniqueNonUnique;
 use strict;
 use warnings;
 use CBIL::Util::Utils;

@@ -1,5 +1,5 @@
-package CBIL::TranscriptExpression::DataMunger::AllPairwiseRNASeqFishers;
-use base qw(CBIL::TranscriptExpression::DataMunger::RNASeqFishersTest);
+package CBIL::StudyAssayResults::DataMunger::AllPairwiseRNASeqFishers;
+use base qw(CBIL::StudyAssayResults::DataMunger::RNASeqFishersTest);
 
 use strict;
 

@@ -1,4 +1,4 @@
-package CBIL::TranscriptExpression::CalculationsForTPM;
+package CBIL::StudyAssayResults::CalculationsForTPM;
 
 use strict;
 use warnings;

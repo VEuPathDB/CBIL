@@ -1,10 +1,10 @@
-package CBIL::TranscriptExpression::DataMunger::PaGE;
-use base qw(CBIL::TranscriptExpression::DataMunger::TwoStateComparison);
+package CBIL::StudyAssayResults::DataMunger::PaGE;
+use base qw(CBIL::StudyAssayResults::DataMunger::TwoStateComparison);
 
 use strict;
 
-use CBIL::TranscriptExpression::Error;
-use CBIL::TranscriptExpression::Utils;
+use CBIL::StudyAssayResults::Error;
+use CBIL::StudyAssayResults::Utils;
 
 use GUS::Community::FileTranslator;
 
@@ -53,19 +53,19 @@ sub new {
   $self->setNames([$args->{analysisName}]);
 
   unless(defined($args->{isDataLogged})) {
-    CBIL::TranscriptExpression::Error->new("Parameter [isDataLogged] is missing in the config file")->throw();
+    CBIL::StudyAssayResults::Error->new("Parameter [isDataLogged] is missing in the config file")->throw();
   }
 
   if($args->{design} eq 'D' && defined($args->{isDataPaired})) {
-    CBIL::TranscriptExpression::Error->new("Parameter [isDataPaired] should not be specified with Dye swap design")->throw();
+    CBIL::StudyAssayResults::Error->new("Parameter [isDataPaired] should not be specified with Dye swap design")->throw();
   }
 
   if($args->{design} ne 'D' && !defined($args->{isDataPaired})) {
-    CBIL::TranscriptExpression::Error->new("Parameter [isDataPaired] is missing from the config file")->throw();
+    CBIL::StudyAssayResults::Error->new("Parameter [isDataPaired] is missing from the config file")->throw();
   }
 
   if($args->{numberOfChannels} == 2 && !($args->{design} eq 'R' || $args->{design} eq 'D') ) {
-    CBIL::TranscriptExpression::Error->new("Parameter [design] must be given (R|D) when specifying 2 channel data.")->throw();
+    CBIL::StudyAssayResults::Error->new("Parameter [design] must be given (R|D) when specifying 2 channel data.")->throw();
   }
 
   if($args->{isDataLogged} && !$args->{baseX}) {
@@ -178,7 +178,7 @@ sub makePageInput {
   my $header;
   chomp($header = <FILE>);
 
-  my $headerIndexHash = CBIL::TranscriptExpression::Utils::headerIndexHashRef($header, qr/\t/);
+  my $headerIndexHash = CBIL::StudyAssayResults::Utils::headerIndexHashRef($header, qr/\t/);
 
 
   my $conditions = $self->groupListHashRef($self->getConditions());

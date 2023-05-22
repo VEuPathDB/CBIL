@@ -1,5 +1,5 @@
-package CBIL::TranscriptExpression::DataMunger::Normalization::AffymetrixRMA;
-use base qw(CBIL::TranscriptExpression::DataMunger::Normalization);
+package CBIL::StudyAssayResults::DataMunger::Normalization::AffymetrixRMA;
+use base qw(CBIL::StudyAssayResults::DataMunger::Normalization);
 
 use strict;
 
@@ -34,13 +34,13 @@ sub munge {
   my $buildCmd = "R CMD build $cleanCdfName";
   my $buildRes = system($buildCmd);
   unless($buildRes / 256 == 0) {
-    CBIL::TranscriptExpression::Error->new("Error while attempting to run R\n$buildCmd")->throw();
+    CBIL::StudyAssayResults::Error->new("Error while attempting to run R\n$buildCmd")->throw();
   }
 
   my $installCmd = "R CMD INSTALL $cleanCdfName" . "*.tar.gz -l $rTempPackageDir";
   my $installRes = system($installCmd);
   unless($installRes / 256 == 0) {
-    CBIL::TranscriptExpression::Error->new("Error while attempting to run R:\n$installCmd")->throw();
+    CBIL::StudyAssayResults::Error->new("Error while attempting to run R:\n$installCmd")->throw();
   }
 
   my $rFile = $self->writeRScript($dataFilesRString, $cleanCdfName, $rTempPackageDir);

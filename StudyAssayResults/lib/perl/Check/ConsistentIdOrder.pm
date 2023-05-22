@@ -1,10 +1,10 @@
-package CBIL::TranscriptExpression::Check::ConsistentIdOrder;
-use base qw(CBIL::TranscriptExpression::Check);
+package CBIL::StudyAssayResults::Check::ConsistentIdOrder;
+use base qw(CBIL::StudyAssayResults::Check);
 
 use strict;
 
-use CBIL::TranscriptExpression::Utils;
-use CBIL::TranscriptExpression::Error;
+use CBIL::StudyAssayResults::Utils;
+use CBIL::StudyAssayResults::Error;
 
 sub getDataDirPath     { $_[0]->{_data_dir_path} }
 sub setDataDirPath     { $_[0]->{_data_dir_path} = $_[1] }
@@ -61,14 +61,14 @@ sub compare {
   my ($self, $array1, $array2) = @_;
 
   unless(scalar @$array1 == scalar @$array2) {
-    CBIL::TranscriptExpression::Error->new("Data files have different number of lines than mapping file")->throw();
+    CBIL::StudyAssayResults::Error->new("Data files have different number of lines than mapping file")->throw();
   }
 
   for(my $i = 0; $i < scalar @$array1; $i++) {
 
     unless($array1->[$i] eq $array2->[$i]) {
       print STDERR $array1->[$i] . "\t" . $array2->[$i] . "\n";
-      CBIL::TranscriptExpression::Error->new("Identifiers must be in the same order in the mapping file as in data files")->throw();
+      CBIL::StudyAssayResults::Error->new("Identifiers must be in the same order in the mapping file as in data files")->throw();
     }
   }
 }
@@ -83,7 +83,7 @@ sub readColumn {
   my $header = <FILE>;
   chomp($header);
 
-  my $headerIndexHash = CBIL::TranscriptExpression::Utils::headerIndexHashRef($header, $del);
+  my $headerIndexHash = CBIL::StudyAssayResults::Utils::headerIndexHashRef($header, $del);
 
   my $idIndex = $headerIndexHash->{$colName};
 

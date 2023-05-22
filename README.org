@@ -20,5 +20,5 @@
    + CSP :: CBIL Style Police (CSP) is a Perl package for generating HTML pages and forms in a principled manner.   
    + HQ :: library of value objects used when computing hierarchical entropy values
    + ISA :: readers and library of value objects for [[https://isa-specs.readthedocs.io/en/latest/isatab.html][ISA-Tab]] Format
-   + TranscriptExpression :: Modules for analyzing expression data (Microarray and RNASeq) and other data types.  
+   + StudyAssayResults :: Modules for analyzing expression data (Microarray and RNASeq) and other data types.  
    + Util :: Helper modules for a variety of tasks

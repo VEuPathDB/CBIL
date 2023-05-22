@@ -1,9 +1,9 @@
-package CBIL::TranscriptExpression::DataMunger::ScaleProfile;
-use base qw(CBIL::TranscriptExpression::DataMunger::Profiles);
+package CBIL::StudyAssayResults::DataMunger::ScaleProfile;
+use base qw(CBIL::StudyAssayResults::DataMunger::Profiles);
 
 use strict;
 
-use CBIL::TranscriptExpression::Error;
+use CBIL::StudyAssayResults::Error;
 
 use File::Temp qw/ tempfile /;
 
@@ -26,7 +26,7 @@ sub new {
   my $self = $class->SUPER::new($args, $requiredParams);
 
   unless(-e $self->getProfileFile() && -e $self->getScalingFactorsFile()) {
-    CBIL::TranscriptExpression::Error->new("BOTH profileFile and scaling factor file are required.")->throw();
+    CBIL::StudyAssayResults::Error->new("BOTH profileFile and scaling factor file are required.")->throw();
   }
 
   return $self;
@@ -47,7 +47,7 @@ sub munge {
 
   my $rString = <<RString;
 
-source("$ENV{GUS_HOME}/lib/R/TranscriptExpression/profile_functions.R");
+source("$ENV{GUS_HOME}/lib/R/StudyAssayResults/profile_functions.R");
 
 dat1 = read.table("$profileFile", header=$header, sep="\\t", check.names=FALSE, row.names=1);
 dat2 = read.table("$scalingFactorsFile", header=$header, sep="\\t", check.names=FALSE, row.names=1);

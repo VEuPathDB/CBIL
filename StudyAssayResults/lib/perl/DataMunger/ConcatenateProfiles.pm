@@ -1,9 +1,9 @@
-package CBIL::TranscriptExpression::DataMunger::ConcatenateProfiles;
-use base qw(CBIL::TranscriptExpression::DataMunger::Profiles);
+package CBIL::StudyAssayResults::DataMunger::ConcatenateProfiles;
+use base qw(CBIL::StudyAssayResults::DataMunger::Profiles);
 
 use strict;
 
-use CBIL::TranscriptExpression::Error;
+use CBIL::StudyAssayResults::Error;
 
 use File::Temp qw/ tempfile /;
 
@@ -24,7 +24,7 @@ sub new {
   my $self = $class->SUPER::new($args, $requiredParams);
 
   unless(-e $self->getFileOne() && -e $self->getFileTwo()) {
-    CBIL::TranscriptExpression::Error->("Missing Required File")->throw();
+    CBIL::StudyAssayResults::Error->("Missing Required File")->throw();
   }
 
   return $self;
@@ -47,7 +47,7 @@ sub munge {
 
   my $rString = <<RString;
 
-source("$ENV{GUS_HOME}/lib/R/TranscriptExpression/profile_functions.R");
+source("$ENV{GUS_HOME}/lib/R/StudyAssayResults/profile_functions.R");
 
 dat1 = read.table("$fileOne", header=$header, sep="\\t", check.names=FALSE, row.names=1);
 dat2 = read.table("$fileTwo", header=$header, sep="\\t", check.names=FALSE, row.names=1);

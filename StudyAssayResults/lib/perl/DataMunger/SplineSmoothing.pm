@@ -1,5 +1,5 @@
-package CBIL::TranscriptExpression::DataMunger::SplineSmoothing;
-use base qw(CBIL::TranscriptExpression::DataMunger::Profiles);
+package CBIL::StudyAssayResults::DataMunger::SplineSmoothing;
+use base qw(CBIL::StudyAssayResults::DataMunger::Profiles);
 
 use strict;
 
@@ -7,7 +7,7 @@ use Data::Dumper;
 
 use File::Temp qw/ tempfile /;
 
-use CBIL::TranscriptExpression::Error;
+use CBIL::StudyAssayResults::Error;
 
 #-------------------------------------------------------------------------------
 

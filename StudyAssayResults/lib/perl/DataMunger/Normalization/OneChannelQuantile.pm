@@ -1,12 +1,12 @@
-package CBIL::TranscriptExpression::DataMunger::Normalization::OneChannelQuantile;
-use base qw(CBIL::TranscriptExpression::DataMunger::Normalization);
+package CBIL::StudyAssayResults::DataMunger::Normalization::OneChannelQuantile;
+use base qw(CBIL::StudyAssayResults::DataMunger::Normalization);
 
 use strict;
 
-use CBIL::TranscriptExpression::Utils;
-use CBIL::TranscriptExpression::Error;
+use CBIL::StudyAssayResults::Utils;
+use CBIL::StudyAssayResults::Error;
 
-use CBIL::TranscriptExpression::Check::ConsistentIdOrder;
+use CBIL::StudyAssayResults::Check::ConsistentIdOrder;
 
 use File::Basename;
 use File::Temp qw/ tempfile /;
@@ -39,7 +39,7 @@ sub new {
                                   'flagColumnName',
                                  ];
 
-  CBIL::TranscriptExpression::Utils::checkRequiredParams($additionalRequiredParams, $args);
+  CBIL::StudyAssayResults::Utils::checkRequiredParams($additionalRequiredParams, $args);
 
   $self->setMappingFileHasHeader($MAP_HAS_HEADER) unless(defined $self->getMappingFileHasHeader());
   $self->setMappingFileGeneColumn($MAP_GENE_COL) unless(defined $self->getMappingFileGeneColumn());
@@ -50,22 +50,22 @@ sub new {
   my $hasHeader = $self->getMappingFileHasHeader();
 
   if($oligoColumn eq $geneColumn) {
-    CBIL::TranscriptExpression::Error->new("oligo column cannot be the same as gene column")->throw();
+    CBIL::StudyAssayResults::Error->new("oligo column cannot be the same as gene column")->throw();
   }
 
   unless($oligoColumn eq 'first' || $oligoColumn eq 'second') {
-    CBIL::TranscriptExpression::Error->new("oligo column must equal first or second")->throw();
+    CBIL::StudyAssayResults::Error->new("oligo column must equal first or second")->throw();
   }
 
   unless($geneColumn eq 'first' || $geneColumn eq 'second') {
-    CBIL::TranscriptExpression::Error->new("gene column must equal first or second")->throw();
+    CBIL::StudyAssayResults::Error->new("gene column must equal first or second")->throw();
   }
 
   my $dataFiles = $self->getDataFiles();
   my $idColumnName = $self->getIdColumnName();
   my $mainDirectory = $self->getMainDirectory();
 
-  my $checker = CBIL::TranscriptExpression::Check::ConsistentIdOrder->new($dataFiles, $mainDirectory, $idColumnName);
+  my $checker = CBIL::StudyAssayResults::Check::ConsistentIdOrder->new($dataFiles, $mainDirectory, $idColumnName);
   $self->setChecker($checker);
 
   return $self;
@@ -109,7 +109,7 @@ load.marray = library(marray, logical.return=TRUE);
 
 if(load.marray) {
 
-source("$ENV{GUS_HOME}/lib/R/TranscriptExpression/normalization_functions.R");
+source("$ENV{GUS_HOME}/lib/R/StudyAssayResults/normalization_functions.R");
 
 my.gnames = read.marrayInfo("$mappingFile", info.id=c(1,2), labels=1, na.strings=c(""))
 

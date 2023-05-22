@@ -1,4 +1,4 @@
-package CBIL::TranscriptExpression::Utils;
+package CBIL::StudyAssayResults::Utils;
 
 use strict;
 
@@ -11,7 +11,7 @@ sub checkRequiredParams {
 
   foreach my $param (@$requiredParamArrayRef) {
     unless(defined $args->{$param}) {
-      CBIL::TranscriptExpression::Error->new("Parameter [$param] is missing in the xml file.")->throw();
+      CBIL::StudyAssayResults::Error->new("Parameter [$param] is missing in the xml file.")->throw();
     }
   }
 }
