@@ -1,5 +1,5 @@
-package CBIL::TranscriptExpression::DataMunger::Normalization::NimbleGenRMA;
-use base qw(CBIL::TranscriptExpression::DataMunger::Normalization);
+package CBIL::StudyAssayResults::DataMunger::Normalization::NimbleGenRMA;
+use base qw(CBIL::StudyAssayResults::DataMunger::Normalization);
 
 use strict;
 
@@ -40,7 +40,7 @@ sub munge {
   my $installCmd = "R CMD INSTALL -l $tmpInstall ${rTempPackageDir}/${cleanNdfName}";
   my $installRes = system($installCmd);
   unless($installRes / 256 == 0) {
-    CBIL::TranscriptExpression::Error->new("Error while attempting to run R:\n$installCmd")->throw();
+    CBIL::StudyAssayResults::Error->new("Error while attempting to run R:\n$installCmd")->throw();
   }
 
   my $rFile = $self->writeRScript($dataFilesRString, $cleanNdfName, $tmpInstall);

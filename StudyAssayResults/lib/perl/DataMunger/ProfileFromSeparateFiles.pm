@@ -1,11 +1,11 @@
-package CBIL::TranscriptExpression::DataMunger::ProfileFromSeparateFiles;
-use base qw(CBIL::TranscriptExpression::DataMunger::Profiles);
+package CBIL::StudyAssayResults::DataMunger::ProfileFromSeparateFiles;
+use base qw(CBIL::StudyAssayResults::DataMunger::Profiles);
 
 use strict;
 
 use File::Temp qw/ tempfile /;
 
-use CBIL::TranscriptExpression::Error;
+use CBIL::StudyAssayResults::Error;
 use Data::Dumper;
 
 # The Default is that Each File contains 2 columns tab delim (U_ID \t VALUE)
@@ -91,10 +91,10 @@ sub readDataHash {
         $fullFileName = defined($fileSuffix) ? $fn . $fileSuffix : $fn;
     }
 
-    open(FILE, $fullFileName) or CBIL::TranscriptExpression::Error->new("Cannot open File $fullFileName for reading: $!")->throw();
+    open(FILE, $fullFileName) or CBIL::StudyAssayResults::Error->new("Cannot open File $fullFileName for reading: $!")->throw();
 
     if($selectedColumn && !$hasHeader) {
-      CBIL::TranscriptExpression::Error->new("Trying to select a specific column $selectedColumn from file $fullFileName but hasHeader flag was set to false")->throw();
+      CBIL::StudyAssayResults::Error->new("Trying to select a specific column $selectedColumn from file $fullFileName but hasHeader flag was set to false")->throw();
     }
 
     my $inputHeader;
@@ -118,7 +118,7 @@ sub readDataHash {
         my( $index ) = grep { $inputHeaders[$_] eq $selectedColumn } 0..$#inputHeaders;
 
       unless(defined $index) {
-        CBIL::TranscriptExpression::Error->new("Ooops!  I tried to select $selectedColumn from an array of headers  @inputHeaders but didn't find it.")->throw();
+        CBIL::StudyAssayResults::Error->new("Ooops!  I tried to select $selectedColumn from an array of headers  @inputHeaders but didn't find it.")->throw();
       }
 
         # subtract 1 because the uid was popped off this array already
@@ -126,7 +126,7 @@ sub readDataHash {
       }
 
       if($self->{dataHash}->{$uId}->{$fn}) {
-        CBIL::TranscriptExpression::Error->new("ID $uId is not unique for $fn")->throw();
+        CBIL::StudyAssayResults::Error->new("ID $uId is not unique for $fn")->throw();
       }
 
       $self->{dataHash}->{$uId}->{$fn} = $value;

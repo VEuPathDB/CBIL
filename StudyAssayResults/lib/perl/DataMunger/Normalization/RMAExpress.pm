@@ -1,9 +1,9 @@
-package CBIL::TranscriptExpression::DataMunger::Normalization::RMAExpress;
-use base qw(CBIL::TranscriptExpression::DataMunger::Normalization);
+package CBIL::StudyAssayResults::DataMunger::Normalization::RMAExpress;
+use base qw(CBIL::StudyAssayResults::DataMunger::Normalization);
 
 use strict;
 
-use CBIL::TranscriptExpression::Error;
+use CBIL::StudyAssayResults::Error;
 use File::Temp qw/ tempfile /;
 use File::Basename;
 

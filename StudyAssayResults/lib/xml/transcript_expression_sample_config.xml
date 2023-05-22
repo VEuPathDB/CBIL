@@ -3,7 +3,7 @@
     <property name="baseLogDir" value="@SOMEWHERE@/logs"/>
   </globalDefaultArguments>
 
-  <step class="CBIL::TranscriptExpression::DataMunger::Profiles">
+  <step class="CBIL::StudyAssayResults::DataMunger::Profiles">
     <property name="pathToExecutable" value="/files/software/R/bin/R"/>
     <property name="inputFile" value="@SOMEWHERE@/normalizedValues.txt"/>
     <property name="outputFile" value="@SOMEWHERE@/profiles.txt"/>
@@ -21,7 +21,7 @@
     </property>
   </step>
 
-  <step class="CBIL::TranscriptExpression::DataMunger::PaGE">
+  <step class="CBIL::StudyAssayResults::DataMunger::PaGE">
 
     <property name="pathToExecutable" value="/home/jbrestel/bin/PaGE_5.1.6_modifiedConfOutput.pl"/>
     <property name="inputFile" value="@SOMEWHERE@/profiles.txt"/>

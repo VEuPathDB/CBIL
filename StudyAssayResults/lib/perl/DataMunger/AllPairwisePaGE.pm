@@ -1,5 +1,5 @@
-package CBIL::TranscriptExpression::DataMunger::AllPairwisePaGE;
-use base qw(CBIL::TranscriptExpression::DataMunger::PaGE);
+package CBIL::StudyAssayResults::DataMunger::AllPairwisePaGE;
+use base qw(CBIL::StudyAssayResults::DataMunger::PaGE);
 
 use strict;
 

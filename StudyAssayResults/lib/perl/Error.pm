@@ -1,4 +1,4 @@
-package CBIL::TranscriptExpression::Error;
+package CBIL::StudyAssayResults::Error;
 use base qw(Error);
 
 use overload ('""' => 'stringify');

@@ -1,4 +1,4 @@
-package CBIL::TranscriptExpression::XmlParser;
+package CBIL::StudyAssayResults::XmlParser;
 
 use strict;
 
@@ -6,7 +6,7 @@ use XML::Simple;
 
 use Data::Dumper;
 
-use CBIL::TranscriptExpression::Error;
+use CBIL::StudyAssayResults::Error;
 
 sub getXmlFile { $_[0]->{xml_file} }
 sub setXmlFile { $_[0]->{xml_file} = $_[1] }
@@ -21,7 +21,7 @@ sub new {
   my ($class, $xmlFile, $globalDefaults, $globalReferencable) = @_;
 
   unless(-e $xmlFile) {
-    CBIL::TranscriptExpression::Error->new("XML File $xmlFile doesn't exist.")->throw();
+    CBIL::StudyAssayResults::Error->new("XML File $xmlFile doesn't exist.")->throw();
   }
 
   my $self = bless {}, $class;
@@ -62,11 +62,11 @@ sub parse {
 
     eval "\$importFileEval = \"$importFile\";";
     if($@) {
-      CBIL::TranscriptExpression::Error->new("ERROR: import file specified but could not be evaluated:  $@")->throw();
+      CBIL::StudyAssayResults::Error->new("ERROR: import file specified but could not be evaluated:  $@")->throw();
     }
 
     # TODO: Defaults and referenceble things could potentially be provided from the imported file
-    my $importedParser = CBIL::TranscriptExpression::XmlParser->new($importFileEval, $defaults, $globalReferencable);
+    my $importedParser = CBIL::StudyAssayResults::XmlParser->new($importFileEval, $defaults, $globalReferencable);
     my $importedSteps = $importedParser->parse();
     push @$all_steps, @$importedSteps;
   }
@@ -101,7 +101,7 @@ sub parse {
         eval "\$args->{$property} = $value;";
 
         if($@) {
-          CBIL::TranscriptExpression::Error->new("ERROR:  isReference specified but value could not be evaluated:  $@")->throw();
+          CBIL::StudyAssayResults::Error->new("ERROR:  isReference specified but value could not be evaluated:  $@")->throw();
         }
       }
       else {

@@ -1,10 +1,10 @@
-package CBIL::TranscriptExpression::DataMunger::MapIdentifiersAndAverageRows;
-use base qw(CBIL::TranscriptExpression::DataMunger);
+package CBIL::StudyAssayResults::DataMunger::MapIdentifiersAndAverageRows;
+use base qw(CBIL::StudyAssayResults::DataMunger);
 
 use strict;
 
-use CBIL::TranscriptExpression::Error;
-use CBIL::TranscriptExpression::Check::ConsistentIdOrder;
+use CBIL::StudyAssayResults::Error;
+use CBIL::StudyAssayResults::Check::ConsistentIdOrder;
 
 use File::Temp qw/ tempfile /;
 use File::Basename;
@@ -45,22 +45,22 @@ sub new {
   my $hasHeader = $self->getMappingFileHasHeader();
 
   if($oligoColumn eq $geneColumn) {
-    CBIL::TranscriptExpression::Error->new("oligo column cannot be the same as gene column")->throw();
+    CBIL::StudyAssayResults::Error->new("oligo column cannot be the same as gene column")->throw();
   }
 
   unless($oligoColumn eq 'first' || $oligoColumn eq 'second') {
-    CBIL::TranscriptExpression::Error->new("oligo column must equal first or second")->throw();
+    CBIL::StudyAssayResults::Error->new("oligo column must equal first or second")->throw();
   }
 
   unless($geneColumn eq 'first' || $geneColumn eq 'second') {
-    CBIL::TranscriptExpression::Error->new("gene column must equal first or second")->throw();
+    CBIL::StudyAssayResults::Error->new("gene column must equal first or second")->throw();
   }
 
   my $dataFiles = $self->getDataFiles();
   my $idColumnName = $self->getIdColumnName();
   my $mainDirectory = $self->getMainDirectory();
 
-  my $checker = CBIL::TranscriptExpression::Check::ConsistentIdOrder->new($dataFiles, $mainDirectory, $idColumnName);
+  my $checker = CBIL::StudyAssayResults::Check::ConsistentIdOrder->new($dataFiles, $mainDirectory, $idColumnName);
   $self->setChecker($checker);
 
   unless($self->getMappingFile()) {
@@ -106,7 +106,7 @@ sub readMappingFile {
   my ($self) = @_;
 
   my $mappingFile = $self->getMappingFile();
-  open(MAP, $mappingFile) or CBIL::TranscriptExpression::Error->new("Cannot open file $mappingFile for reading: $!")->throw();
+  open(MAP, $mappingFile) or CBIL::StudyAssayResults::Error->new("Cannot open file $mappingFile for reading: $!")->throw();
 
   if($self->hasHeader()) {
     <MAP>;
@@ -142,7 +142,7 @@ sub writeRScript {
   my ($rfh, $rFile) = tempfile();
 
   my $rString = <<RString;
-source("$ENV{GUS_HOME}/lib/R/TranscriptExpression/normalization_functions.R");
+source("$ENV{GUS_HOME}/lib/R/StudyAssayResults/normalization_functions.R");
 
 # reading in the mapping file; in which the 2nd coln is the gene_list...
 idMap = read.table("$mappingFile", sep="\\t", header=TRUE, na.strings=c(""));

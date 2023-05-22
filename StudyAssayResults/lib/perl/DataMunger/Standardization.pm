@@ -1,10 +1,10 @@
-package CBIL::TranscriptExpression::DataMunger::Standardization;
-use base qw(CBIL::TranscriptExpression::DataMunger::Profiles);
+package CBIL::StudyAssayResults::DataMunger::Standardization;
+use base qw(CBIL::StudyAssayResults::DataMunger::Profiles);
 use strict;
 
 use Data::Dumper;
 use File::Temp qw/ tempfile /;
-use CBIL::TranscriptExpression::Error;
+use CBIL::StudyAssayResults::Error;
 
 #-------------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ sub writeStdRScript {
   my ($rfh, $rFile) = tempfile();
   my $rString = <<RString;
 
-source("$ENV{GUS_HOME}/lib/R/TranscriptExpression/profile_functions.R");
+source("$ENV{GUS_HOME}/lib/R/StudyAssayResults/profile_functions.R");
 
 dat = read.table("$inputFile", header=T, sep="\\t", check.names=FALSE);
 standardizedProfiles = standardizeProfiles(df=dat, refColName=$refColName);

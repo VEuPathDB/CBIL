@@ -1,5 +1,5 @@
-package CBIL::TranscriptExpression::DataMunger::TwoStateComparison;
-use base qw(CBIL::TranscriptExpression::DataMunger::Loadable);
+package CBIL::StudyAssayResults::DataMunger::TwoStateComparison;
+use base qw(CBIL::StudyAssayResults::DataMunger::Loadable);
 
 use strict;
 

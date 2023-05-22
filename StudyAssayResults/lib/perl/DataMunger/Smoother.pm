@@ -1,11 +1,11 @@
-package CBIL::TranscriptExpression::DataMunger::Smoother;
-use base qw(CBIL::TranscriptExpression::DataMunger::Profiles);
+package CBIL::StudyAssayResults::DataMunger::Smoother;
+use base qw(CBIL::StudyAssayResults::DataMunger::Profiles);
 
 use strict;
 
 use File::Temp qw/ tempfile /;
 
-use CBIL::TranscriptExpression::Error;
+use CBIL::StudyAssayResults::Error;
 
 use Data::Dumper;
 

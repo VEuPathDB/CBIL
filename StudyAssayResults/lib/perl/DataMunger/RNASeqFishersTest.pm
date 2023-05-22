@@ -1,9 +1,9 @@
-package CBIL::TranscriptExpression::DataMunger::RNASeqFishersTest;
-use base qw(CBIL::TranscriptExpression::DataMunger::TwoStateComparison Exporter);
+package CBIL::StudyAssayResults::DataMunger::RNASeqFishersTest;
+use base qw(CBIL::StudyAssayResults::DataMunger::TwoStateComparison Exporter);
 
 use strict;
 
-use CBIL::TranscriptExpression::Error;
+use CBIL::StudyAssayResults::Error;
 
 use File::Temp qw/ tempfile /;
 
@@ -200,7 +200,7 @@ sub munge {
 #  STDOUT->print("n2=$numMappers2\n");
 
   if($numMappers1 == 0 || $numMappers2 == 0) {
-    CBIL::TranscriptExpression::Error->new("Error reading the mappingStats file to find the numMappers. (perhaps isPairedEnd is set incorrectly??)")->throw();    
+    CBIL::StudyAssayResults::Error->new("Error reading the mappingStats file to find the numMappers. (perhaps isPairedEnd is set incorrectly??)")->throw();    
   }
 
   my $countsFile1 = $self->getCountsFile1();

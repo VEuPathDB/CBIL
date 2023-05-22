@@ -1,4 +1,4 @@
-package CBIL::TranscriptExpression::Check;
+package CBIL::StudyAssayResults::Check;
 
 use strict;
 

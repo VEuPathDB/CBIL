@@ -1,11 +1,11 @@
-package CBIL::TranscriptExpression::DataMunger::Normalization;
-use base qw(CBIL::TranscriptExpression::DataMunger);
+package CBIL::StudyAssayResults::DataMunger::Normalization;
+use base qw(CBIL::StudyAssayResults::DataMunger);
 
 use strict;
 
 use Data::Dumper;
 
-use CBIL::TranscriptExpression::Error;
+use CBIL::StudyAssayResults::Error;
 
 #-------------------------------------------------------------------------------
 
@@ -36,7 +36,7 @@ sub new {
   my $mappingFile = $self->getMappingFile();
 
   unless(-e $mappingFile) {
-    CBIL::TranscriptExpression::Error->new("Required Mapping file not provided")->throw();
+    CBIL::StudyAssayResults::Error->new("Required Mapping file not provided")->throw();
   }
 
   return $self;

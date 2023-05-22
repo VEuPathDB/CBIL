@@ -4,8 +4,8 @@ use strict;
 
 use Getopt::Long;
 use lib "$ENV{GUS_HOME}/lib/perl";
-use CBIL::TranscriptExpression::XmlParser;
-use CBIL::TranscriptExpression::Error;
+use CBIL::StudyAssayResults::XmlParser;
+use CBIL::StudyAssayResults::Error;
 
 use Data::Dumper;
 
@@ -34,7 +34,7 @@ unless(-d $mainDirectory) {
   &usage("Error:  Main Directory $mainDirectory does not exist.");
 }
 
-my $xmlParser = CBIL::TranscriptExpression::XmlParser->new($xmlFile);
+my $xmlParser = CBIL::StudyAssayResults::XmlParser->new($xmlFile);
 my $nodes = $xmlParser->parse();
 
 foreach my $node (@$nodes) {
@@ -60,12 +60,12 @@ foreach my $node (@$nodes) {
   }
 
   eval "require $class";
-  CBIL::TranscriptExpression::Error->new($@)->throw() if $@;
+  CBIL::StudyAssayResults::Error->new($@)->throw() if $@;
   my $dataMunger = eval {
     $class->new($args);
   };
 
-  CBIL::TranscriptExpression::Error->new($@)->throw() if $@;
+  CBIL::StudyAssayResults::Error->new($@)->throw() if $@;
 
   $dataMunger->setTechnologyType($technologyType);
   $dataMunger->munge();
@@ -75,7 +75,7 @@ sub usage {
   my $m = shift;
 
   print STDERR "$m\n\n" if($m);
-  print STDERR "usage:  perl doTranscriptExpression.pl --xml_file <XML> --main_directory <DIR> [--input_file <FILE>] [--seq_id_prefix <SEQ ID PREFIX>] [--patch <use this flag for a patch update>]--help\n";
+  print STDERR "usage:  perl doStudyAssayResults.pl --xml_file <XML> --main_directory <DIR> [--input_file <FILE>] [--seq_id_prefix <SEQ ID PREFIX>] [--patch <use this flag for a patch update>]--help\n";
   exit;
 }
 
