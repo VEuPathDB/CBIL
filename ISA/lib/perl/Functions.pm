@@ -637,6 +637,15 @@ sub setUnitToYear {
   $unit->setTerm("year");
 }
 
+sub removePrefix {
+  my ($self, $obj) = @_;
+  my $value = $obj->getValue();
+  return unless $value;
+  return unless $value =~ /:/;
+  my ($pref, @v) = split(/:/, $value);
+  $obj->setValue(join(":", @v));
+} 
+  
 
 sub formatDate {
   my ($self, $obj) = @_;
@@ -914,6 +923,33 @@ sub formatInteger {
   }
 }
 
+sub convertDaysToYearsWithUnit {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val);
+  return if ($val =~ /year[s]?$/i);
+  if(looks_like_number($val)){
+    # days per month = 365.25 / 12 = 30.43
+    my $years = sprintf("%0.3f years", $val / 365.25 );
+    return $obj->setValue($years);
+  }
+}
+
+sub convertMonthsToYearsWithUnit {
+  my ($self, $obj) = @_;
+  my $val = $obj->getValue();
+  return unless defined($val);
+  return if ($val =~ /year[s]?$/i);
+  if($val =~ /month/){
+    my ($count, $unit) = split(/\s+/, $val);
+    $val = $count;
+  }
+  if(looks_like_number($val)){
+    my $years = sprintf("%0.3f years", $val / 12 );
+    return $obj->setValue($years);
+  }
+}
+
 sub convertDaysToMonths {
   my ($self, $obj) = @_;
   my $val = $obj->getValue();
@@ -1012,6 +1048,11 @@ sub parseDmsCoordinate {
   if($sec){ $decVal += $sec/3600; }
   if(defined($card) && $card =~ /[SWsw]/) { $decVal = -$decVal; }
   return $obj->setValue($decVal);
+}
+
+sub DELETE {
+  my ($self, $obj) = @_;
+  return $obj->setValue();
 }
 
 sub digestSHAHex16 {
