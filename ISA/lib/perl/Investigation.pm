@@ -225,7 +225,7 @@ sub parseStudy {
     my $assayFileReader = $self->getStudyAssayFileReader($assayFileName, $delimiter, $assay);
 
     while($assayFileReader->hasNextLine()) {
-      $self->addNodesAndEdgesToStudy($study, $assayFileReader->readLineToObjects());
+      $self->addNodesAndEdgesToStudy($study, $assayFileReader->readLineToObjects(), 'ignoreOrphanAssays');
       $rowCount++;
 
       if($rowCount == $rowLimit) {
@@ -249,7 +249,7 @@ sub parseStudy {
 
 
 sub addNodesAndEdgesToStudy {
-  my ($self, $study, $saEntities) = @_;
+  my ($self, $study, $saEntities, $ignoreOrphanAssays) = @_;
 
   my $wasNodeContext;
   my @protocolApplications;
@@ -262,6 +262,12 @@ sub addNodesAndEdgesToStudy {
     next unless($entity->isNode() || $entityName eq 'ProtocolApplication');
 
     if($entity->isNode()) {
+      # if an assay refers to a sample that was never read in from the s_samples.txt file ($studyFilename)
+      # then skip this entire row of entities (sample is always the first entity in an assay file)
+      if ($entityName eq 'Sample' && $ignoreOrphanAssays) {
+        return unless ($study->hasNode($entity));
+      }
+      
       # add node unless it already exists.  If exists we get the ref to that object
       $entity = $study->addNode($entity);
 

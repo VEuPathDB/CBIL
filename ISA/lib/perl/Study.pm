@@ -129,6 +129,15 @@ sub addNode {
 }
 sub getNodes { $_[0]->{_nodes} or [] }
 
+sub hasNode {
+  my ($self, $node) = @_;
+
+  foreach(@{$self->getNodes()}) {
+    return 1 if($node->equals($_));
+  }
+  return 0;
+}
+
 sub addEdge { 
   my ($self, $input, $protocolApplications, $output) = @_;
 
