@@ -12,6 +12,9 @@ use CBIL::ISA::OntologySource;
 use CBIL::ISA::Study;
 use CBIL::ISA::StudyDesign;
 
+use CBIL::ISA::Protocol;
+use CBIL::ISA::StudyAssayEntity::ProtocolApplication;
+
 use CBIL::ISA::OntologyTerm qw(@allOntologyTerms);
 
 use Carp;
@@ -267,7 +270,11 @@ sub addNodesAndEdgesToStudy {
 
       if($wasNodeContext) {
         $self->log("WARNING:  Study/Assay file contained consecutive Node Columns (" . $lastNode->getEntityName() . " and " . $entity->getEntityName() . ").  Creating Edge to connect these\n");
+
+        my $implicitProtocolString = $lastNode->getEntityName() . "to" . $entity->getEntityName();
+        my $protocol = CBIL::ISA::Protocol->new({_value => 'IMPLICIT PROTOCOL', _protocol_name => $implicitProtocolString });
         my $protocolApp = CBIL::ISA::StudyAssayEntity::ProtocolApplication->new({_value => 'IMPLICIT PROTOCOL'});
+        $protocolApp->setProtocol($protocol);
         push @protocolApplications, $protocolApp;
       }
 
