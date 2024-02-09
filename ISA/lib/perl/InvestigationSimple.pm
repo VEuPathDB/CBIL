@@ -552,13 +552,24 @@ sub makeNodes {
     if($idColumn){
       if($idColumn =~ /:::/){
         my @cols = split(/:::/, $idColumn);
-        my @keys = map { $valuesHash->{$_}->[0] } @cols;
+        my @keys;
+        foreach my $col( @cols ){
+          # support literal string for idColumn, ex. "{{p}}:::Subject ID"
+          # same as ClinEpiData::Load::GenericReader
+          if($col =~ /^\{\{(.+)\}\}$/){
+            push(@keys, $1);
+          }
+          else {
+            push(@keys, $valuesHash->{$col}->[0]);
+            $self->addStudySpecialColumn($idColumn); # housekeeping
+          }
+        }
         $name = join("_", @keys);
       }
       else { 
         $name = $valuesHash->{$idColumn}->[0];
+        $self->addStudySpecialColumn($idColumn); # housekeeping
       }
-      $self->addStudySpecialColumn($idColumn); # housekeeping
     }
     else { ## idColumn not defined: use lowercase file basename + line number
       # alternatively, use lc($study->{_simple_study_headers}->[0]);
