@@ -188,10 +188,15 @@ sub parseInvestigation {
 
     $studyXml->{identifier} = $identifier;
 
-    if(lc $studyXml->{disallowEdgeLookup} eq 'true') {
-      $study->setDisallowEdgeLookup(1);
+    $study->setDisallowEdgeLookup(1);
+    if(lc $studyXml->{disallowEdgeLookup} eq 'false') {
+      $study->setDisallowEdgeLookup(0);
     }
 
+    $study->setDisallowNodeLookup(1);
+    if(lc $studyXml->{disallowNodeLookup} eq 'false') {
+      $study->setDisallowNodeLookup(0);
+    }
 
     my $studyIdentifier = $self->makeIdentifier($studyXml);
     $study->setIdentifier($studyIdentifier);    
