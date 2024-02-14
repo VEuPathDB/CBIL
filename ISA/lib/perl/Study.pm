@@ -19,8 +19,12 @@ use Data::Dumper;
 sub disallowEdgeLookup { $_[0]->{_disallow_edge_lookup} }
 sub setDisallowEdgeLookup { $_[0]->{_disallow_edge_lookup} = $_[1] }
 
+sub disallowNodeLookup { $_[0]->{_disallow_node_lookup} }
+sub setDisallowNodeLookup { $_[0]->{_disallow_node_lookup} = $_[1] }
+
 sub hasMoreData { $_[0]->{_has_more_data} }
 sub setHasMoreData { $_[0]->{_has_more_data} = $_[1] }
+
 
 sub setIdentifier { $_[0]->{_identifier} = $_[1] }
 sub getIdentifier { $_[0]->{_identifier} }
@@ -120,10 +124,13 @@ sub addStudyAssay { push @{$_[0]->{_study_assays}}, $_[1] }
 sub addNode { 
   my ($self, $node) = @_;
 
-  foreach(@{$self->getNodes()}) {
-    return $_ if($node->equals($_));
+  # try to find an existing node (expensive)
+  unless($self->disallowNodeLookup()) {
+    foreach(@{$self->getNodes()}) {
+      return $_ if($node->equals($_));
+    }
   }
-  
+
   push @{$self->{_nodes}}, $node;
   return $node;
 }
@@ -134,6 +141,7 @@ sub addEdge {
 
   my $edge = CBIL::ISA::Edge->new($input, $protocolApplications, $output);
 
+  # try to find an existing edge (expensive)
   unless($self->disallowEdgeLookup()) {
     foreach my $existingEdge (@{$self->getEdges()}) {
       if($edge->equals($existingEdge)) {
@@ -144,6 +152,7 @@ sub addEdge {
     }
   }
 
+  # for first edge OR if we are disallowing edge lookup entirely,  we need to set protocol for each protocolapp and possibly deal with param values
   foreach my $protocolApp (@$protocolApplications) {
     my $protocolName = $protocolApp->getValue();
     foreach my $studyProtocol (@{$self->getProtocols()}) {
@@ -164,9 +173,10 @@ sub addEdge {
     }
   }
 
-  push @{$self->{_edges}}, $edge; 
+  push @{$self->{_edges}}, $edge;
   return $edge;
 }
+
 sub getEdges { $_[0]->{_edges} or [] }
 
 sub pruneNodesAndEdges {
