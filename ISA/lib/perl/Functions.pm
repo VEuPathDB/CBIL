@@ -413,7 +413,7 @@ sub valueIsMappedValue {
 
   ## $qualifierValues = { hashref of value=>mapped value/term }
   if($qualifierValues) { ## there is some row for this variable
-    my $lcValue = lc($value) unless $value =~ /:::function:/; ## matching is not case-sensitive
+    my $lcValue = lc($value); ## matching is not case-sensitive
     ## Skip rows where 
 ## <CLEAN-UP qualifierValues->{:::undef:::} tried to use this to insert a value, didn't work
     # unless(defined($value) || defined($qualifierValues->{':::undef:::'})){ return; }
@@ -440,22 +440,6 @@ sub valueIsMappedValue {
       }
       elsif($newValue || $newValue eq '0') {
         $obj->setValue($newValue);
-      }
-    }
-    ## After matching value and applying mapping
-    ## Check whether there are functions in valueMap.txt
-    ## Functions are normally added in ontologyMapping.xml
-    ## but it may be convenient to add them in valueMap.txt
-    my @mappedFunctions = map { /^:::function:(.*)$/; $1 } grep { /^:::function:/ } keys %$qualifierValues;
-    foreach my $func (@mappedFunctions){
-      if($self->can($func)){
-        ## Get param(s) from mapped value column
-        ## Leave it up to the function to parse it
-        my $param = $qualifierValues->{$func};
-        $self->$func($obj,$param);
-      }
-      else{
-printf STDERR "$func is not defined\n";
       }
     }
     
