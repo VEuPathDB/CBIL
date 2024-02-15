@@ -493,6 +493,7 @@ sub makeValueObject {
     }
     return $o;
 }
+
 sub addCharacteristicToNode {
   my ($self, $node, $inputNodes, $term, $values) = @_;
 
@@ -503,21 +504,44 @@ sub addCharacteristicToNode {
     next unless($value || $value eq '0' || $forceDateDelta); # Old comment: "put this here because I still wanna check the headers"
     my $char = $self->makeValueObject('CBIL::ISA::StudyAssayEntity::Characteristic','Characteristics', $term, $value);
 
-    my $functionsObj = $self->getFunctions();
-    foreach my $function (@functions) {
-      eval {
-        $functionsObj->$function($char, $node, $inputNodes);
-      };
-      if ($@) {
-        my $charTxt = $char->Dumper;
-        my $nodeTxt = $node->getValue;
-        $self->handleError("Could not apply function: $function\nCharacteristic: ${charTxt}Node: ${nodeTxt}\nMesssage: $@");
-      }
-    }
+    # use cache to add mapped value to $char
+    $self->applyCachedMappedValue($term, $char, $node, $inputNodes, $value, \@functions);
+
     if(defined $char->getValue() && $char->getValue() ne ""){
       $node->addCharacteristic($char);
     }
   }
+}
+
+# use cache to apply new value to characteristic
+# if not found, map raw value and add mapping to cache
+sub applyCachedMappedValue {
+  my ($self, $term, $char, $node, $inputNodes, $rawValue, $functions) = @_;
+
+  my $key = $term->{lc_header};
+
+  if (exists $self->{mappedValueCache}->{$key}->{$rawValue}) {
+    $char->setValue($self->{mappedValueCache}->{$key}->{$rawValue});
+    return;
+  }
+
+  # not found in cache.  apply functions and update $char
+  my $functionsObj = $self->getFunctions();
+  foreach my $function (@$functions) {
+    eval {
+      $functionsObj->$function($char, $node, $inputNodes);
+    };
+    if ($@) {
+      my $charTxt = $char->Dumper;
+      my $nodeTxt = $node->getValue;
+      $self->handleError("Could not apply function: $function\nCharacteristic: ${charTxt}Node: ${nodeTxt}\nMesssage: $@");
+    }
+  }
+  
+  # set cache with value retrieved from $char
+  my $valForCache = $char->getValue();
+  $valForCache = "" unless defined $valForCache;
+  $self->{mappedValueCache}->{$key}->{$rawValue} = $valForCache;
 }
 
 sub checkArrayRefLengths {
