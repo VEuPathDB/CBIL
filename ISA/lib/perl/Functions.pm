@@ -21,11 +21,17 @@ use Digest::SHA;
 
 use Switch;
 
+#####################################
+# Functions which generate a unique value per node must not cache the value for all nodes. Example:
+# sample 1 collection date = 2013-04-17; run formatEuroDateWithObfuscation, new date 2013-04-15 (offset -2)
+# sample 2 collection date = 2013-04-17; run formatEuroDateWithObfuscation, new date 2013-04-21 (offset +3)
+# household visit date = 04/17/2013; run formatDate; new date 2013-04-17 (ok to cache, same new date for all nodes where visit date = 04/17/2013)
 our $DO_NOT_CACHE = {
   formatDateWithObfuscation  => 1,
   formatEuroDateWithObfuscation  => 1,
   formatDateWithObfuscationMin1900  => 1,
 };
+#####################################
 
 sub getOntologyMapping {$_[0]->{_ontology_mapping} }
 sub getOntologySources {$_[0]->{_ontology_sources} }
