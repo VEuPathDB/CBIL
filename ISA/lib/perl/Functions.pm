@@ -21,6 +21,12 @@ use Digest::SHA;
 
 use Switch;
 
+our $DO_NOT_CACHE = {
+  formatDateWithObfuscation  => 1,
+  formatEuroDateWithObfuscation  => 1,
+  formatDateWithObfuscationMin1900  => 1,
+};
+
 sub getOntologyMapping {$_[0]->{_ontology_mapping} }
 sub getOntologySources {$_[0]->{_ontology_sources} }
 sub getValueMappingFile {$_[0]->{_valueMappingFile} }
@@ -75,10 +81,6 @@ sub new {
       # not to be confused with Qualifier_ID or Unit_ID
       #
       my $lcIn = lc($in) if(defined($in)); # value hash key, matching is not case-sensitive
-      if( $lcIn =~ /:::function:/ ){ ## bypass case-insensitivity for embedded functions
-        $lcIn = $in;
-      }
-
 
       # I think case for source_ids matters so these need to match exactly
       $valueMapping->{$qualSourceId}->{$lcIn} = $out;
@@ -91,6 +93,14 @@ sub new {
       # This maps a term to the ORIGINAL value (not mapped value)
     }
     close FILE;
+    ## shunt regexes
+    while( my ($qual,$qualifierValues) = each %$valueMapping){
+      foreach my $regex ( grep { /^\{\{.*\}\}$/ } keys %$qualifierValues){
+        my ($pattern) = ($regex =~ /^\{\{(.*)\}\}$/ );
+        $valueMapping->{_REGEX_}->{$qual}->{$pattern} = $qualifierValues->{$regex};
+        delete $qualifierValues->{$regex};
+      }
+    }
   }
   $self->setValueMapping($valueMapping);
 
@@ -404,6 +414,14 @@ sub valueIsMappedValue {
     next if( $qualifierValues->{lc($rawval)} ); # give bias to previous rows, no override
     $qualifierValues->{lc($rawval)} = $mapval;
   }
+  my $regexValues;
+  if( $valueMapping->{_REGEX_}->{$qualName} || $valueMapping->{_REGEX_}->{$qualSourceId} ){
+    $regexValues = $valueMapping->{_REGEX_}->{$qualName};
+    while( my ($regex, $mapval) = each %{$valueMapping->{_REGEX_}->{$qualSourceId}}){
+      next if( $regexValues->{lc($regex)} ); # give bias to previous rows, no override
+      $regexValues->{lc($regex)} = $mapval;
+    }
+  }
   ## _TERMS_ are the ontology IRIs for specific values
   ## Currently this serves no purpose but may be relevant at some time in the future
   ## If there is an IRI for the value, it is added to this file during preprocessing
@@ -422,15 +440,13 @@ sub valueIsMappedValue {
 ## CLEAN-UP>
     my $newValue = $qualifierValues->{$lcValue};
     unless(defined($newValue) && length($newValue)){
-      foreach my $regex ( grep { /^\{\{.*\}\}$/ } keys %$qualifierValues){
-        my ($test) = ($regex =~ /^\{\{(.*)\}\}$/);
-        $test = qr/$test/;
-        if($lcValue =~ $test){
-          $newValue = $qualifierValues->{$regex};
-          last;
-        }
-        else {
-          #printf STDERR ("NO MATCH $lcValue =~ $test\n");
+      # only try regexes if a mapped value has not been found
+      foreach my $regex ( keys %$regexValues ){
+        $regex = qr/$regex/;
+        if($lcValue =~ $regex){
+          $newValue = $regexValues->{$regex};
+#printf STDERR "DEBUG: $lcValue => $newValue\n" if $newValue;
+          last; # stop trying regexes
         }
       }
     }
