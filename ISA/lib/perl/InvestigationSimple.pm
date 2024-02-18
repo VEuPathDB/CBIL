@@ -527,9 +527,11 @@ sub applyCachedMappedValue {
 
   # not found in cache.  apply functions and update $char
   my $functionsObj = $self->getFunctions();
+  my $isCacheable = 1;
   foreach my $function (@$functions) {
     eval {
       $functionsObj->$function($char, $node, $inputNodes);
+      $isCacheable =  0 if(${CBIL::ISA::Functions::DO_NOT_CACHE}->{$function});
     };
     if ($@) {
       my $charTxt = $char->Dumper;
@@ -537,7 +539,9 @@ sub applyCachedMappedValue {
       $self->handleError("Could not apply function: $function\nCharacteristic: ${charTxt}Node: ${nodeTxt}\nMesssage: $@");
     }
   }
-  
+
+  return unless $isCacheable;
+
   # set cache with value retrieved from $char
   my $valForCache = $char->getValue();
   $valForCache = "" unless defined $valForCache;
