@@ -18,7 +18,7 @@ use CBIL::ISA::StudyAssayEntity::ProtocolApplication;
 use CBIL::ISA::OntologyTerm qw(@allOntologyTerms);
 
 use Carp;
-
+use Digest::MD5 qw(md5_hex);
 use Data::Dumper;
 
 my $INVESTIGATION = "INVESTIGATION";
@@ -106,6 +106,14 @@ sub log {
     $self->{_on_log}->(@args);
   } else {
     say @args;
+  }
+}
+sub logOnce {
+  my ($self, $msg) = @_;
+  my $cksum = md5_hex($msg);
+  unless($self->{_log_once}->{$cksum}){
+    say $msg;
+    $self->{_log_once}->{$cksum} = 1;
   }
 }
 

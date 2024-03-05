@@ -22,6 +22,9 @@ sub setDisallowEdgeLookup { $_[0]->{_disallow_edge_lookup} = $_[1] }
 sub disallowNodeLookup { $_[0]->{_disallow_node_lookup} }
 sub setDisallowNodeLookup { $_[0]->{_disallow_node_lookup} = $_[1] }
 
+sub ignoreUnmappedColumns { $_[0]->{_ignore_unmapped_columns} }
+sub setIgnoreUnmappedColumns { $_[0]->{_ignore_unmapped_columns} = $_[1] }
+
 sub hasMoreData { $_[0]->{_has_more_data} }
 sub setHasMoreData { $_[0]->{_has_more_data} = $_[1] }
 

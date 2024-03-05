@@ -197,6 +197,8 @@ sub parseInvestigation {
     if(lc $studyXml->{disallowNodeLookup} eq 'false') {
       $study->setDisallowNodeLookup(0);
     }
+    
+    $study->setIgnoreUnmappedColumns($studyXml->{ignoreUnmappedColumns} || 0);
 
     my $studyIdentifier = $self->makeIdentifier($studyXml);
     $study->setIdentifier($studyIdentifier);    
@@ -291,7 +293,13 @@ sub addNodesAndEdgesToStudy {
   my %specialColumns = map {lc($_) => 1 } @{$self->getStudySpecialColumns()};
   my @missingColumns = sort grep {not $specialColumns{lc($_)}} @{$unmappedHeaders};
   if(@missingColumns){
-    $self->handleError("Unmapped column headers:  ". join (", ", @missingColumns));
+    my $msg = "Unmapped column headers:  ". join (", ", @missingColumns);
+    if($study->ignoreUnmappedColumns ){
+      $self->logOnce($msg);
+    }
+    else {
+      $self->handleError($msg);
+    }
   }
 
   while(my $line = <$fileHandle>) {
