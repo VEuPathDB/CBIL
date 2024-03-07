@@ -238,11 +238,11 @@ sub parseStudy {
 
   unless($fileHandle) {
     $self->log("Processing study file $fileName");
-    open($fileHandle, "<:encoding(utf8)",  $fileName) or die "Cannot open file $fileName for reading: $!";    
-    binmode($fileHandle, ':utf8');
+    open($fileHandle, "<",  $fileName) or die "Cannot open file $fileName for reading: $!";    
     $study->setFileHandle($fileHandle);
 
     my $header = <$fileHandle>;
+    $header = encode("UTF-8", $header);
     chomp $header;
     my @headers = split(/\t/, $header);
     $study->{_simple_study_headers} = \@headers;
@@ -291,6 +291,7 @@ sub addNodesAndEdgesToStudy {
 
   while(my $line = <$fileHandle>) {
     $study->{__line__}++;
+    $line = encode("UTF-8", $line);
     chomp $line;
     my @a = split(/\t/, $line);
     my $valuesHash = {};
