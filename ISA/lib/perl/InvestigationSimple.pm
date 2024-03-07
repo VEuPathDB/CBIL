@@ -5,6 +5,8 @@ use utf8;
 use strict;
 use XML::Simple;
 
+use Encode;
+
 use Scalar::Util 'blessed';
 use CBIL::ISA::OntologyTerm qw(@allOntologyTerms);
 use ApiCommonData::Load::OntologyMapping;
