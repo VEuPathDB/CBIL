@@ -2,7 +2,6 @@ package CBIL::ISA::InvestigationFileReader;
 use base qw(CBIL::ISA::Reader);
 
 use strict;
-use utf8;
 
 use CBIL::Util::V;
 use Data::Dumper;
