@@ -1,7 +1,6 @@
 package CBIL::ISA::InvestigationSimple;
 use base qw(CBIL::ISA::Investigation);
 
-use utf8;
 use strict;
 use XML::Simple;
 
