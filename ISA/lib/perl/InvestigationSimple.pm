@@ -614,7 +614,7 @@ sub makeNodes {
     }
     else { ## idColumn not defined: use lowercase file basename + line number
       # alternatively, use lc($study->{_simple_study_headers}->[0]);
-      print STDERR ("WARNING: node [$nodeName] idColumn not specified! using __line__ (line number)\n");
+      $self->logOnce("WARNING: node [$nodeName] idColumn not specified! using __line__ (line number)\n");
       $name = join(":", $basename, $study->{__line__}) ;
     }
 
