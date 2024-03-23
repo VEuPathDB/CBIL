@@ -4,8 +4,6 @@ use base qw(CBIL::ISA::Reader);
 use strict;
 use warnings;
 
-use Encode;
-
 use Scalar::Util qw(blessed);
 use Data::Dumper;
 
@@ -35,11 +33,11 @@ sub new {
 
   my ($fh);
 
-  open($fh, "<", $file) or die "Cannot open file $file for reading: $!";
+  open($fh, "<:encoding(utf8)", $file) or die "Cannot open file $file for reading: $!";
 
   $self->setFh($fh);
   
-  my $header = encode("UTF-8", $self->readNextLine());
+  my $header = $self->readNextLine();
 
   $self->setHeaderValues($header);
 
@@ -94,7 +92,7 @@ sub readLineToObjects {
   my @entityNames = @{$self->getEntityNames()};
   my @qualifierNames=  @{$self->getQualifierNames()};
 
-  my $lineValues = encode("UTF-8", $self->readNextLine());
+  my $lineValues = $self->readNextLine();
 
   for(my $i = 0; $i < scalar @entityNames; $i++) {
     my $class = "CBIL::ISA::StudyAssayEntity::" . $entityNames[$i];

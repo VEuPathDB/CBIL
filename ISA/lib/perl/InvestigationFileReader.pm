@@ -5,7 +5,6 @@ use strict;
 
 use CBIL::Util::V;
 use Data::Dumper;
-use Encode;
 
 sub setInvestigationFile { $_[0]->{_investigation_file} = $_[1] }
 sub getInvestigationFile { $_[0]->{_investigation_file} }
@@ -53,7 +52,7 @@ sub read {
   my $columnCounts = {};
   my ($fh);
 
-  open($fh, "<", $investigationFile) or die "Cannot open file $investigationFile for Reading: $!";
+  open($fh, "<:encoding(utf8)", $investigationFile) or die "Cannot open file $investigationFile for Reading: $!";
   $self->setFh($fh);
 
   my ($lineContext, $studyIdentifier);
@@ -62,7 +61,6 @@ sub read {
 
   my $line = 0;
   while(my $fields = $self->readNextLine()) {
-    $fields = encode("UTF-8", $fields);
     
     # split and remove leading and trailing quotes
     #my @a = map { s/^"(.*)"$/$1/; $_; } $self->splitLine($line);
