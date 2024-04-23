@@ -452,7 +452,7 @@ sub functionNamesForTerm {
     return @$functionsRef;
   }
   else {
-    return "valueIsMappedValue";
+    return ("trimWhitespace","valueIsMappedValue");
   }
 }
 
