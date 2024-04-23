@@ -893,7 +893,7 @@ sub trimWhitespace {
   my $val = $obj->getValue();
   return unless defined $val && length $val;
   $val =~ s/^\s+|\s+$//g;
-  return $obj->setValue($val) if(defined($val));
+  return $obj->setValue($val);
 }
 sub formatSentenceCase {
   my ($self, $obj) = @_;
