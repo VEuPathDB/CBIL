@@ -557,7 +557,6 @@ sub applyCachedMappedValue {
   $self->{mappedValueCache}->{$key}->{$rawValue} = $valForCache;
   my $unitForCache = $char->getUnit();
   if(blessed($unitForCache) && $unitForCache->getValue){
-printf STDERR ("DEBUG: %s:%s\n",blessed($unitForCache), $unitForCache->getValue);
     $self->{mappedUnitCache}->{$key}->{$rawValue} = $unitForCache->clone();
   }
 }
