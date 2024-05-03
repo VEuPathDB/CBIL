@@ -528,6 +528,9 @@ sub applyCachedMappedValue {
 
   if (exists $self->{mappedValueCache}->{$key}->{$rawValue}) {
     $char->setValue($self->{mappedValueCache}->{$key}->{$rawValue});
+    if(exists $self->{mappedUnitCache}->{$key}->{$rawValue}) {
+      $char->setUnit($self->{mappedUnitCache}->{$key}->{$rawValue});
+    }
     return;
   }
 
@@ -552,6 +555,11 @@ sub applyCachedMappedValue {
   my $valForCache = $char->getValue();
   $valForCache = "" unless defined $valForCache;
   $self->{mappedValueCache}->{$key}->{$rawValue} = $valForCache;
+  my $unitForCache = $char->getUnit();
+  if(blessed($unitForCache) && $unitForCache->getValue){
+printf STDERR ("DEBUG: %s:%s\n",blessed($unitForCache), $unitForCache->getValue);
+    $self->{mappedUnitCache}->{$key}->{$rawValue} = $unitForCache->clone();
+  }
 }
 
 sub checkArrayRefLengths {
