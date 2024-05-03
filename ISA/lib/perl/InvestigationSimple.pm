@@ -527,10 +527,7 @@ sub applyCachedMappedValue {
   my $key = $term->{lc_header};
 
   if (exists $self->{mappedValueCache}->{$key}->{$rawValue}) {
-    $char->setValue($self->{mappedValueCache}->{$key}->{$rawValue});
-    if(exists $self->{mappedUnitCache}->{$key}->{$rawValue}) {
-      $char->setUnit($self->{mappedUnitCache}->{$key}->{$rawValue});
-    }
+    $char = $self->{mappedValueCache}->{$key}->{$rawValue};
     return;
   }
 
@@ -554,11 +551,7 @@ sub applyCachedMappedValue {
   # set cache with value retrieved from $char
   my $valForCache = $char->getValue();
   $valForCache = "" unless defined $valForCache;
-  $self->{mappedValueCache}->{$key}->{$rawValue} = $valForCache;
-  my $unitForCache = $char->getUnit();
-  if(blessed($unitForCache) && $unitForCache->getValue){
-    $self->{mappedUnitCache}->{$key}->{$rawValue} = $unitForCache->clone();
-  }
+  $self->{mappedValueCache}->{$key}->{$rawValue} = $char;
 }
 
 sub checkArrayRefLengths {
