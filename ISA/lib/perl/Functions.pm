@@ -1062,13 +1062,6 @@ sub DELETE {
   return $obj->setValue();
 }
 
-sub filterDbXrefTaxon {
-  my ($self, $obj) = @_;
-  my $val = $obj->getValue();
-  my ($taxon) = ( $val =~ /(taxon:\d+)/ );
-  return $obj->setValue($taxon);
-}
-
 sub digestSHAHex16 {
   my ($self, $obj) = @_;
   my $val = $obj->getValue();
