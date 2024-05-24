@@ -527,7 +527,11 @@ sub applyCachedMappedValue {
   my $key = $term->{lc_header};
 
   if (exists $self->{mappedValueCache}->{$key}->{$rawValue}) {
-    $char = $self->{mappedValueCache}->{$key}->{$rawValue};
+    my($val, $unit, $unitSourceId) = @{ $self->{mappedValueCache}->{$key}->{$rawValue} };
+    $char->setValue($val);
+    if($unit){
+      $char->setUnit(&makeOntologyTerm($unitSourceId, $unit, "CBIL::ISA::StudyAssayEntity::Unit"));
+    }
     return;
   }
 
@@ -551,7 +555,9 @@ sub applyCachedMappedValue {
   # set cache with value retrieved from $char
   my $valForCache = $char->getValue();
   $valForCache = "" unless defined $valForCache;
-  $self->{mappedValueCache}->{$key}->{$rawValue} = $char;
+  if( my $unit = $char->getUnit ){
+    $self->{mappedValueCache}->{$key}->{$rawValue} = [$valForCache, $unit->getValue, $unit->getTermAccessionNumber];
+  }
 }
 
 sub checkArrayRefLengths {
