@@ -231,7 +231,7 @@ if($makePercentiles) {
 ### Here we make individual files
 ### Header names match gus4 results tables
 
-  samplesDir = ".$outputFile";
+  samplesDir = paste(dirname("$outputFile"), "/", ".", basename("$outputFile"), sep="");
   dir.create(samplesDir);
 
  for(i in 1:ncol(reorderedSamples\$data)) {
