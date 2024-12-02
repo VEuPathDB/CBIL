@@ -244,7 +244,9 @@ sub parseStudy {
 
   unless($fileHandle) {
     $self->log("Processing study file $fileName");
-    open($fileHandle, "<:encoding(utf8)",  $fileName) or die "Cannot open file $fileName for reading: $!";
+
+    open($fileHandle, "<:encoding(utf8)",  $fileName) or die "Cannot open file $fileName for reading: $!";    
+
     $study->setFileHandle($fileHandle);
 
     my $header = <$fileHandle>;
@@ -452,7 +454,7 @@ sub functionNamesForTerm {
     return @$functionsRef;
   }
   else {
-    return "valueIsMappedValue";
+    return ("trimWhitespace","valueIsMappedValue");
   }
 }
 
@@ -527,7 +529,11 @@ sub applyCachedMappedValue {
   my $key = $term->{lc_header};
 
   if (exists $self->{mappedValueCache}->{$key}->{$rawValue}) {
-    $char->setValue($self->{mappedValueCache}->{$key}->{$rawValue});
+    my($val, $unit, $unitSourceId) = @{ $self->{mappedValueCache}->{$key}->{$rawValue} };
+    $char->setValue($val);
+    if($unit){
+      $char->setUnit(&makeOntologyTerm($unitSourceId, $unit, "CBIL::ISA::StudyAssayEntity::Unit"));
+    }
     return;
   }
 
@@ -551,7 +557,9 @@ sub applyCachedMappedValue {
   # set cache with value retrieved from $char
   my $valForCache = $char->getValue();
   $valForCache = "" unless defined $valForCache;
-  $self->{mappedValueCache}->{$key}->{$rawValue} = $valForCache;
+  if( my $unit = $char->getUnit ){
+    $self->{mappedValueCache}->{$key}->{$rawValue} = [$valForCache, $unit->getValue, $unit->getTermAccessionNumber];
+  }
 }
 
 sub checkArrayRefLengths {
@@ -612,7 +620,7 @@ sub makeNodes {
     }
     else { ## idColumn not defined: use lowercase file basename + line number
       # alternatively, use lc($study->{_simple_study_headers}->[0]);
-      print STDERR ("WARNING: node [$nodeName] idColumn not specified! using __line__ (line number)\n");
+      $self->logOnce("WARNING: node [$nodeName] idColumn not specified! using __line__ (line number)\n");
       $name = join(":", $basename, $study->{__line__}) ;
     }
 
