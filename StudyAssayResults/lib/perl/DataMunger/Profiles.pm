@@ -121,7 +121,14 @@ sub munge {
 
   my $outputFile = $self->getOutputFile();
 
-  my @fileNames = map { my $n = $_;  $n =~ s/\s/_/g; $n=~ s/[\(\)]//g; ".$outputFile/$n";} @names;
+  #  don't want the full path here
+
+  my $outputFileBasename = basename $outputFile;
+  my $outputFileDirname = dirname $outputFile;
+
+  # NOTE:  we are adding a "." here to make a hidden directory for some reason
+  # maybe because the directory name is exactly the same as the file name??
+  my @fileNames = map { my $n = $_;  $n =~ s/\s/_/g; $n=~ s/[\(\)]//g; "${outputFileDirname}/.${outputFileBasename}/$n";} @names;
 
   $self->setFileNames(\@fileNames);
 

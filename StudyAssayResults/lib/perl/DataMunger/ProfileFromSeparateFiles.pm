@@ -21,6 +21,9 @@ sub setHeaders     {$_[0]->{headers} = $_[1]}
 sub getSampleNameAsDir {$_[0]->{sampleNameAsDir}}
 sub setSampleNameAsDir {$_[0]->{sampleNameAsDir} = $_[1]}
 
+sub getDataHash     {$_[0]->{dataHash}}
+sub setDataHash     {$_[0]->{dataHash} = $_[1]}
+
 sub new {
   my ($class, $args) = @_;
 
@@ -38,14 +41,21 @@ sub new {
 sub munge {
   my ($self) = @_;
 
-  $self->readDataHash();
-  my $inputFile = $self->writeDataHash();
+  my $inputFile;
 
-  $self->setInputFile($inputFile);
+  #don't run this part if calling from the RnaSeqCounts subclass
+  if (ref($self) ne 'ApiCommonData::Load::RnaSeqCounts') {
+    my $dataHash = $self->readDataHash();
+    $self->setDataHash($dataHash);
+
+    $inputFile = $self->writeDataHash();
+
+    $self->setInputFile($inputFile);
+  }
 
   $self->SUPER::munge();
 
-  unlink($inputFile);
+  unlink($inputFile) unless ref($self) eq 'ApiCommonData::Load::RnaSeqCounts';
 }
 
 sub readDataHash {
@@ -59,6 +69,7 @@ sub readDataHash {
 
   my @headers; # these are the input headers
   my @samples;
+  my $dataHash;
 
   foreach my $file (@$files) {
     my ($fn, $display, $selectedColumn);
@@ -99,6 +110,7 @@ sub readDataHash {
 
     my $inputHeader;
     my @inputHeaders;
+
     if($hasHeader) {
       $inputHeader = <FILE>;
       chomp $inputHeader;
@@ -125,23 +137,24 @@ sub readDataHash {
         $value = $rest[$index - 1];
       }
 
-      if($self->{dataHash}->{$uId}->{$fn}) {
+      if($dataHash->{$uId}->{$fn}) {
         CBIL::StudyAssayResults::Error->new("ID $uId is not unique for $fn")->throw();
       }
 
-      $self->{dataHash}->{$uId}->{$fn} = $value;
+      $dataHash->{$uId}->{$fn} = $value;
     }
     close FILE;
   }
 
   $self->setHeaders(\@headers);
   $self->setSamples(\@samples);
+  return $dataHash;
 }
 
 sub writeDataHash {
   my ($self) =  @_;
 
-  my $dataHash = $self->{dataHash};
+  my $dataHash = $self->getDataHash();
   my $headers = $self->getHeaders();
 
   my ($fh, $file) = tempfile();
