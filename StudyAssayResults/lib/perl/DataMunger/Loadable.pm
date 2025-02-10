@@ -111,12 +111,16 @@ sub createConfigFile {
 
 
     my $profileSetName = $self->getProfileSetName();
-     if(my $displaySuffix = $self->getDisplaySuffix()) {
-       $name .= $displaySuffix;
+    if(my $displaySuffix = $self->getDisplaySuffix()) {
+        die "display suffix must be in [  ]" unless ($displaySuffix =~ /\s\[(.+)\]$/);
+
+        $name .= $displaySuffix;
        $profileSetName .= $displaySuffix;
      }
-
-     $name .= " ($technologyType)";
+    else {
+        $profileSetName .= " [$technologyType]";
+        $name .= " [$technologyType]";
+    }
 
     # don't allow the something to be input to itself
     $inputProtocolAppNodesString = undef if($inputProtocolAppNodesString eq $name);
