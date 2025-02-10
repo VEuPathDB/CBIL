@@ -121,7 +121,14 @@ sub munge {
 
   my $outputFile = $self->getOutputFile();
 
-  my @fileNames = map { my $n = $_;  $n =~ s/\s/_/g; $n=~ s/[\(\)]//g; ".$outputFile/$n";} @names;
+  #  don't want the full path here
+
+  my $outputFileBasename = basename $outputFile;
+  my $outputFileDirname = dirname $outputFile;
+
+  # NOTE:  we are adding a "." here to make a hidden directory for some reason
+  # maybe because the directory name is exactly the same as the file name??
+  my @fileNames = map { my $n = $_;  $n =~ s/\s/_/g; $n=~ s/[\(\)]//g; "${outputFileDirname}/.${outputFileBasename}/$n";} @names;
 
   $self->setFileNames(\@fileNames);
 
@@ -231,7 +238,7 @@ if($makePercentiles) {
 ### Here we make individual files
 ### Header names match gus4 results tables
 
-  samplesDir = ".$outputFile";
+  samplesDir = paste(dirname("$outputFile"), "/", ".", basename("$outputFile"), sep="");
   dir.create(samplesDir);
 
  for(i in 1:ncol(reorderedSamples\$data)) {
