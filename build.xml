@@ -9,6 +9,7 @@
                                             CBIL/Cider-Installation,
                                             CBIL/HQ-Installation,
                                             CBIL/StudyAssayResults-Installation,
+                                            CBIL/TransciptExpression-Installation,
                                             CBIL/ISA-Installation,
                                             CBIL/ObjectMapper-Installation">
 
@@ -76,6 +77,14 @@
       <property name="component" value="StudyAssayResults" />
     </ant>
   </target>
+
+  <target name="CBIL/TranscriptExpression-Installation">
+    <ant target="defaultComponentInstall">
+      <property name="project" value="CBIL" />
+      <property name="component" value="TranscriptExpression" />
+    </ant>
+  </target>
+
 
   <target name="CBIL/ISA-Installation">
     <ant target="defaultComponentInstall">
