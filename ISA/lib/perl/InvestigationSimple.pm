@@ -244,7 +244,9 @@ sub parseStudy {
 
   unless($fileHandle) {
     $self->log("Processing study file $fileName");
+
     open($fileHandle, "<:encoding(utf8)",  $fileName) or die "Cannot open file $fileName for reading: $!";    
+
     $study->setFileHandle($fileHandle);
 
     my $header = <$fileHandle>;

@@ -1,7 +1,3 @@
 package CBIL::TranscriptExpression::Check;
-
-use strict;
-
-sub check {}
-
+use base qw(CBIL::StudyAssayResults::Check);
 1;
