@@ -9,7 +9,7 @@ use CBIL::StudyAssayResults::Error;
 
 use Data::Dumper;
 
-my ($help, $xmlFile, $mainDirectory, $inputFile, @executableDirectory, $technologyType, $seqIdPrefix, $patch);
+my ($help, $xmlFile, $mainDirectory, $inputFile, @executableDirectory, $technologyType, $seqIdPrefix, $patch, $gusConfigFile);
 
 &GetOptions('help|h' => \$help,
             'xml_file=s' => \$xmlFile,
@@ -18,6 +18,7 @@ my ($help, $xmlFile, $mainDirectory, $inputFile, @executableDirectory, $technolo
             'executable_path=s' => \@executableDirectory,
             'technology_type=s' => \$technologyType,
             'seq_id_prefix=s' => \$seqIdPrefix,
+            'gus_config_file=s' => \$gusConfigFile,
             'patch' => \$patch,
            );
 
@@ -68,6 +69,7 @@ foreach my $node (@$nodes) {
   CBIL::StudyAssayResults::Error->new($@)->throw() if $@;
 
   $dataMunger->setTechnologyType($technologyType);
+  $dataMunger->setGusConfigFile($gusConfigFile) if($gusConfigFile);
   $dataMunger->munge();
 }
 
